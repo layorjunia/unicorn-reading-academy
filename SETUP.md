@@ -1,47 +1,27 @@
-# Setup — the two things that need your hands
+# Setup
 
-Everything else is done and deployed. These two need your own click because
-they involve a legal agreement and a credential, which I shouldn't accept or
-create on your behalf.
+## 1. Cloud sync — ✅ DONE
 
----
+Firebase project `homeschool-apps` is live on your second Google account and
+wired into the app. Nothing left to do here.
 
-## 1. Finish the Firebase project (~1 min) — for cross-device sync
+- **Email/Password** sign-in enabled
+- **Firestore** created (production mode, nam5/US)
+- **Security rules published** — each child can read and write only their own
+  profile; signed-out access is denied outright
+- Web app registered and its config committed to `js/firebase-config.js`
 
-The console is already open in Chrome with the form filled in
-(project name `homeschool-apps`).
+That config is *public by design* — it identifies the project and is not a
+secret. The rules are the real security boundary.
 
-1. Tick **"I accept the Firebase terms"**, click **Continue**.
-2. Google Analytics: not needed — toggle it **off**, click **Create project**.
-3. Then set up the two services:
-   - **Build → Authentication → Get started → Sign-in method → Email/Password → Enable → Save**
-   - **Build → Firestore Database → Create database → production mode → US location**
-4. **Firestore → Rules**, replace with this, click **Publish**:
+Verified end to end: created an account, saved 42 stars, wiped local storage to
+simulate a second device, signed back in with just a name plus four emoji, and
+the progress came back. Also confirmed a signed-in child cannot read or write
+another child's document. The test account and its data were deleted afterward.
 
-   ```
-   rules_version = '2';
-   service cloud.firestore {
-     match /databases/{database}/documents {
-       match /profiles/{uid} {
-         allow read, write: if request.auth != null && request.auth.uid == uid;
-       }
-     }
-   }
-   ```
-
-5. **Project settings (gear) → Your apps → Web (`</>`)** → register the app →
-   copy the `firebaseConfig` object it shows.
-6. Paste it into `js/firebase-config.js`, replacing `null`.
-
-That config is *public by design* — it identifies the project, it is not a
-secret. The Firestore rules above are the actual security boundary, which is
-why step 4 matters.
-
-Tell me when it's done and I'll commit and redeploy, or run:
-
-```bash
-cd "/Users/jacob/Desktop/Schooling Apps/unicorn-reading-academy" && git add -A && git commit -m "Add Firebase config" && git push
-```
+**How your daughter uses it:** Parent Corner → "Connect cloud backpack" → she
+picks her name and four secret pictures. On any other device she taps "I have a
+cloud backpack" and enters the same two things.
 
 ---
 

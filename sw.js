@@ -1,6 +1,6 @@
 // Offline cache for Unicorn Reading Academy.
 // Bump CACHE version whenever app files change so devices pick up updates.
-const CACHE = 'ura-v4';
+const CACHE = 'ura-v5';
 const ASSETS = [
   '.', 'index.html', 'css/style.css', 'manifest.json',
   'js/ui-speech.js', 'js/extras.js', 'js/banks.js', 'js/storylib.js',

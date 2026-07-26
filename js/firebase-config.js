@@ -18,15 +18,11 @@
 // This config is safe to publish — it identifies the project, it is not a
 // secret. Security comes from the Firestore rules.
 
-const FIREBASE_CONFIG = null;
-
-/* Example of what it looks like when filled in:
 const FIREBASE_CONFIG = {
-  apiKey: "AIzaSy...",
+  apiKey: "AIzaSyDoEce6LGJwE8HqqMxL9Oz-Xy8u_wvS43c",
   authDomain: "homeschool-apps.firebaseapp.com",
   projectId: "homeschool-apps",
   storageBucket: "homeschool-apps.firebasestorage.app",
-  messagingSenderId: "123456789",
-  appId: "1:123456789:web:abc123"
+  messagingSenderId: "125075518550",
+  appId: "1:125075518550:web:2159ebad5fef3d142537f7"
 };
-*/

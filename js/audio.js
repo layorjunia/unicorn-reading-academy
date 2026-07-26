@@ -204,14 +204,25 @@ const AudioLib = {
     });
   },
 
-  speakSounds(tokens) {
+  // Blending practice: the separate sounds, then the WHOLE WORD.
+  //
+  // Playing only the fragments is not blending — it is the opposite of it. The
+  // point of the exercise is arriving at the word, so the sounds are always
+  // followed by the real word in the natural voice. The individual sounds come
+  // from the phoneme engine (exact); the word comes from the neural voice
+  // (human), which is also what stops the whole thing sounding robotic.
+  speakSounds(tokens, word) {
     const items = [];
     tokens.forEach((t, i) => {
-      if (i) items.push({ gap: 520 });   // a clear beat between sounds, so blending reads as separate sounds
+      if (i) items.push({ gap: 500 });
       const f = this.phFile(t);
       if (f) items.push({ file: f });
       else items.push(...this._itemsFor(String(t)));
     });
+    if (word) {
+      items.push({ gap: 700 });             // a beat, then the payoff
+      items.push(...this._itemsFor(word));
+    }
     this._playSeq(items);
   },
 

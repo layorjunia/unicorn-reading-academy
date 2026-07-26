@@ -43,7 +43,7 @@ const App = {
   // ───────────────────────── speech (pre-generated clips) ─────────────────────────
   speak(text, rate) { AudioLib.speak(text, { rate }); },
   speakQueue(parts) { AudioLib.speakSeq(parts.filter(p => p !== '...')); },
-  speakSounds(sounds) { AudioLib.speakSounds(sounds); },
+  speakSounds(sounds, word) { AudioLib.speakSounds(sounds, word); },
 
   // "sound ... like ... word" for the Learn screen pattern buttons
   // Plays "<sound> ... like ... <example word>" for a Learn-screen pattern
@@ -565,12 +565,12 @@ const App = {
       this.render(`${head}
         <div class="card center">
           <p>Tap the robot, listen to the sounds, tap the word!</p>
-          <div style="font-size:4rem; cursor:pointer" onclick='App.speakSounds(${JSON.stringify(w.sounds)})'>🤖</div>
+          <div style="font-size:4rem; cursor:pointer" onclick='App.speakSounds(${JSON.stringify(w.sounds)}, "${w.w}")'>🤖</div>
           <div class="choices">
             ${choices.map(c => `<button class="choice" onclick="App.prPick(this,'${c}','${w.w}')">${c}</button>`).join('')}
           </div>
         </div>`);
-      setTimeout(() => this.speakSounds(w.sounds), 400);
+      setTimeout(() => this.speakSounds(w.sounds, w.w), 400);
     } else if (mode === 'build') {
       if (!pr.tray) {
         const pool = [...new Set(pr.bank.flatMap(b => b.tiles))].filter(t => !w.tiles.includes(t));
@@ -689,7 +689,8 @@ const App = {
         <div class="title">${st.emoji} ${st.title}</div>
         <span class="star-chip">${pg + 1}/${st.pages.length}</span>
       </div>
-      <div class="card">
+      <div class="card story-card">
+        ${this.sceneHtml(typeof LIB_SCENES !== 'undefined' ? LIB_SCENES[st.id] : null, pg)}
         <div class="story-page">
           ${words.map(w => `<span class="story-word" onclick="App.speak('${w.replace(/[^a-zA-Z'-]/g, '')}')">${w}</span>`).join(' ')}
         </div>
@@ -864,7 +865,7 @@ const App = {
     this.render(`
       ${this.islHead('Robot talk! Tap the robot, listen to the sounds, and tap the word you hear!')}
       <div class="card center">
-        <div style="font-size:4rem; cursor:pointer" onclick="App.speakSounds(${JSON.stringify(it.sounds).replace(/"/g, '&quot;')})">🤖</div>
+        <div style="font-size:4rem; cursor:pointer" onclick="App.speakSounds(${JSON.stringify(it.sounds).replace(/"/g, '&quot;')}, '${it.word}')">🤖</div>
         <div class="small-note">tap the robot to hear the sounds</div>
         <div class="choices">
           ${it.choices.map(c => `<button class="choice" onclick="App.soundPick(this,'${c}')">${c}</button>`).join('')}
@@ -872,7 +873,7 @@ const App = {
         <div class="small-note">${this.isl.sub + 1} of ${items.length}</div>
       </div>
     `);
-    setTimeout(() => this.speakSounds(it.sounds), 400);
+    setTimeout(() => this.speakSounds(it.sounds, it.word), 400);
   },
 
   soundPick(el, chosen) {
@@ -889,7 +890,7 @@ const App = {
     } else {
       el.classList.add('wrong'); Sfx.play('retry', 0.55);
       this.encourage();
-      setTimeout(() => { el.classList.remove('wrong'); this.speakSounds(it.sounds); }, 700);
+      setTimeout(() => { el.classList.remove('wrong'); this.speakSounds(it.sounds, it.word); }, 700);
     }
   },
 
@@ -986,6 +987,40 @@ const App = {
     }
   },
 
+  // Draws the picture-book illustration for a story page: painted scene with
+  // the characters she collects standing in it. The cast drifts gently and the
+  // page turn cross-fades, so it reads as a place rather than a slide.
+  sceneHtml(spec, pageIndex) {
+    if (!spec || typeof SCENES === 'undefined') return '';
+    const sc = SCENES[spec.scene];
+    if (!sc) return '';
+    const cast = (spec.cast || []).map((c, i) => {
+      const svg = (typeof CHARACTERS !== 'undefined') && CHARACTERS[c.key];
+      if (!svg) return '';
+      // characters shift slightly per page so the picture isn't static
+      const nudge = pageIndex % 2 === 0 ? 0 : (i === 0 ? 6 : -6);
+      // A nested <svg> MUST carry x/y/width/height — without them it expands to
+      // fill the parent viewport and one character swallows the whole scene.
+      // stand them ON the ground line rather than floating above it
+      const ground = sc.groundY || 130;
+      const y = (c.y != null && c.standing === false) ? c.y - c.w / 2 : ground - c.w * 0.82;
+      const placed = svg.replace(
+        '<svg ',
+        `<svg x="${c.x + nudge - c.w / 2}" y="${y}" width="${c.w}" height="${c.w}" `);
+      return `<g class="scene-actor" style="animation-delay:${i * 0.4}s">${placed}</g>`;
+    }).join('');
+    return `<div class="scene">
+      <svg viewBox="0 0 320 180" preserveAspectRatio="xMidYMid slice">
+        <defs><linearGradient id="sky-${spec.scene}" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="${sc.sky[0]}"/><stop offset="1" stop-color="${sc.sky[1]}"/>
+        </linearGradient></defs>
+        <rect width="320" height="180" fill="url(#sky-${spec.scene})"/>
+        ${sc.svg}
+        ${cast}
+      </svg>
+    </div>`;
+  },
+
   // ── Read it (decodable story) ──
   renderStory() {
     const story = this.isl.island.readIt;
@@ -994,9 +1029,9 @@ const App = {
     const words = story.pages[pg].split(' ');
     this.render(`
       ${this.islHead('Story time! Read it out loud. Tap any word if you need help. 📖')}
-      <div class="card">
-        <div class="story-emoji">${story.emoji}</div>
-        <h2 class="center">${story.title}</h2>
+      <div class="card story-card">
+        ${this.sceneHtml(typeof STORY_SCENES !== 'undefined' ? STORY_SCENES[this.isl.island.id] : null, pg)}
+        <h2 class="center story-title">${story.title}</h2>
         <div class="story-page">
           ${words.map(w => `<span class="story-word" onclick="App.speak('${w.replace(/[^a-zA-Z'-]/g, '')}')">${w}</span>`).join(' ')}
         </div>

@@ -428,14 +428,31 @@ class EspeakPhonemes:
         if not shutil.which('espeak-ng'):
             raise RuntimeError('espeak-ng not installed — run: brew install espeak-ng')
 
-    # a plosive taught in isolation should be as clipped as possible; the
-    # schwa we add for other engines becomes an audible extra syllable here
-    STOPS = ('p', 'b', 't', 'd', 'k', 'g', 'tS', 'dZ')
+    # A stop consonant needs SOMETHING after it or there is no sound at all —
+    # /b/, /d/ and /g/ rendered as literal silence when the schwa was stripped.
+    # Phonics teaches them with a minimal schwa ("buh"), so keep it, but keep it
+    # short: unvoiced stops get a lighter release than voiced ones.
+    VOICED_STOPS = ('b', 'd', 'g', 'dZ')
+    UNVOICED_STOPS = ('p', 't', 'k', 'tS')
+
+    # Continuants must be HELD to be heard as a sound ("ffff", "mmmm"), which
+    # espeak does by repeating the phoneme. And en-us has no standalone /r/ at
+    # all — a bare 'r' renders as pure silence; only 'r@' produces anything.
+    CONTINUANTS = ('f', 's', 'm', 'n', 'l', 'v', 'z', 'T', 'D', 'S', 'Z', 'N')
 
     def render(self, ipa, out_path, pad=0.10):
         code = ipa_to_espeak(ipa)
-        if code.endswith('@') and code[:-1] in self.STOPS:
-            code = code[:-1]
+        base = code[:-1] if code.endswith('@') else code
+        if base in self.VOICED_STOPS or base in self.UNVOICED_STOPS:
+            code = base + '@'   # audible release; never a bare stop
+        elif base == 'r':
+            code = 'r@'
+        elif base in self.CONTINUANTS:
+            code = base * 3
+        elif base and not any(v in base for v in 'aeiouAEIOU@3VU0'):
+            # a consonant blend ("gr", "nd") is still all stops — without a
+            # release it is as inaudible as a bare stop
+            code = base + '@'
         wav = out_path + '.raw.wav'
         r = subprocess.run(['espeak-ng', '-v', self.voice, '-s', self.speed,
                             '-p', self.pitch, '-w', wav, '[[%s]]' % code],
@@ -454,6 +471,10 @@ class EspeakPhonemes:
         first = next((i for i, v in enumerate(a) if abs(v) > thresh), 0)
         last = next((i for i in range(len(a) - 1, -1, -1) if abs(a[i]) > thresh), len(a) - 1)
         core = a[max(0, first - int(sr * 0.01)):min(len(a), last + int(sr * 0.03))]
+        peak = max((abs(v) for v in core), default=0)
+        if peak:
+            gain = min(8.0, 24000.0 / peak)      # bring every sound to a like level
+            core = array.array('h', [int(max(-32000, min(32000, v * gain))) for v in core])
         padding = array.array('h', [0] * int(sr * pad))
         out = padding + core + padding
         with wave.open(wav, 'wb') as w:

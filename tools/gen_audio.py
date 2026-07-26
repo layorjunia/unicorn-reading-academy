@@ -433,6 +433,25 @@ def duration(path):
     return -1.0
 
 
+def clip_energy(path):
+    """(peak, seconds-above-floor) for a clip."""
+    import wave as _w, tempfile as _t, array as _a
+    wav = _t.mktemp(suffix='.wav')
+    subprocess.run(['afconvert', '-f', 'WAVE', '-d', 'LEI16@22050', '-c', '1',
+                    path, wav], capture_output=True)
+    if not os.path.exists(wav):
+        return 0.0, 0.0
+    with _w.open(wav, 'rb') as f:
+        a = _a.array('h')
+        a.frombytes(f.readframes(f.getnframes()))
+    os.unlink(wav)
+    if not len(a):
+        return 0.0, 0.0
+    peak = max(abs(v) for v in a)
+    loud = sum(1 for v in a if abs(v) > 1500) / 22050.0
+    return float(peak), float(loud)
+
+
 def validate(manifest, phrases):
     """Silence, missing files, and — critically — any narration fragment that
     lacks its own recording (which would be played as stitched word clips)."""
@@ -442,6 +461,15 @@ def validate(manifest, phrases):
         d = duration(p) if os.path.exists(p) else -1
         if d < 0.10:
             problems.append(f'phoneme /{tok}/ is silent or missing ({d:.3f}s, IPA {IPA[tok]!r})')
+            continue
+        # A file can have length and still be SILENT: /b/, /d/ and /g/ once
+        # shipped as pure zeroes because a stop with nothing after it makes no
+        # sound. Duration alone never caught it — check real energy.
+        peak, loud = clip_energy(p)
+        if peak < 9000 or loud < 0.05:
+            problems.append(
+                f'phoneme /{tok}/ is too quiet to hear '
+                f'(peak {peak:.0f}, {loud:.3f}s audible)')
     for ch, f in sorted(manifest['ltr'].items()):
         p = os.path.join(AUDIO, f)
         d = duration(p) if os.path.exists(p) else -1

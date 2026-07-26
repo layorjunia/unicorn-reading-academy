@@ -132,6 +132,73 @@ body {
 .hub-card .h-note { font-size: .8rem; color: #b08ab5; margin-top: 2px; }
 
 /* ── Activity screens ── */
+/* ── Next-friend panel: the visible goal ── */
+.next-friend {
+  display: flex; align-items: center; gap: 16px; cursor: pointer;
+  padding: 14px 18px; background: linear-gradient(120deg, #fff 60%, #fff2f8);
+}
+.next-friend:active { transform: scale(.99); }
+.nf-art { width: 76px; flex: 0 0 76px; }
+.nf-char { width: 100%; }
+/* the next friend stays in silhouette until earned — the tease is the point */
+.peeking .nf-char { filter: brightness(0) opacity(.22); animation: peek 2.6s ease-in-out infinite; }
+@keyframes peek { 0%,100% { transform: translateY(0) } 50% { transform: translateY(-5px) } }
+.nf-text { flex: 1; }
+.nf-bar {
+  height: 14px; background: var(--pink-bg); border-radius: 999px;
+  overflow: hidden; margin: 7px 0 5px;
+  box-shadow: inset 0 2px 0 rgba(90,61,92,.06);
+}
+.nf-bar span {
+  display: block; height: 100%; border-radius: 999px;
+  background: linear-gradient(90deg, var(--yellow), var(--pink));
+  transition: width .5s cubic-bezier(.2,.8,.3,1);
+}
+.all-found .nf-char { filter: none; }
+
+.quest-card { padding: 14px 18px; }
+.streak-chip { background: linear-gradient(120deg, #ffd93d, #ff8fc7); color: #fff; }
+.bonus-won { background: var(--yellow); }
+
+/* ── Creature unlock moment ── */
+.unlock-screen { text-align: center; padding: 26px 12px; position: relative; }
+.unlock-label { font-size: 1.15rem; color: var(--purple-dark); margin-bottom: 6px; }
+.unlock-char {
+  width: 190px; margin: 0 auto;
+  animation: unlock-pop .9s cubic-bezier(.2,1.4,.4,1) both;
+}
+@keyframes unlock-pop {
+  0% { transform: scale(.2) rotate(-25deg); opacity: 0 }
+  60% { transform: scale(1.14) rotate(6deg); opacity: 1 }
+  100% { transform: scale(1) rotate(0) }
+}
+.unlock-name { font-size: 2.2rem; margin-top: 6px; }
+.unlock-burst {
+  position: absolute; left: 50%; top: 130px; width: 300px; height: 300px;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle, rgba(255,217,61,.55) 0%, rgba(255,217,61,0) 62%);
+  animation: rays 1.2s ease-out both; pointer-events: none;
+}
+@keyframes rays { 0% { transform: translate(-50%,-50%) scale(.2); opacity: 0 }
+                  50% { opacity: 1 } 100% { transform: translate(-50%,-50%) scale(1.5); opacity: 0 } }
+
+/* ── Drawn characters ── */
+.char { display: inline-block; line-height: 0; }
+.char svg { width: 100%; height: auto; display: block; }
+.char-fallback { display: inline-block; line-height: 1; }
+
+.guide-char { width: 104px; flex: 0 0 104px; animation: bob 3.4s ease-in-out infinite; }
+.guide-char.char-fallback { font-size: 3rem; }
+@keyframes bob { 0%,100% { transform: translateY(0) rotate(-1.5deg) } 50% { transform: translateY(-7px) rotate(1.5deg) } }
+
+.creature-char { width: 74px; margin: 0 auto; }
+.creature-char.char-fallback { font-size: 2.6rem; }
+.c-art { min-height: 78px; display: flex; align-items: center; justify-content: center; }
+.c-locked { font-size: 2.4rem; color: var(--pink-light); font-weight: bold; }
+
+.hero-char { width: 150px; margin: 0 auto 4px; }
+.hero-char.char-fallback { font-size: 5rem; }
+
 .activity-head { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
 .guide-bubble {
   background: #fff; border-radius: 20px; padding: 14px 18px; box-shadow: var(--shadow);

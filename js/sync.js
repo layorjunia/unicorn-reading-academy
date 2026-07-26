@@ -30,6 +30,8 @@ const Store = {
         activities: {},     // islandId -> {learn:1, sound:1, build:1, sort:1, read:1}
         heartBox: {},       // word -> {box:0..4, last:timestamp}
         fluency: [],        // {passageId, wcpm, errors, date}
+        streak: 0, bestStreak: 0, lastDay: null,
+        libRead: {},
         sessions: 0
       },
       updatedAt: Date.now()

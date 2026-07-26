@@ -249,8 +249,8 @@ class PiperEngine:
 
     name = 'piper'
     ext = '.m4a'
-    DEFAULT_MODEL = os.path.join(ROOT, 'tools', 'voices',
-                                 'en_US-hfc_female-medium.onnx')
+    VOICE_NAME = os.environ.get('PIPER_VOICE', 'en_US-lessac-high')
+    DEFAULT_MODEL = os.path.join(ROOT, 'tools', 'voices', VOICE_NAME + '.onnx')
 
     # espeak has no ɝ; it writes the stressed r-coloured vowel as ɜː
     IPA_FIX = [('ɝ', 'ɜː')]
@@ -303,10 +303,12 @@ class PiperEngine:
             seq.extend(sent)
         return seq
 
-    def _write(self, phonemes, out_path):
+    def _write(self, phonemes, out_path, length_scale=None):
+        from piper.config import SynthesisConfig
+        cfg = SynthesisConfig(length_scale=length_scale) if length_scale else None
         ids = self.voice.phonemes_to_ids(phonemes)
         with self._lock:
-            audio = self.voice.phoneme_ids_to_audio(ids)
+            audio = self.voice.phoneme_ids_to_audio(ids, syn_config=cfg)
         import numpy as np
         arr = np.asarray(audio)
         if arr.dtype != 'int16':
@@ -323,8 +325,28 @@ class PiperEngine:
         if r.returncode != 0:
             raise RuntimeError('afconvert: ' + r.stderr.strip()[:200])
 
-    def speak_text(self, text, out_path):
-        self._write(self.text_phonemes(text), out_path)
+    def speak_text(self, text, out_path, length_scale=None):
+        # A trailing period matters: without sentence-final punctuation the
+        # model often clips the last consonant ("sit" -> "si").
+        t = text if text.strip()[-1:] in '.!?' else text.rstrip() + '.'
+        self._write(self.text_phonemes(t), out_path, length_scale)
+
+    def speak_word_verified(self, word, out_path, listener, attempts=6):
+        """Render a single word and keep re-rolling until it is heard correctly.
+
+        Short inputs are where this model drifts — "hop" comes out "hope",
+        "cub" comes out "cube". Because sampling is stochastic, another draw
+        usually lands correctly, so generate-then-listen converges quickly.
+        Returns what was finally heard, or None if it never matched.
+        """
+        last = None
+        for _ in range(max(1, attempts)):
+            self.speak_text(word, out_path)
+            heard = listener(out_path, word)
+            if heard is True:
+                return None
+            last = heard
+        return last
 
     def speak_phoneme(self, ipa, out_path):
         self._write(self.ipa_chars(ipa), out_path)

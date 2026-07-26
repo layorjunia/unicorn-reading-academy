@@ -113,15 +113,25 @@ const AudioLib = {
     });
   },
 
-  async _playSeq(items) {
+  // Resolves when whatever is currently speaking has finished. Screen changes
+  // wait on this instead of a fixed timer — otherwise the next screen's audio
+  // cancels the praise line halfway through, which is heard as it being
+  // "cut off".
+  _done: Promise.resolve(),
+  done() { return this._done; },
+
+  _playSeq(items) {
     this.stop();
     const token = this._queueToken;
-    for (const it of items) {
-      if (token !== this._queueToken) return;
-      if (it.gap) { await new Promise(r => setTimeout(r, it.gap)); continue; }
-      if (it.file) { await this._playFile(it.file); continue; }
-      if (it.tts != null) { await this._tts(it.tts, it.rate); }
-    }
+    this._done = (async () => {
+      for (const it of items) {
+        if (token !== this._queueToken) return;
+        if (it.gap) { await new Promise(r => setTimeout(r, it.gap)); continue; }
+        if (it.file) { await this._playFile(it.file); continue; }
+        if (it.tts != null) { await this._tts(it.tts, it.rate); }
+      }
+    })();
+    return this._done;
   },
 
   _tts(text, rate) {
@@ -219,6 +229,21 @@ const AudioLib = {
       items.push(...this._itemsFor(word));
     }
     this._playSeq(items);
+  }
+};
+
+// Sound effects are deliberately separate from speech: they must be able to
+// overlap a spoken line rather than cancel it, and a fresh Audio per call lets
+// rapid taps stack instead of cutting each other off.
+const Sfx = {
+  enabled: true,
+  play(name, volume) {
+    if (!this.enabled) return;
+    try {
+      const a = new Audio('audio/sfx/' + name + '.m4a');
+      a.volume = volume == null ? 0.75 : volume;
+      a.play().catch(() => {});
+    } catch (e) { /* audio not available yet */ }
   }
 };
 

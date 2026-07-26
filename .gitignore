@@ -2,3 +2,6 @@ tools/.tts-key
 tools/voices/
 .venv-tts/
 *.aiff
+.work/
+tools/verify-report.json
+tools/audio-repair-report.json

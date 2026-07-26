@@ -502,6 +502,8 @@ def main():
 
     ext = engine.ext
     manifest = {'words': {}, 'ph': {}, 'ltr': {}, 'engine': engine.name}
+    if getattr(engine, 'VOICE_NAME', None):
+        manifest['voice'] = engine.VOICE_NAME
     jobs = []   # (callable, out_path)
 
     for w in words:

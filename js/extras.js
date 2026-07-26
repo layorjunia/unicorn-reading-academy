@@ -174,19 +174,21 @@ const FLUENCY_PASSAGES = [
 ];
 
 // ── Creature Cove: collectible friends, unlocked by stars ──
+// `key` selects the drawn character in js/characters.js. The emoji is only a
+// fallback for the brief moment before that file loads.
 const CREATURES = [
-  { emoji: '🦄', name: 'Sparkle' }, { emoji: '🐱', name: 'Whiskers' },
-  { emoji: '🐰', name: 'Clover' }, { emoji: '🐶', name: 'Biscuit' },
-  { emoji: '🦊', name: 'Ember' }, { emoji: '🐼', name: 'Bamboo' },
-  { emoji: '🦋', name: 'Flutter' }, { emoji: '🐬', name: 'Splash' },
-  { emoji: '🦩', name: 'Pinky' }, { emoji: '🐢', name: 'Sheldon' },
-  { emoji: '🐙', name: 'Inky' }, { emoji: '🦉', name: 'Sage' },
-  { emoji: '🐣', name: 'Peep' }, { emoji: '🧜‍♀️', name: 'Marina' },
-  { emoji: '🧚', name: 'Twinkle' }, { emoji: '🐉', name: 'Blaze' },
-  { emoji: '🦖', name: 'Rexy' }, { emoji: '🐿️', name: 'Nutmeg' },
-  { emoji: '🦢', name: 'Grace' }, { emoji: '🐞', name: 'Dottie' },
-  { emoji: '🦒', name: 'Stretch' }, { emoji: '🐧', name: 'Waddle' },
-  { emoji: '🐨', name: 'Snuggles' }, { emoji: '🌟', name: 'Nova' }
+  { key: 'sparkle', emoji: '🦄', name: 'Sparkle' }, { key: 'whiskers', emoji: '🐱', name: 'Whiskers' },
+  { key: 'clover', emoji: '🐰', name: 'Clover' }, { key: 'biscuit', emoji: '🐶', name: 'Biscuit' },
+  { key: 'ember', emoji: '🦊', name: 'Ember' }, { key: 'bamboo', emoji: '🐼', name: 'Bamboo' },
+  { key: 'flutter', emoji: '🦋', name: 'Flutter' }, { key: 'splash', emoji: '🐬', name: 'Splash' },
+  { key: 'pinky', emoji: '🦩', name: 'Pinky' }, { key: 'sheldon', emoji: '🐢', name: 'Sheldon' },
+  { key: 'inky', emoji: '🐙', name: 'Inky' }, { key: 'sage', emoji: '🦉', name: 'Sage' },
+  { key: 'peep', emoji: '🐣', name: 'Peep' }, { key: 'marina', emoji: '🧜‍♀️', name: 'Marina' },
+  { key: 'twinkle', emoji: '🧚', name: 'Twinkle' }, { key: 'blaze', emoji: '🐉', name: 'Blaze' },
+  { key: 'rexy', emoji: '🦖', name: 'Rexy' }, { key: 'nutmeg', emoji: '🐿️', name: 'Nutmeg' },
+  { key: 'grace', emoji: '🦢', name: 'Grace' }, { key: 'dottie', emoji: '🐞', name: 'Dottie' },
+  { key: 'stretch', emoji: '🦒', name: 'Stretch' }, { key: 'waddle', emoji: '🐧', name: 'Waddle' },
+  { key: 'snuggles', emoji: '🐨', name: 'Snuggles' }, { key: 'nova', emoji: '🌟', name: 'Nova' }
 ];
 const STARS_PER_CREATURE = 12;
 

@@ -70,6 +70,14 @@ const App = {
   praise() { this.speak(PRAISE[Math.floor(Math.random() * PRAISE.length)]); },
   encourage() { this.speak(ENCOURAGE[Math.floor(Math.random() * ENCOURAGE.length)]); },
 
+  // Advance only once the current line has actually finished speaking (and at
+  // least `minMs` has passed, so the celebration is still visible). Using a
+  // bare setTimeout here is what chopped the praise off mid-word.
+  after(minMs, fn) {
+    const wait = new Promise(r => setTimeout(r, minMs));
+    Promise.all([wait, AudioLib.done().catch(() => {})]).then(fn);
+  },
+
   burst(emoji) {
     const layer = document.getElementById('feedback-layer');
     layer.innerHTML = `<div class="big-burst">${emoji}</div>`;
@@ -89,8 +97,55 @@ const App = {
     }
   },
 
+  creaturesUnlocked(stars) {
+    const s = stars == null ? this.profile.progress.stars : stars;
+    return Math.min(CREATURES.length, Math.floor(s / STARS_PER_CREATURE));
+  },
+
+  // Earning stars is the whole motivation loop, so crossing a creature
+  // threshold is treated as an event, not a number quietly ticking up.
   addStars(n) {
+    const before = this.creaturesUnlocked();
     this.profile.progress.stars += n;
+    const after = this.creaturesUnlocked();
+    this.save();
+    if (after > before) this.pendingUnlock = CREATURES[after - 1];
+  },
+
+  pendingUnlock: null,
+
+  // Full-screen "you found a new friend" moment. Shown after a lesson ends so
+  // it never interrupts the teaching.
+  showUnlock(next) {
+    const c = this.pendingUnlock;
+    if (!c) return next && next();
+    this.pendingUnlock = null;
+    Sfx.play('unlock');
+    this.confetti();
+    this.render(`
+      <div class="unlock-screen">
+        <div class="unlock-burst"></div>
+        <div class="unlock-label">A new friend found you!</div>
+        ${this.charHtml(c.key, 'unlock-char', c.emoji)}
+        <h1 class="unlock-name">${c.name}</h1>
+        <div class="sub">joined your Creature Cove</div>
+        <button class="btn big green mt" onclick="App.showCove()">Say hello! 👋</button>
+        <div class="mt"><button class="btn ghost small" onclick="App.showHome()">🏠 Back to the map</button></div>
+      </div>
+    `);
+    setTimeout(() => this.speakQueue([c.name, 'Hello!']), 700);
+  },
+
+  // ── Streak ──
+  touchStreak() {
+    const p = this.profile.progress;
+    const today = this.todayKey();
+    if (p.lastDay === today) return;
+    const y = new Date(); y.setDate(y.getDate() - 1);
+    const yesterday = y.getFullYear() + '-' + (y.getMonth() + 1) + '-' + y.getDate();
+    p.streak = (p.lastDay === yesterday) ? (p.streak || 0) + 1 : 1;
+    p.bestStreak = Math.max(p.bestStreak || 0, p.streak);
+    p.lastDay = today;
     this.save();
   },
 
@@ -99,7 +154,7 @@ const App = {
     const profiles = Object.values(this.data.profiles);
     this.render(`
       <div class="logo">
-        <span class="big-emoji">🦄</span>
+        ${this.charHtml('pip', 'hero-char', '🦄')}
         <h1>Unicorn Reading Academy</h1>
         <div class="sub">Let's read together! 💖</div>
       </div>
@@ -121,6 +176,7 @@ const App = {
   pickProfile(id) {
     this.profile = this.data.profiles[id];
     this.data.activeProfileId = id;
+    this.touchStreak();
     this.save();
     this.speak('Hi! Ready to read?');
     if (this.profile.cloud && Sync.configured()) {
@@ -164,6 +220,7 @@ const App = {
     this.data.profiles[p.id] = p;
     this.data.activeProfileId = p.id;
     this.profile = p;
+    this.touchStreak();
     this.save();
     this.confetti();
     this.speak('Welcome! Let the reading adventure begin!');
@@ -279,6 +336,32 @@ const App = {
     return Object.values(hb).filter(x => x.box >= 3).length;
   },
 
+  // The single most motivating thing on the screen: who you are working
+  // towards, how close you are, and a peek at them still in shadow.
+  nextFriendPanel() {
+    const stars = this.profile.progress.stars;
+    const have = this.creaturesUnlocked();
+    if (have >= CREATURES.length) {
+      return `<div class="card next-friend all-found">
+        <div class="nf-art">${this.charHtml(CREATURES[CREATURES.length - 1].key, 'nf-char')}</div>
+        <div class="nf-text"><b>You found every friend!</b>
+          <div class="small-note">All ${CREATURES.length} live in your cove. Keep reading to grow your stars!</div></div>
+      </div>`;
+    }
+    const next = CREATURES[have];
+    const into = stars % STARS_PER_CREATURE;
+    const togo = STARS_PER_CREATURE - into;
+    const pct = Math.round((into / STARS_PER_CREATURE) * 100);
+    return `<div class="card next-friend" onclick="App.showCove()">
+      <div class="nf-art peeking">${this.charHtml(next.key, 'nf-char', next.emoji)}</div>
+      <div class="nf-text">
+        <b>Someone new is almost here!</b>
+        <div class="nf-bar"><span style="width:${pct}%"></span></div>
+        <div class="small-note">${togo} more ${togo === 1 ? 'star' : 'stars'} to meet your next friend</div>
+      </div>
+    </div>`;
+  },
+
   todayKey() {
     const d = new Date();
     return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate();
@@ -299,6 +382,7 @@ const App = {
     if (q.practice && q.hearts && q.fluency && !q.bonus) {
       q.bonus = true;
       this.addStars(5);
+      Sfx.play('bonus');
       this.confetti();
       setTimeout(() => this.speak('Daily quest complete! Five bonus stars!'), 600);
     }
@@ -314,33 +398,35 @@ const App = {
       <div class="topbar">
         <div class="title">${p.avatar} Hi, ${p.name}!</div>
         <div>
+          ${(p.progress.streak || 0) > 1 ? `<span class="star-chip streak-chip">🔥 ${p.progress.streak} day streak</span>` : ''}
           <span class="star-chip">⭐ ${p.progress.stars}</span>
           <button class="btn ghost small" onclick="App.showProfiles()">👥</button>
           <button class="btn ghost small" onclick="App.showParentGate()">👨‍👩‍👧 Parents</button>
         </div>
       </div>
-      <div class="card" style="padding:14px 18px">
-        <b>🗓️ Today's Quest</b> <span class="small-note">— do all 3 for +5 bonus stars!</span>
+      ${this.nextFriendPanel()}
+      <div class="card quest-card">
+        <b>🗓️ Today's Quest</b> <span class="small-note">— do all three for +5 bonus stars!</span>
         <div class="badge-row" style="justify-content:flex-start">
           ${chip(q.practice, 'Island work')} ${chip(q.hearts, 'Heart words')} ${chip(q.fluency, 'Fluency read')}
-          ${q.bonus ? '<span class="star-chip">🏅 Bonus earned!</span>' : ''}
+          ${q.bonus ? '<span class="star-chip bonus-won">🏅 Bonus earned!</span>' : ''}
         </div>
       </div>
       <div class="hub-row">
-        <div class="hub-card" onclick="App.showGarden()">
-          <div class="h-emoji">🌷</div><div class="h-label">Heart Words</div>
+        <div class="hub-card" onclick="Sfx.play('tap',0.4); App.showGarden()">
+          ${this.charHtml('flutter', 'hub-char', '🌷')}<div class="h-label">Heart Words</div>
           <div class="h-note">${this.heartMastered()} flowers bloomed</div>
         </div>
-        <div class="hub-card" onclick="App.showFluency()">
-          <div class="h-emoji">🎤</div><div class="h-label">Fluency Stage</div>
+        <div class="hub-card" onclick="Sfx.play('tap',0.4); App.showFluency()">
+          ${this.charHtml('nova', 'hub-char', '🎤')}<div class="h-label">Fluency Stage</div>
           <div class="h-note">read like a star</div>
         </div>
-        <div class="hub-card" onclick="App.showLibrary()">
-          <div class="h-emoji">📚</div><div class="h-label">Story Library</div>
+        <div class="hub-card" onclick="Sfx.play('tap',0.4); App.showLibrary()">
+          ${this.charHtml('sage', 'hub-char', '📚')}<div class="h-label">Story Library</div>
           <div class="h-note">${Object.keys(p.progress.libRead || {}).length} of ${STORY_LIB.length} read</div>
         </div>
-        <div class="hub-card" onclick="App.showCove()">
-          <div class="h-emoji">🏝️</div><div class="h-label">Creature Cove</div>
+        <div class="hub-card" onclick="Sfx.play('tap',0.4); App.showCove()">
+          ${this.charHtml('sparkle', 'hub-char', '🏝️')}<div class="h-label">Creature Cove</div>
           <div class="h-note">${creatures} friends found</div>
         </div>
       </div>
@@ -352,8 +438,9 @@ const App = {
               const done = this.isDone(isl.id);
               const unlocked = this.isUnlocked(li, ii);
               const click = !unlocked ? 'App.lockedTap()' : done ? `App.islandMenu('${isl.id}')` : `App.startIsland('${isl.id}')`;
-              return `<div class="island ${done ? 'done' : ''} ${unlocked ? '' : 'locked'}" onclick="${click}">
-                <div class="isl-emoji">${isl.emoji}</div>
+              const gk = this.GUIDE_KEY[isl.guide] || 'pip';
+              return `<div class="island ${done ? 'done' : ''} ${unlocked ? '' : 'locked'}" onclick="Sfx.play('tap',0.4); ${click}">
+                <div class="isl-art">${this.charHtml(gk, 'isl-char', isl.emoji)}<span class="isl-badge">${isl.emoji}</span></div>
                 <div class="isl-title">${isl.title}</div>
                 <div class="isl-sub">${isl.sub}</div>
               </div>`;
@@ -464,10 +551,10 @@ const App = {
 
   prPick(el, chosen, target) {
     if (chosen === target) {
-      el.classList.add('correct'); this.burst('🌟'); this.praise();
-      setTimeout(() => { this.pr.idx++; this.pr.tray = null; this.renderPractice(); }, 1000);
+      el.classList.add('correct'); Sfx.play('correct'); this.burst('🌟'); this.praise();
+      this.after(800, () => { this.pr.idx++; this.pr.tray = null; this.renderPractice(); });
     } else {
-      el.classList.add('wrong'); this.encourage();
+      el.classList.add('wrong'); Sfx.play('retry', 0.55); this.encourage();
       setTimeout(() => el.classList.remove('wrong'), 700);
     }
   },
@@ -476,14 +563,14 @@ const App = {
     const pr = this.pr;
     const w = pr.words[pr.idx];
     if (pr.built.includes(idx) || pr.built.length >= w.tiles.length) return;
-    this.speakSounds([pr.tray[idx].t]);
+    Sfx.play('tap', 0.4); this.speakSounds([pr.tray[idx].t]);
     pr.built.push(idx);
     if (pr.built.length === w.tiles.length) {
       const made = pr.built.map(i => pr.tray[i].t).join('');
       if (made === w.tiles.join('')) {
-        this.burst('💖');
+        Sfx.play('star'); this.burst('💖');
         setTimeout(() => this.speakQueue(['You built it!', w.w]), 200);
-        setTimeout(() => { pr.idx++; pr.tray = null; this.renderPractice(); }, 1300);
+        this.after(1000, () => { pr.idx++; pr.tray = null; this.renderPractice(); });
       } else {
         this.encourage();
         setTimeout(() => { pr.built = []; this.renderPractice(); }, 900);
@@ -495,13 +582,13 @@ const App = {
   finishPractice() {
     this.addStars(3);
     this.markQuest('practice');
-    this.confetti(); this.burst('🌈');
+    Sfx.play('fanfare'); this.confetti(); this.burst('🌈');
     this.speak('Practice complete! Three stars!');
     this.render(`
       <div class="logo"><span class="big-emoji">🌈</span><h1>Practice complete!</h1>
       <div class="sub">⭐ +3 stars — your reading brain grew today!</div></div>
       <div class="card center">
-        <button class="btn big" onclick="App.startPractice('${this.pr.id}')">More practice! 🔄</button>
+        <button class="btn big" onclick="App.showUnlock(() => App.startPractice('${this.pr.id}'))">More practice! 🔄</button>
         <div class="mt"><button class="btn ghost small" onclick="App.showHome()">🏠 Back to map</button></div>
       </div>
     `);
@@ -551,9 +638,9 @@ const App = {
           ${words.map(w => `<span class="story-word" onclick="App.speak('${w.replace(/[^a-zA-Z'-]/g, '')}')">${w}</span>`).join(' ')}
         </div>
         <div class="story-nav">
-          <button class="btn ghost small" ${pg === 0 ? 'disabled' : ''} onclick="App.lib.page--; App.renderLib()">⬅</button>
+          <button class="btn ghost small" ${pg === 0 ? 'disabled' : ''} onclick="App.turnPage(); App.lib.page--; App.renderLib()">⬅</button>
           <button class="btn purple small" onclick="App.speak(${JSON.stringify(st.pages[pg]).replace(/"/g, '&quot;')})">🔊 Read to me</button>
-          <button class="btn green" onclick="App.lib.page++; App.renderLib()">${pg === st.pages.length - 1 ? 'Questions! ➜' : 'Next ➜'}</button>
+          <button class="btn green" onclick="App.turnPage(); App.lib.page++; App.renderLib()">${pg === st.pages.length - 1 ? 'Questions! ➜' : 'Next ➜'}</button>
         </div>
       </div>
     `);
@@ -567,7 +654,7 @@ const App = {
       const first = !read[st.id];
       read[st.id] = (read[st.id] || 0) + 1;
       this.addStars(first ? 3 : 1);
-      this.confetti(); this.burst('📚');
+      Sfx.play('fanfare'); this.confetti(); this.burst('📚');
       this.speak('You read the whole story!');
       this.render(`
         <div class="logo"><span class="big-emoji">📚</span><h1>Story complete!</h1>
@@ -599,7 +686,7 @@ const App = {
     const q = this.lib.story.questions[this.lib.q];
     if (i === q.answer) {
       el.classList.add('correct'); this.burst('🌟'); this.praise();
-      setTimeout(() => { this.lib.q++; this.renderLibQuestions(); }, 1000);
+      this.after(800, () => { this.lib.q++; this.renderLibQuestions(); });
     } else {
       el.classList.add('wrong'); this.encourage();
       setTimeout(() => el.classList.remove('wrong'), 700);
@@ -628,6 +715,18 @@ const App = {
       `<div class="pdot ${i < cur ? 'on' : i === cur ? 'now' : ''}"></div>`).join('')}</div>`;
   },
 
+  // ── Drawn characters ──
+  // Emoji render differently on every device and look like clip-art in a grid.
+  // These are hand-drawn SVGs (js/characters.js); emoji stay only as a fallback
+  // for the instant before that file loads.
+  GUIDE_KEY: { Pip: 'pip', Mimi: 'mimi', Bun: 'bun', Dot: 'dot' },
+
+  charHtml(key, cls, fallbackEmoji) {
+    const svg = (typeof CHARACTERS !== 'undefined') && CHARACTERS[key];
+    if (svg) return `<span class="char ${cls || ''}">${svg}</span>`;
+    return `<span class="char-fallback ${cls || ''}">${fallbackEmoji || ''}</span>`;
+  },
+
   // The guide bubble shows `text` but SPEAKS `narration` (segment array), so a
   // line can display "Short a says /a/" while the voice plays prose + a real
   // phoneme clip instead of trying to pronounce a lone letter.
@@ -652,7 +751,7 @@ const App = {
       </div>
       ${this.dots()}
       <div class="activity-head">
-        <span class="guide-emoji">${guides[isl.guide] || '🦄'}</span>
+        ${this.charHtml(this.GUIDE_KEY[isl.guide] || 'pip', 'guide-char', guides[isl.guide] || '🦄')}
         <div class="guide-bubble" onclick="App.playBubble()">${text}</div>
       </div>`;
   },
@@ -724,14 +823,15 @@ const App = {
     const it = this.isl.island.soundIt[this.isl.sub];
     if (chosen === it.word) {
       el.classList.add('correct');
+      Sfx.play('correct');
       this.burst('🌟'); this.speakQueue([PRAISE[Math.floor(Math.random() * PRAISE.length)], it.word + '!']);
-      setTimeout(() => {
+      this.after(900, () => {
         this.isl.sub++;
         if (this.isl.sub >= this.isl.island.soundIt.length) { this.awardActivity('sound', 2); this.nextStep(); }
         else this.renderSound();
-      }, 1100);
+      });
     } else {
-      el.classList.add('wrong');
+      el.classList.add('wrong'); Sfx.play('retry', 0.55);
       this.encourage();
       setTimeout(() => { el.classList.remove('wrong'); this.speakSounds(it.sounds); }, 700);
     }
@@ -768,18 +868,18 @@ const App = {
     const it = this.isl.island.buildIt[this.isl.sub];
     if (this.isl.built.includes(idx)) return;
     const tile = this.isl.trayOrder[idx];
-    this.speakSounds([tile.t]);
+    Sfx.play('tap', 0.4); this.speakSounds([tile.t]);
     this.isl.built.push(idx);
     if (this.isl.built.length === it.tiles.length) {
       const word = this.isl.built.map(i => this.isl.trayOrder[i].t).join('');
       if (word === it.tiles.join('')) {
-        this.burst('💖'); this.confetti();
+        Sfx.play('star'); this.burst('💖'); this.confetti();
         setTimeout(() => this.speakQueue(['You built it!', it.word]), 200);
-        setTimeout(() => {
+        this.after(1000, () => {
           this.isl.sub++; this.isl.trayOrder = null;
           if (this.isl.sub >= this.isl.island.buildIt.length) { this.awardActivity('build', 2); this.nextStep(); }
           else this.renderBuild();
-        }, 1400);
+        });
         this.renderBuild();
         return;
       } else {
@@ -817,12 +917,12 @@ const App = {
     const it = this.isl.sortOrder[this.isl.sub];
     if (cat === it.cat) {
       el.style.borderStyle = 'solid'; el.style.background = 'var(--green)'; el.style.color = '#fff';
-      this.burst('⭐'); this.praise();
-      setTimeout(() => {
+      Sfx.play('star'); this.burst('⭐'); this.praise();
+      this.after(800, () => {
         this.isl.sub++;
         if (this.isl.sub >= this.isl.sortOrder.length) { this.awardActivity('sort', 2); this.isl.sortOrder = null; this.nextStep(); }
         else this.renderSort();
-      }, 900);
+      });
     } else {
       el.style.background = 'var(--red)'; el.style.color = '#fff';
       this.encourage();
@@ -845,14 +945,16 @@ const App = {
           ${words.map(w => `<span class="story-word" onclick="App.speak('${w.replace(/[^a-zA-Z'-]/g, '')}')">${w}</span>`).join(' ')}
         </div>
         <div class="story-nav">
-          <button class="btn ghost small" ${pg === 0 ? 'disabled' : ''} onclick="App.isl.page--; App.renderStory()">⬅</button>
+          <button class="btn ghost small" ${pg === 0 ? 'disabled' : ''} onclick="App.turnPage(); App.isl.page--; App.renderStory()">⬅</button>
           <button class="btn purple small" onclick="App.readPageAloud()">🔊 Read to me</button>
-          <button class="btn green" onclick="App.isl.page++; App.renderStory()">${pg === story.pages.length - 1 ? 'Questions! ➜' : 'Next ➜'}</button>
+          <button class="btn green" onclick="App.turnPage(); App.isl.page++; App.renderStory()">${pg === story.pages.length - 1 ? 'Questions! ➜' : 'Next ➜'}</button>
         </div>
         <div class="small-note center mt">page ${pg + 1} of ${story.pages.length}</div>
       </div>
     `);
   },
+
+  turnPage() { Sfx.play('page', 0.5); },
 
   readPageAloud() {
     const story = this.isl.island.readIt;
@@ -883,7 +985,7 @@ const App = {
     const q = this.isl.island.readIt.questions[this.isl.q];
     if (i === q.answer) {
       el.classList.add('correct'); this.burst('🌟'); this.praise();
-      setTimeout(() => { this.isl.q++; this.renderStoryQuestions(); }, 1000);
+      this.after(800, () => { this.isl.q++; this.renderStoryQuestions(); });
     } else {
       el.classList.add('wrong'); this.encourage();
       setTimeout(() => el.classList.remove('wrong'), 700);
@@ -913,13 +1015,13 @@ const App = {
     document.querySelectorAll('.choice').forEach(c => c.style.pointerEvents = 'none');
     if (chosen === it.word) {
       el.classList.add('correct'); this.isl.quizScore++;
-      this.burst('⭐');
+      Sfx.play('star'); this.burst('⭐');
     } else {
-      el.classList.add('wrong');
+      el.classList.add('wrong'); Sfx.play('retry', 0.55);
       document.querySelectorAll('.choice').forEach(c => { if (c.textContent === it.word) c.classList.add('correct'); });
       this.speakQueue(['It was', it.word]);
     }
-    setTimeout(() => { this.isl.sub++; this.renderQuiz(); }, 1100);
+    this.after(900, () => { this.isl.sub++; this.renderQuiz(); });
   },
 
   finishIsland() {
@@ -932,7 +1034,7 @@ const App = {
       if (first) this.addStars(5);
       this.markQuest('practice');
       this.save();
-      this.confetti(); this.burst('🏆');
+      Sfx.play('fanfare'); this.confetti(); this.burst('🏆');
       const newCreature = Math.floor(this.profile.progress.stars / STARS_PER_CREATURE);
       this.render(`
         <div class="logo"><span class="big-emoji">🏆</span>
@@ -942,7 +1044,7 @@ const App = {
         <div class="card center">
           <div style="font-size:2.2rem">⭐ +5 stars!</div>
           ${newCreature > 0 && newCreature <= CREATURES.length ? `<div class="mt">A new friend may be waiting in Creature Cove... 🏝️</div>` : ''}
-          <button class="btn big green mt" onclick="App.showHome()">Back to the map! 🗺️</button>
+          <button class="btn big green mt" onclick="App.showUnlock(() => App.showHome())">Back to the map! 🗺️</button>
           <div class="mt"><button class="btn ghost small" onclick="App.showCove()">🏝️ Visit Creature Cove</button></div>
         </div>
       `);
@@ -1087,23 +1189,23 @@ const App = {
     const hb = this.profile.progress.heartBox;
     const st = hb[w.w] || { box: 0, last: 0 };
     if (chosen === w.w) {
-      el.classList.add('correct'); this.burst('🌸'); this.praise();
+      el.classList.add('correct'); Sfx.play('correct'); this.burst('🌸'); this.praise();
       st.box = Math.min(4, st.box + 1);
     } else {
-      el.classList.add('wrong'); AudioLib.spellOut(w.w, { prefix: 'It is spelled' });
+      el.classList.add('wrong'); Sfx.play('retry', 0.55); AudioLib.spellOut(w.w, { prefix: 'It is spelled' });
       st.box = Math.max(0, st.box - 1);
       document.querySelectorAll('.choice').forEach(c => { if (c.textContent === w.w) c.classList.add('correct'); });
     }
     st.last = Date.now();
     hb[w.w] = st;
     this.save();
-    setTimeout(() => { this.hw.idx++; this.hw.phase = 'teach'; this.renderHeart(); }, 1300);
+    this.after(1000, () => { this.hw.idx++; this.hw.phase = 'teach'; this.renderHeart(); });
   },
 
   finishHeartSession() {
     this.addStars(3);
     this.markQuest('hearts');
-    this.confetti(); this.burst('🌷');
+    Sfx.play('fanfare'); this.confetti(); this.burst('🌷');
     this.speak('Your garden is watered! Three stars for you!');
     this.showGarden();
   },
@@ -1235,7 +1337,7 @@ const App = {
         <div class="creature-grid">
           ${CREATURES.map((c, i) => `
             <div class="creature ${i < unlocked ? '' : 'locked-c'}" onclick="${i < unlocked ? `App.speakQueue(['${c.name}','Hello!'])` : `App.speak('Keep reading to meet this friend!')`}">
-              <div class="c-emoji">${i < unlocked ? c.emoji : '❓'}</div>
+              <div class="c-art">${i < unlocked ? this.charHtml(c.key, 'creature-char', c.emoji) : '<span class="c-locked">?</span>'}</div>
               <div class="c-name">${i < unlocked ? c.name : '???'}</div>
             </div>`).join('')}
         </div>

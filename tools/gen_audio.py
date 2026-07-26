@@ -471,8 +471,8 @@ def validate(manifest, phrases):
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument('--engine', default=os.environ.get('TTS_ENGINE', 'google'),
-                    choices=['google', 'apple'])
+    ap.add_argument('--engine', default=os.environ.get('TTS_ENGINE', 'piper'),
+                    choices=['piper', 'google', 'apple'])
     ap.add_argument('--clean', action='store_true')
     ap.add_argument('--workers', type=int, default=8)
     args = ap.parse_args()

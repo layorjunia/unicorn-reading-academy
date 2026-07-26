@@ -17,7 +17,9 @@ import json
 import os
 import subprocess
 import tempfile
+import threading
 import time
+import wave
 import urllib.error
 import urllib.request
 
@@ -233,9 +235,126 @@ class AppleEngine:
         return made
 
 
+class PiperEngine:
+    """Piper — a neural TTS that runs locally. No API key, no billing, no
+    network at build time, and it sounds like a person rather than a 1990s
+    speech synthesiser.
+
+    Crucially it exposes the phoneme layer (`phonemize` → IPA, then
+    `phonemes_to_ids` → `phoneme_ids_to_audio`), so a whole teaching line can be
+    built as ONE utterance whose prose is naturally phonemised while the letter
+    sounds are our exact IPA. That is the combination the app needs: natural
+    delivery AND guaranteed-correct phonics.
+    """
+
+    name = 'piper'
+    ext = '.m4a'
+    DEFAULT_MODEL = os.path.join(ROOT, 'tools', 'voices',
+                                 'en_US-hfc_female-medium.onnx')
+
+    # espeak has no ɝ; it writes the stressed r-coloured vowel as ɜː
+    IPA_FIX = [('ɝ', 'ɜː')]
+
+    def __init__(self, model=None, rate=1.0):
+        try:
+            from piper import PiperVoice
+        except ImportError as e:
+            raise RuntimeError(
+                'piper-tts is not installed. Set it up with:\n'
+                '  uv venv --python 3.12 .venv-tts\n'
+                '  uv pip install --python .venv-tts/bin/python piper-tts\n'
+                '  .venv-tts/bin/python -m piper.download_voices '
+                '--download-dir tools/voices en_US-hfc_female-medium\n'
+                'then run gen_audio.py with .venv-tts/bin/python') from e
+        path = model or self.DEFAULT_MODEL
+        if not os.path.exists(path):
+            raise RuntimeError('voice model missing: ' + path)
+        self.voice = PiperVoice.load(path)
+        self.sample_rate = self.voice.config.sample_rate
+        self.pmap = self.voice.config.phoneme_id_map
+        self._lock = threading.Lock()   # onnx session is not thread-safe
+
+    def _fix(self, ipa):
+        for a, b in self.IPA_FIX:
+            ipa = ipa.replace(a, b)
+        return ipa
+
+    def ipa_chars(self, ipa, stress=True):
+        """IPA string -> phoneme characters the model knows.
+
+        The map is per-character, so diphthongs like eɪ are naturally split.
+        Unknown characters are dropped rather than silently poisoning the
+        sequence; validate() then catches anything that produced no audio.
+        """
+        ipa = self._fix(ipa)
+        out = []
+        if stress and ipa and 'ˈ' not in ipa:
+            out.append('ˈ')
+        out.extend(c for c in ipa if c in self.pmap)
+        return out
+
+    def text_phonemes(self, text):
+        """All sentences flattened — phonemize() splits on sentence
+        boundaries, and using only the first silently truncates the line."""
+        seq = []
+        for i, sent in enumerate(self.voice.phonemize(text)):
+            if i:
+                seq.append(' ')
+            seq.extend(sent)
+        return seq
+
+    def _write(self, phonemes, out_path):
+        ids = self.voice.phonemes_to_ids(phonemes)
+        with self._lock:
+            audio = self.voice.phoneme_ids_to_audio(ids)
+        import numpy as np
+        arr = np.asarray(audio)
+        if arr.dtype != 'int16':
+            arr = (np.clip(arr, -1.0, 1.0) * 32767).astype('int16')
+        wav_path = out_path + '.wav'
+        with wave.open(wav_path, 'wb') as w:
+            w.setnchannels(1)
+            w.setsampwidth(2)
+            w.setframerate(self.sample_rate)
+            w.writeframes(arr.tobytes())
+        r = subprocess.run(['afconvert', '-f', 'm4af', '-d', 'aac', '-b', '48000',
+                            wav_path, out_path], capture_output=True, text=True)
+        os.unlink(wav_path)
+        if r.returncode != 0:
+            raise RuntimeError('afconvert: ' + r.stderr.strip()[:200])
+
+    def speak_text(self, text, out_path):
+        self._write(self.text_phonemes(text), out_path)
+
+    def speak_phoneme(self, ipa, out_path):
+        self._write(self.ipa_chars(ipa), out_path)
+
+    def speak_letter_name(self, ch, out_path):
+        # spelled out so espeak reads the NAME, not the sound
+        names = AppleEngine.LETTER_NAME
+        self._write(self.text_phonemes(names.get(ch, ch)), out_path)
+
+    def speak_narration(self, segments, out_path):
+        seq = []
+        for s in segments:
+            if seq:
+                seq.append(' ')
+            if s.get('say') is not None or s.get('word') is not None:
+                seq.extend(self.text_phonemes(s.get('say') or s.get('word')))
+            elif s.get('ph') is not None:
+                seq.extend(self.ipa_chars(s['ph_ipa']))
+            elif s.get('ltr') is not None:
+                ipa = s.get('ltr_ipa')
+                seq.extend(self.ipa_chars(ipa) if ipa
+                           else self.text_phonemes(s['ltr']))
+        self._write(seq, out_path)
+
+
 def get_engine(name):
     if name == 'google':
         return GoogleEngine()
     if name == 'apple':
         return AppleEngine()
+    if name == 'piper':
+        return PiperEngine()
     raise ValueError('unknown engine: ' + name)

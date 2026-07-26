@@ -25,10 +25,42 @@ cloud backpack" and enters the same two things.
 
 ---
 
-## 2. Google Text-to-Speech API key (~3 min) — for the best voice
+## 2. Voice — ✅ DONE, and it needed no key after all
 
-The app already works with a good offline voice. This upgrades the narration to
-Google's neural voice, which sounds markedly more human.
+The app now uses **Piper**, a neural text-to-speech model that runs locally on
+your Mac. No API key, no billing, no account, no internet at build time — and it
+sounds like a person rather than a synthesiser.
+
+It was also the right technical choice, not just the free one: Piper exposes its
+phoneme layer, so a teaching line is generated as **one continuous utterance**
+whose prose is phonemised naturally while the letter sounds use our exact IPA.
+Natural delivery and guaranteed-correct phonics in the same recording.
+
+To regenerate after adding curriculum:
+
+```bash
+cd "/Users/jacob/Desktop/Schooling Apps/unicorn-reading-academy" && .venv-tts/bin/python tools/gen_audio.py
+```
+
+If `.venv-tts` is ever missing (new Mac, cleaned checkout):
+
+```bash
+cd "/Users/jacob/Desktop/Schooling Apps/unicorn-reading-academy" && uv venv --python 3.12 .venv-tts && uv pip install --python .venv-tts/bin/python piper-tts && .venv-tts/bin/python -m piper.download_voices --download-dir tools/voices en_US-hfc_female-medium
+```
+
+To try a different voice, download another model and point at it:
+
+```bash
+cd "/Users/jacob/Desktop/Schooling Apps/unicorn-reading-academy" && .venv-tts/bin/python -m piper.download_voices --download-dir tools/voices en_US-amy-medium
+```
+
+---
+
+## Optional: Google Text-to-Speech (only if you ever want a different voice)
+
+Not needed — the app is complete without this. Kept because the engine is still
+supported in `tools/tts_engines.py`. Google requires a card on file even inside
+the free tier, which is why Piper is the default.
 
 **Cost: $0 at our size.** The whole app is roughly 60,000 characters and
 Google's free tier covers 1,000,000 neural characters per month. Regenerating

@@ -1,2 +1,4 @@
 tools/.tts-key
+tools/voices/
+.venv-tts/
 *.aiff

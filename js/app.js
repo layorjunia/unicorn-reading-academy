@@ -20,12 +20,6 @@ const App = {
     if ('serviceWorker' in navigator && location.protocol === 'https:') {
       navigator.serviceWorker.register('sw.js').catch(() => {});
     }
-    const pick = () => {
-      const vs = speechSynthesis.getVoices().filter(v => v.lang.startsWith('en'));
-      this.voice = vs.find(v => /Samantha/i.test(v.name))
-        || vs.find(v => /female|Victoria|Karen|Google US/i.test(v.name)) || vs[0] || null;
-    };
-    if (window.speechSynthesis) { pick(); speechSynthesis.onvoiceschanged = pick; }
     if (Sync.configured()) Sync.ensureLoaded().catch(() => {});
     const active = this.data.activeProfileId && this.data.profiles[this.data.activeProfileId];
     if (active) { this.profile = active; this.showHome(); } else { this.showProfiles(); }
@@ -46,32 +40,26 @@ const App = {
     window.scrollTo(0, 0);
   },
 
-  // ───────────────────────── speech ─────────────────────────
-  speak(text, rate) {
-    if (!window.speechSynthesis) return;
-    speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(text);
-    if (this.voice) u.voice = this.voice;
-    u.rate = rate || 0.92;
-    u.pitch = 1.15;
-    speechSynthesis.speak(u);
-    return u;
-  },
+  // ───────────────────────── speech (pre-generated clips) ─────────────────────────
+  speak(text, rate) { AudioLib.speak(text, { rate }); },
+  speakQueue(parts) { AudioLib.speakSeq(parts.filter(p => p !== '...')); },
+  speakSounds(sounds) { AudioLib.speakSounds(sounds); },
 
-  speakQueue(parts, rate) {
-    if (!window.speechSynthesis) return;
-    speechSynthesis.cancel();
-    parts.forEach(p => {
-      const u = new SpeechSynthesisUtterance(p);
-      if (this.voice) u.voice = this.voice;
-      u.rate = rate || 0.8;
-      u.pitch = 1.15;
-      speechSynthesis.speak(u);
-    });
-  },
-
-  speakSounds(sounds) {
-    this.speakQueue(sounds.map(s => PHONEME_SPEAK[s] || s), 0.75);
+  // "sound ... like ... word" for the Learn screen pattern buttons
+  playPattern(tok, ex) {
+    // Labels like "ce/ci" and "-ful" are display text; the first variant is
+    // the token that has a phoneme clip.
+    const key = String(tok).toLowerCase().split('/')[0].replace(/^-|-$/g, '');
+    const items = [];
+    const m = AudioLib.manifest;
+    if (m && m.ph[key]) items.push({ file: m.ph[key] });
+    else if (m && m.words[key]) items.push({ file: m.words[key] });
+    else items.push({ tts: (typeof PHONEME_SPEAK !== 'undefined' && PHONEME_SPEAK[key]) || tok, rate: 0.75 });
+    items.push({ gap: 320 });
+    items.push(...AudioLib._itemsFor('like'));
+    items.push({ gap: 200 });
+    items.push(...AudioLib._itemsFor(ex));
+    AudioLib._playSeq(items);
   },
 
   praise() { this.speak(PRAISE[Math.floor(Math.random() * PRAISE.length)]); },
@@ -129,7 +117,7 @@ const App = {
     this.profile = this.data.profiles[id];
     this.data.activeProfileId = id;
     this.save();
-    this.speak('Hi ' + this.profile.name + '! Ready to read?');
+    this.speak('Hi! Ready to read?');
     if (this.profile.cloud && Sync.configured()) {
       Sync.ensureLoaded()
         .then(() => Sync.pull(this.profile.uid))
@@ -173,7 +161,7 @@ const App = {
     this.profile = p;
     this.save();
     this.confetti();
-    this.speak('Welcome, ' + name + '! Let the reading adventure begin!');
+    this.speak('Welcome! Let the reading adventure begin!');
     this.showHome();
   },
 
@@ -237,7 +225,7 @@ const App = {
       p.updatedAt = Date.now();
       this.profile = p; this.data.activeProfileId = p.id;
       this.save(); this.confetti();
-      this.speak('Welcome back, ' + p.name + '!');
+      this.speak('Welcome back!');
       this.showHome();
     } catch (e) {
       this.speak('Hmm, that did not match. Ask a grown-up to help!');
@@ -286,9 +274,37 @@ const App = {
     return Object.values(hb).filter(x => x.box >= 3).length;
   },
 
+  todayKey() {
+    const d = new Date();
+    return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate();
+  },
+
+  quest() {
+    const p = this.profile.progress;
+    if (!p.quest || p.quest.date !== this.todayKey()) {
+      p.quest = { date: this.todayKey(), practice: false, hearts: false, fluency: false, bonus: false };
+    }
+    return p.quest;
+  },
+
+  markQuest(k) {
+    const q = this.quest();
+    if (q[k]) return;
+    q[k] = true;
+    if (q.practice && q.hearts && q.fluency && !q.bonus) {
+      q.bonus = true;
+      this.addStars(5);
+      this.confetti();
+      setTimeout(() => this.speak('Daily quest complete! Five bonus stars!'), 600);
+    }
+    this.save();
+  },
+
   showHome() {
     const p = this.profile;
+    const q = this.quest();
     const creatures = Math.min(CREATURES.length, Math.floor(p.progress.stars / STARS_PER_CREATURE));
+    const chip = (done, label) => `<span class="star-chip" style="${done ? 'background:var(--green);color:#fff' : ''}">${done ? '✅' : '⭕'} ${label}</span>`;
     this.render(`
       <div class="topbar">
         <div class="title">${p.avatar} Hi, ${p.name}!</div>
@@ -296,6 +312,13 @@ const App = {
           <span class="star-chip">⭐ ${p.progress.stars}</span>
           <button class="btn ghost small" onclick="App.showProfiles()">👥</button>
           <button class="btn ghost small" onclick="App.showParentGate()">👨‍👩‍👧 Parents</button>
+        </div>
+      </div>
+      <div class="card" style="padding:14px 18px">
+        <b>🗓️ Today's Quest</b> <span class="small-note">— do all 3 for +5 bonus stars!</span>
+        <div class="badge-row" style="justify-content:flex-start">
+          ${chip(q.practice, 'Island work')} ${chip(q.hearts, 'Heart words')} ${chip(q.fluency, 'Fluency read')}
+          ${q.bonus ? '<span class="star-chip">🏅 Bonus earned!</span>' : ''}
         </div>
       </div>
       <div class="hub-row">
@@ -306,6 +329,10 @@ const App = {
         <div class="hub-card" onclick="App.showFluency()">
           <div class="h-emoji">🎤</div><div class="h-label">Fluency Stage</div>
           <div class="h-note">read like a star</div>
+        </div>
+        <div class="hub-card" onclick="App.showLibrary()">
+          <div class="h-emoji">📚</div><div class="h-label">Story Library</div>
+          <div class="h-note">${Object.keys(p.progress.libRead || {}).length} of ${STORY_LIB.length} read</div>
         </div>
         <div class="hub-card" onclick="App.showCove()">
           <div class="h-emoji">🏝️</div><div class="h-label">Creature Cove</div>
@@ -319,8 +346,8 @@ const App = {
             ${lv.islands.map((isl, ii) => {
               const done = this.isDone(isl.id);
               const unlocked = this.isUnlocked(li, ii);
-              return `<div class="island ${done ? 'done' : ''} ${unlocked ? '' : 'locked'}"
-                onclick="${unlocked ? `App.startIsland('${isl.id}')` : 'App.lockedTap()'}">
+              const click = !unlocked ? 'App.lockedTap()' : done ? `App.islandMenu('${isl.id}')` : `App.startIsland('${isl.id}')`;
+              return `<div class="island ${done ? 'done' : ''} ${unlocked ? '' : 'locked'}" onclick="${click}">
                 <div class="isl-emoji">${isl.emoji}</div>
                 <div class="isl-title">${isl.title}</div>
                 <div class="isl-sub">${isl.sub}</div>
@@ -332,6 +359,243 @@ const App = {
   },
 
   lockedTap() { this.speak('Finish the island before this one to unlock it!'); },
+
+  sayLetter(ch) {
+    const m = AudioLib.manifest;
+    const k = ch.toLowerCase();
+    if (m && m.ltr[k]) AudioLib._playSeq([{ file: m.ltr[k] }]);
+    else this.speak(ch);
+  },
+
+  // ── Island menu for completed islands: replay or practice ──
+  islandMenu(id) {
+    const isl = this.findIsland(id);
+    this.render(`
+      <div class="logo"><span class="big-emoji">${isl.emoji}</span><h1>${isl.title}</h1>
+      <div class="sub">${isl.sub} — all done! What next?</div></div>
+      <div class="card center">
+        <button class="btn big" onclick="App.startPractice('${id}')">🌈 Rainbow Practice</button>
+        <div class="small-note mt">new words every time — great for daily review!</div>
+        <div class="mt"><button class="btn purple" onclick="App.startIsland('${id}')">📖 Replay the whole lesson</button></div>
+        <div class="mt"><button class="btn ghost small" onclick="App.showHome()">🏠 Back to map</button></div>
+      </div>
+    `);
+  },
+
+  // ── Rainbow Practice: generated fresh from the island's word bank ──
+  startPractice(id) {
+    const bank = (typeof bankFor === 'function') ? bankFor(id) : [];
+    if (bank.length < 6) return this.startIsland(id);
+    const words = bank.slice().sort(() => Math.random() - 0.5).slice(0, 9);
+    this.pr = { id, island: this.findIsland(id), bank, words, idx: 0, tray: null, built: [] };
+    this.speak('Practice time!');
+    this.renderPractice();
+  },
+
+  prDistractors(word, n, pool) {
+    const others = pool.filter(w => w.w !== word.w).sort(() => Math.random() - 0.5).slice(0, n);
+    return others.map(o => o.w);
+  },
+
+  renderPractice() {
+    const pr = this.pr;
+    if (pr.idx >= pr.words.length) return this.finishPractice();
+    const w = pr.words[pr.idx];
+    const mode = ['blend', 'build', 'pick'][pr.idx % 3];
+    const head = `
+      <div class="topbar">
+        <button class="btn ghost small" onclick="App.showHome()">🏠 Map</button>
+        <div class="title">🌈 ${pr.island.title} Practice</div>
+        <span class="star-chip">${pr.idx + 1} / ${pr.words.length}</span>
+      </div>`;
+    if (mode === 'blend') {
+      const choices = [w.w, ...this.prDistractors(w, 2, pr.bank)].sort(() => Math.random() - 0.5);
+      this.render(`${head}
+        <div class="card center">
+          <p>Tap the robot, listen to the sounds, tap the word!</p>
+          <div style="font-size:4rem; cursor:pointer" onclick='App.speakSounds(${JSON.stringify(w.sounds)})'>🤖</div>
+          <div class="choices">
+            ${choices.map(c => `<button class="choice" onclick="App.prPick(this,'${c}','${w.w}')">${c}</button>`).join('')}
+          </div>
+        </div>`);
+      setTimeout(() => this.speakSounds(w.sounds), 400);
+    } else if (mode === 'build') {
+      if (!pr.tray) {
+        const pool = [...new Set(pr.bank.flatMap(b => b.tiles))].filter(t => !w.tiles.includes(t));
+        const extra = pool.sort(() => Math.random() - 0.5).slice(0, 2);
+        pr.tray = w.tiles.concat(extra).map((t, i) => ({ t, i })).sort(() => Math.random() - 0.5);
+        pr.built = [];
+      }
+      this.render(`${head}
+        <div class="card center">
+          <p>Build the word!</p>
+          <button class="sound-chip" onclick="App.speak('${w.w}')">🔊 Hear the word</button>
+          <div class="build-slots">
+            ${w.tiles.map((t, i) => `<div class="build-slot ${pr.built[i] != null ? 'filled' : ''}">${pr.built[i] != null ? pr.tray[pr.built[i]].t : ''}</div>`).join('')}
+          </div>
+          <div class="tile-tray">
+            ${pr.tray.map((x, idx) => `<button class="tile ${pr.built.includes(idx) ? 'used' : ''}" onclick="App.prBuildTap(${idx})">${x.t}</button>`).join('')}
+          </div>
+          <button class="btn ghost small" onclick="App.pr.built=[]; App.renderPractice()">Start over 🔄</button>
+        </div>`);
+      if (pr.built.length === 0) setTimeout(() => this.speakQueue(['Build the word', w.w]), 350);
+    } else {
+      const choices = [w.w, ...this.prDistractors(w, 3, pr.bank)].sort(() => Math.random() - 0.5);
+      this.render(`${head}
+        <div class="card center">
+          <p>Listen and tap the word!</p>
+          <button class="sound-chip" style="font-size:2rem" onclick="App.speak('${w.w}')">🔊 Hear the word</button>
+          <div class="choices">
+            ${choices.map(c => `<button class="choice" onclick="App.prPick(this,'${c}','${w.w}')">${c}</button>`).join('')}
+          </div>
+        </div>`);
+      setTimeout(() => this.speak(w.w), 400);
+    }
+  },
+
+  prPick(el, chosen, target) {
+    if (chosen === target) {
+      el.classList.add('correct'); this.burst('🌟'); this.praise();
+      setTimeout(() => { this.pr.idx++; this.pr.tray = null; this.renderPractice(); }, 1000);
+    } else {
+      el.classList.add('wrong'); this.encourage();
+      setTimeout(() => el.classList.remove('wrong'), 700);
+    }
+  },
+
+  prBuildTap(idx) {
+    const pr = this.pr;
+    const w = pr.words[pr.idx];
+    if (pr.built.includes(idx) || pr.built.length >= w.tiles.length) return;
+    this.speakSounds([pr.tray[idx].t]);
+    pr.built.push(idx);
+    if (pr.built.length === w.tiles.length) {
+      const made = pr.built.map(i => pr.tray[i].t).join('');
+      if (made === w.tiles.join('')) {
+        this.burst('💖');
+        setTimeout(() => this.speakQueue(['You built it!', w.w]), 200);
+        setTimeout(() => { pr.idx++; pr.tray = null; this.renderPractice(); }, 1300);
+      } else {
+        this.encourage();
+        setTimeout(() => { pr.built = []; this.renderPractice(); }, 900);
+      }
+    }
+    if (pr.tray) this.renderPractice();
+  },
+
+  finishPractice() {
+    this.addStars(3);
+    this.markQuest('practice');
+    this.confetti(); this.burst('🌈');
+    this.speak('Practice complete! Three stars!');
+    this.render(`
+      <div class="logo"><span class="big-emoji">🌈</span><h1>Practice complete!</h1>
+      <div class="sub">⭐ +3 stars — your reading brain grew today!</div></div>
+      <div class="card center">
+        <button class="btn big" onclick="App.startPractice('${this.pr.id}')">More practice! 🔄</button>
+        <div class="mt"><button class="btn ghost small" onclick="App.showHome()">🏠 Back to map</button></div>
+      </div>
+    `);
+  },
+
+  // ── Story Library ──
+  showLibrary() {
+    const read = this.profile.progress.libRead || {};
+    this.render(`
+      <div class="topbar">
+        <button class="btn ghost small" onclick="App.showHome()">🏠 Map</button>
+        <div class="title">📚 Story Library</div>
+        <span class="star-chip">⭐ ${this.profile.progress.stars}</span>
+      </div>
+      <div class="card center"><p>Bonus books! Read them all to become a Story Champion. 🏆</p></div>
+      ${STORY_LIB.map(s => `
+        <div class="card" style="cursor:pointer; padding:16px" onclick="App.openLibStory('${s.id}')">
+          <div style="display:flex; align-items:center; gap:14px">
+            <span style="font-size:2.2rem">${s.emoji}</span>
+            <div style="flex:1"><b style="font-size:1.1rem">${s.title}</b>
+              <div class="small-note">Level ${s.level}${read[s.id] ? ' • read ' + read[s.id] + '×  ✅' : ''}</div>
+            </div>
+            <span style="font-size:1.5rem">➜</span>
+          </div>
+        </div>`).join('')}
+    `);
+  },
+
+  openLibStory(id) {
+    this.lib = { story: STORY_LIB.find(s => s.id === id), page: 0, q: 0 };
+    this.renderLib();
+  },
+
+  renderLib() {
+    const st = this.lib.story;
+    const pg = this.lib.page;
+    if (pg >= st.pages.length) return this.renderLibQuestions();
+    const words = st.pages[pg].split(' ');
+    this.render(`
+      <div class="topbar">
+        <button class="btn ghost small" onclick="App.showLibrary()">📚 Library</button>
+        <div class="title">${st.emoji} ${st.title}</div>
+        <span class="star-chip">${pg + 1}/${st.pages.length}</span>
+      </div>
+      <div class="card">
+        <div class="story-page">
+          ${words.map(w => `<span class="story-word" onclick="App.speak('${w.replace(/[^a-zA-Z'-]/g, '')}')">${w}</span>`).join(' ')}
+        </div>
+        <div class="story-nav">
+          <button class="btn ghost small" ${pg === 0 ? 'disabled' : ''} onclick="App.lib.page--; App.renderLib()">⬅</button>
+          <button class="btn purple small" onclick="App.speak(${JSON.stringify(st.pages[pg]).replace(/"/g, '&quot;')})">🔊 Read to me</button>
+          <button class="btn green" onclick="App.lib.page++; App.renderLib()">${pg === st.pages.length - 1 ? 'Questions! ➜' : 'Next ➜'}</button>
+        </div>
+      </div>
+    `);
+  },
+
+  renderLibQuestions() {
+    const st = this.lib.story;
+    const q = st.questions[this.lib.q];
+    if (!q) {
+      const read = this.profile.progress.libRead = this.profile.progress.libRead || {};
+      const first = !read[st.id];
+      read[st.id] = (read[st.id] || 0) + 1;
+      this.addStars(first ? 3 : 1);
+      this.confetti(); this.burst('📚');
+      this.speak('You read the whole story!');
+      this.render(`
+        <div class="logo"><span class="big-emoji">📚</span><h1>Story complete!</h1>
+        <div class="sub">⭐ +${first ? 3 : 1} star${first ? 's' : ''}!</div></div>
+        <div class="card center">
+          <button class="btn big" onclick="App.showLibrary()">Pick another story! 📚</button>
+          <div class="mt"><button class="btn ghost small" onclick="App.showHome()">🏠 Back to map</button></div>
+        </div>
+      `);
+      return;
+    }
+    this.render(`
+      <div class="topbar">
+        <button class="btn ghost small" onclick="App.showLibrary()">📚 Library</button>
+        <div class="title">${st.emoji} Question time!</div>
+        <span class="star-chip">${this.lib.q + 1}/${st.questions.length}</span>
+      </div>
+      <div class="card center">
+        <h2>${q.q}</h2>
+        <div class="choices" style="flex-direction:column; align-items:center">
+          ${q.choices.map((c, i) => `<button class="choice" style="font-size:1.2rem" onclick="App.libAnswer(this,${i})">${c}</button>`).join('')}
+        </div>
+      </div>
+    `);
+    setTimeout(() => this.speak(q.q), 300);
+  },
+
+  libAnswer(el, i) {
+    const q = this.lib.story.questions[this.lib.q];
+    if (i === q.answer) {
+      el.classList.add('correct'); this.burst('🌟'); this.praise();
+      setTimeout(() => { this.lib.q++; this.renderLibQuestions(); }, 1000);
+    } else {
+      el.classList.add('wrong'); this.encourage();
+      setTimeout(() => el.classList.remove('wrong'), 700);
+    }
+  },
 
   // ───────────────────────── island lesson loop ─────────────────────────
   findIsland(id) {
@@ -406,7 +670,7 @@ const App = {
       ${this.islHead(t.intro)}
       <div class="card center">
         <div class="choices">
-          ${t.patterns.map(p => `<button class="choice" onclick="App.speakQueue(['${p.say}','like','${p.ex}'])">${p.g}</button>`).join('')}
+          ${t.patterns.map(p => `<button class="choice" onclick="App.playPattern('${p.g}','${p.ex}')">${p.g}</button>`).join('')}
         </div>
         <div class="sound-btns">
           ${t.examples.map(w => `<button class="sound-chip" onclick="App.speak('${w}')">${w}</button>`).join('')}
@@ -475,14 +739,14 @@ const App = {
         <div class="small-note">${this.isl.sub + 1} of ${items.length}</div>
       </div>
     `);
-    if (this.isl.built.length === 0) setTimeout(() => this.speak('Build the word... ' + it.word), 350);
+    if (this.isl.built.length === 0) setTimeout(() => this.speakQueue(['Build the word', it.word]), 350);
   },
 
   buildTap(idx) {
     const it = this.isl.island.buildIt[this.isl.sub];
     if (this.isl.built.includes(idx)) return;
     const tile = this.isl.trayOrder[idx];
-    this.speak(PHONEME_SPEAK[tile.t] || tile.t, 0.8);
+    this.speakSounds([tile.t]);
     this.isl.built.push(idx);
     if (this.isl.built.length === it.tiles.length) {
       const word = this.isl.built.map(i => this.isl.trayOrder[i].t).join('');
@@ -556,7 +820,7 @@ const App = {
         <div class="story-emoji">${story.emoji}</div>
         <h2 class="center">${story.title}</h2>
         <div class="story-page">
-          ${words.map(w => `<span class="story-word" onclick="App.speak('${w.replace(/[^a-zA-Z]/g, '')}')">${w}</span>`).join(' ')}
+          ${words.map(w => `<span class="story-word" onclick="App.speak('${w.replace(/[^a-zA-Z'-]/g, '')}')">${w}</span>`).join(' ')}
         </div>
         <div class="story-nav">
           <button class="btn ghost small" ${pg === 0 ? 'disabled' : ''} onclick="App.isl.page--; App.renderStory()">⬅</button>
@@ -631,7 +895,7 @@ const App = {
     } else {
       el.classList.add('wrong');
       document.querySelectorAll('.choice').forEach(c => { if (c.textContent === it.word) c.classList.add('correct'); });
-      this.speak('It was ' + it.word);
+      this.speakQueue(['It was', it.word]);
     }
     setTimeout(() => { this.isl.sub++; this.renderQuiz(); }, 1100);
   },
@@ -644,6 +908,7 @@ const App = {
       const first = !this.isDone(this.isl.island.id);
       this.profile.progress.islands[this.isl.island.id] = { done: true, best: Math.max(score, (this.profile.progress.islands[this.isl.island.id] || {}).best || 0) };
       if (first) this.addStars(5);
+      this.markQuest('practice');
       this.save();
       this.confetti(); this.burst('🏆');
       const newCreature = Math.floor(this.profile.progress.stars / STARS_PER_CREATURE);
@@ -753,12 +1018,12 @@ const App = {
           <p>The pink letters are the tricky part — learn them by heart!</p>
           <div class="word-big" onclick="App.speak('${w.w}')">${this.heartHtml(w)} 🔊</div>
           <div class="sound-btns">
-            ${w.w.split('').map((ch, i) => `<button class="sound-chip" style="${w.heart.includes(i) ? 'background:var(--pink);box-shadow:0 4px 0 #d84f85' : ''}" onclick="App.speak('${ch === 'I' ? 'capital I' : ch}')">${ch}</button>`).join('')}
+            ${w.w.split('').map((ch, i) => `<button class="sound-chip" style="${w.heart.includes(i) ? 'background:var(--pink);box-shadow:0 4px 0 #d84f85' : ''}" onclick="App.sayLetter('${ch}')">${ch}</button>`).join('')}
           </div>
           <button class="btn big green mt" onclick="App.hw.phase='quiz'; App.renderHeart()">Got it! ➜</button>
         </div>
       `);
-      setTimeout(() => this.speakQueue([w.w, '...', w.w.split('').join(', '), '...', w.w]), 350);
+      setTimeout(() => AudioLib.spellOut(w.w, { prefix: w.w, thenWord: true }), 350);
     } else {
       // quiz: pick correct spelling among distractors
       const distract = (word) => {
@@ -803,7 +1068,7 @@ const App = {
       el.classList.add('correct'); this.burst('🌸'); this.praise();
       st.box = Math.min(4, st.box + 1);
     } else {
-      el.classList.add('wrong'); this.speak('It is spelled ' + w.w.split('').join(', '));
+      el.classList.add('wrong'); AudioLib.spellOut(w.w, { prefix: 'It is spelled' });
       st.box = Math.max(0, st.box - 1);
       document.querySelectorAll('.choice').forEach(c => { if (c.textContent === w.w) c.classList.add('correct'); });
     }
@@ -815,6 +1080,7 @@ const App = {
 
   finishHeartSession() {
     this.addStars(3);
+    this.markQuest('hearts');
     this.confetti(); this.burst('🌷');
     this.speak('Your garden is watered! Three stars for you!');
     this.showGarden();
@@ -865,7 +1131,7 @@ const App = {
       </div>
       <div class="card">
         <div class="fluency-text" id="fl-text">
-          ${words.map((w, i) => `<span class="fl-word ${this.fl.missed.has(i) ? 'missed' : ''}" data-i="${i}" onclick="App.flWordTap(${i}, '${w.replace(/[^a-zA-Z]/g, '')}')">${w}</span>`).join(' ')}
+          ${words.map((w, i) => `<span class="fl-word ${this.fl.missed.has(i) ? 'missed' : ''}" data-i="${i}" onclick="App.flWordTap(${i}, '${w.replace(/[^a-zA-Z'-]/g, '')}')">${w}</span>`).join(' ')}
         </div>
       </div>
       <div class="card center">
@@ -908,6 +1174,7 @@ const App = {
     this.fl.startAt = null;
     this.fl.reads++;
     this.addStars(2);
+    this.markQuest('fluency');
     if (this.fl.parentMode) {
       this.profile.progress.fluency.push({ passageId: this.fl.p.id, wcpm, errors: missed, date: Date.now() });
       this.save();

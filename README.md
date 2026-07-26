@@ -15,15 +15,51 @@ words with spaced repetition → repeated-reading fluency.
   - 👑 *Crystal Castle* — multisyllabic words, prefixes/suffixes, soft c/g, silent letters
 - Each island: **Learn it → Sound it → Build it → Sort it → Read it (decodable
   story) → Sparkle Quiz** (mastery check gates the next island)
-- 🌷 **Heart Word Garden** — 40 irregular high-frequency words taught the
-  "heart word" way, reviewed on a spaced-repetition schedule
-- 🎤 **Fluency Stage** — repeated reading with a parent-check mode that
-  computes real WCPM against 2nd-grade benchmarks (51/72/89)
-- 🏝️ **Creature Cove** — collectible friends earned with stars
+- 🌈 **Rainbow Practice** — after an island is finished, tap it again for
+  endlessly re-generated practice drawn from an **865-word bank** (blend /
+  build / listen-and-pick rounds). This is the daily-review engine.
+- 🗓️ **Daily Quest** — island work + heart words + a fluency read in one day
+  earns 5 bonus stars.
+- 🌷 **Heart Word Garden** — **100** irregular/high-frequency words in 20 sets,
+  taught the heart-word way, reviewed on a spaced-repetition schedule
+- 🎤 **Fluency Stage** — **18** leveled passages, repeated reading, parent-check
+  mode computing real WCPM against 2nd-grade benchmarks (51/72/89)
+- 📚 **Story Library** — 10 bonus decodable books with comprehension questions
+- 🏝️ **Creature Cove** — 24 collectible friends earned with stars
 - 👨‍👩‍👧 **Parent Corner** — progress dashboard, WCPM chart, free-roam toggle,
   cloud sync controls (gated behind a multiplication question)
 
-All narration/audio uses the device's built-in text-to-speech — no downloads.
+### A year of material
+
+Roughly 21 island lessons + 21 endlessly-regenerating practice sets + 100
+heart words on spaced repetition + 18 fluency passages (each read 3–4×) + 10
+bonus books. At ~15 minutes/day that is a full school year of work, and the
+practice/heart-word/fluency loops keep producing new sessions after every
+island is finished.
+
+## Voice / audio
+
+**All speech is pre-generated audio, not live browser text-to-speech.** This
+was a deliberate fix: browser TTS pronounced letters inconsistently (saying
+the letter *name* "bee" where the app needed the *sound* /b/), and varied by
+device.
+
+`tools/gen_audio.py` renders every word, phrase, story sentence, letter name,
+and letter sound with macOS `say` (voice: Samantha) into `audio/*.m4a`, plus
+`audio/manifest.json` that maps text → file. Letter **sounds** use Apple's
+phoneme input mode (`[[inpt PHON]]`), so /b/, /sh/, /ar/ are true phonemes —
+never letter names. Letter **names** (for spelling out heart words) use
+`[[char LTRL]]`. `js/audio.js` plays clips and only falls back to browser TTS
+for text with no clip.
+
+Regenerate after adding curriculum content:
+
+```bash
+python3 tools/gen_audio.py
+```
+
+Existing clips are skipped, so re-runs are fast; delete `audio/` to force a
+full rebuild. **Requires macOS** (uses `say` + `afconvert`).
 
 ## Saving & sync
 
@@ -69,14 +105,16 @@ python3 -m http.server 8080
 ```
 
 Deployed via GitHub Pages from the `main` branch. After changing any app
-file, bump `CACHE` in `sw.js` (e.g. `ura-v2`) so installed iPads fetch the
+file, bump `CACHE` in `sw.js` (e.g. `ura-v3`) so installed iPads fetch the
 update.
 
 ## Adding content / new apps
 
-- Curriculum lives in `js/curriculum-l*.js` (islands) and `js/extras.js`
-  (heart words, fluency passages, creatures). Data-only — copy the schema to
-  add islands or stories.
-- `js/sync.js` + `js/firebase-config.js` are app-agnostic: reuse them for
-  future homeschool apps (each app writes its own `app` field in the profile
-  doc; give each app its own Firestore collection if progress shapes differ).
+- Curriculum lives in `js/curriculum-l*.js` (island lessons), `js/banks.js`
+  (practice word banks, format `word:sound.sound|tile.tile`), `js/extras.js`
+  (heart words, fluency passages, creatures), and `js/storylib.js` (bonus
+  books). All data-only — copy the schema to add more.
+- **After adding words, re-run `tools/gen_audio.py`** or new words will fall
+  back to browser TTS.
+- `js/sync.js` + `js/firebase-config.js` + `js/audio.js` are app-agnostic:
+  reuse them for future homeschool apps.

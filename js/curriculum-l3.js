@@ -450,7 +450,7 @@ const LEVEL3 = {
         { word: 'city', choices: ['city', 'kitty', 'sit', 'silly'] },
         { word: 'ice', choices: ['ace', 'ice', 'eyes', 'is'] },
         { word: 'giant', choices: ['grant', 'gently', 'giant', 'gadget'] },
-        { word: 'knee', choices: ['knee', 'need', 'key', 'née'] },
+        { word: 'knee', choices: ['knee', 'need', 'key', 'knot'] },
         { word: 'write', choices: ['white', 'write', 'wrote', 'right'] },
         { word: 'magic', choices: ['magic', 'manic', 'magnet', 'music'] },
         { word: 'dance', choices: ['dance', 'dunce', 'darts', 'chance'] },

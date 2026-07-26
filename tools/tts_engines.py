@@ -15,6 +15,7 @@ in the app.
 import base64
 import json
 import os
+import shutil
 import subprocess
 import tempfile
 import threading
@@ -380,3 +381,88 @@ def get_engine(name):
     if name == 'piper':
         return PiperEngine()
     raise ValueError('unknown engine: ' + name)
+
+
+# ── Isolated letter sounds ──────────────────────────────────────────────────
+# A neural TTS is the wrong tool for a single phoneme: it is trained on
+# connected speech, so a one-sound input is far outside anything it has seen.
+# Piper rendered /k/+/a/+/t/ as "buh-ah-dup" — it invents a whole extra
+# syllable, which is exactly the jumbling a child hears.
+#
+# eSpeak NG takes phonemes as its NATIVE input, so /b/ is the stop alone with
+# no invented vowel, and it is fully deterministic. It is more mechanical than
+# the neural voice, but for a phonics app a correct sound beats a pretty wrong
+# one — and this is the same trade a teacher makes when they enunciate.
+IPA_TO_ESPEAK = [
+    # order matters: longest first, so digraphs win over their parts
+    ('eɪ', 'eI'), ('aɪ', 'aI'), ('oʊ', 'oU'), ('aʊ', 'aU'), ('ɔɪ', 'OI'),
+    ('dʒ', 'dZ'), ('tʃ', 'tS'), ('ɑɹ', 'A@'), ('ɔɹ', 'O@'), ('ɜː', '3:'),
+    ('iː', 'i:'), ('uː', 'u:'), ('ɡ', 'g'), ('ɹ', 'r'), ('ʃ', 'S'),
+    ('θ', 'T'), ('ð', 'D'), ('ŋ', 'N'), ('ʒ', 'Z'), ('ʊ', 'U'),
+    ('æ', 'a'), ('ɛ', 'E'), ('ɪ', 'I'), ('ɑ', '0'), ('ʌ', 'V'),
+    ('ɔ', 'O'), ('ə', '@'), ('ɝ', '3:'), ('ɚ', '@'), ('ju', 'ju:'),
+    ('i', 'i'), ('u', 'u:'), ('e', 'e'), ('a', 'a'), ('o', 'oU'),
+    ('ˈ', ''), ('ˌ', ''), ('ː', ''),
+]
+
+
+def ipa_to_espeak(ipa):
+    out, i = [], 0
+    while i < len(ipa):
+        for src, dst in IPA_TO_ESPEAK:
+            if ipa.startswith(src, i):
+                out.append(dst)
+                i += len(src)
+                break
+        else:
+            out.append(ipa[i])
+            i += 1
+    return ''.join(out)
+
+
+class EspeakPhonemes:
+    """Renders one isolated letter sound, exactly as specified."""
+
+    def __init__(self, speed=150, pitch=55, voice='en-us'):
+        self.speed, self.pitch, self.voice = str(speed), str(pitch), voice
+        if not shutil.which('espeak-ng'):
+            raise RuntimeError('espeak-ng not installed — run: brew install espeak-ng')
+
+    # a plosive taught in isolation should be as clipped as possible; the
+    # schwa we add for other engines becomes an audible extra syllable here
+    STOPS = ('p', 'b', 't', 'd', 'k', 'g', 'tS', 'dZ')
+
+    def render(self, ipa, out_path, pad=0.10):
+        code = ipa_to_espeak(ipa)
+        if code.endswith('@') and code[:-1] in self.STOPS:
+            code = code[:-1]
+        wav = out_path + '.raw.wav'
+        r = subprocess.run(['espeak-ng', '-v', self.voice, '-s', self.speed,
+                            '-p', self.pitch, '-w', wav, '[[%s]]' % code],
+                           capture_output=True, text=True)
+        if r.returncode != 0 or not os.path.exists(wav):
+            raise RuntimeError('espeak failed for %r: %s' % (ipa, r.stderr[:160]))
+        # espeak pads generously; trim to the sound and re-pad evenly so clips
+        # line up when they are played in sequence for blending practice
+        with wave.open(wav, 'rb') as w:
+            sr = w.getframerate()
+            data = w.readframes(w.getnframes())
+        import array
+        a = array.array('h')
+        a.frombytes(data)
+        thresh = 220
+        first = next((i for i, v in enumerate(a) if abs(v) > thresh), 0)
+        last = next((i for i in range(len(a) - 1, -1, -1) if abs(a[i]) > thresh), len(a) - 1)
+        core = a[max(0, first - int(sr * 0.01)):min(len(a), last + int(sr * 0.03))]
+        padding = array.array('h', [0] * int(sr * pad))
+        out = padding + core + padding
+        with wave.open(wav, 'wb') as w:
+            w.setnchannels(1)
+            w.setsampwidth(2)
+            w.setframerate(sr)
+            w.writeframes(out.tobytes())
+        c = subprocess.run(['afconvert', '-f', 'm4af', '-d', 'aac', '-b', '48000',
+                            wav, out_path], capture_output=True, text=True)
+        os.unlink(wav)
+        if c.returncode != 0:
+            raise RuntimeError('afconvert: ' + c.stderr[:160])

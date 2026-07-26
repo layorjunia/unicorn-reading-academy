@@ -207,7 +207,7 @@ const AudioLib = {
   speakSounds(tokens) {
     const items = [];
     tokens.forEach((t, i) => {
-      if (i) items.push({ gap: 420 });
+      if (i) items.push({ gap: 520 });   // a clear beat between sounds, so blending reads as separate sounds
       const f = this.phFile(t);
       if (f) items.push({ file: f });
       else items.push(...this._itemsFor(String(t)));

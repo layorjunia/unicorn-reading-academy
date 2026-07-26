@@ -1,12 +1,22 @@
 // AudioLib — plays pre-generated voice clips (audio/manifest.json).
-// Every word, letter sound, story page, and instruction in the app has a
-// pre-recorded clip generated with macOS TTS in phoneme mode, so letter
-// SOUNDS are always sounds (/b/) and never letter names ("bee"), and the
-// voice is identical on every device. Browser speechSynthesis is only a
-// fallback for rare dynamic text (e.g. greetings with the child's name).
+//
+// Nothing here uses the browser's speech synthesiser for real content. Every
+// word, sentence, letter sound and letter name is a file generated at build
+// time by tools/gen_audio.py with a neural voice.
+//
+// NARRATION is the important concept. A teaching line is never one blob of
+// text, because a voice reading "Short a says ah" pronounces the lone "a" as
+// the article ("uh") and "i" as "eye" — teaching the wrong sound. Instead a
+// line is an ordered list of segments:
+//
+//   [{say:'This letter says'}, {ph:'a'}, {say:'like in'}, {word:'cat'}]
+//
+// Prose is spoken by the neural voice; letter SOUNDS come from dedicated IPA
+// phoneme clips. The two can never be confused.
 
 const AudioLib = {
   manifest: null,      // { words: {text->file}, ph: {token->file}, ltr: {letter->file} }
+  ready: false,
   _current: null,
   _queueToken: 0,
   _unlocked: false,
@@ -14,9 +24,9 @@ const AudioLib = {
   init() {
     fetch('audio/manifest.json')
       .then(r => r.ok ? r.json() : null)
-      .then(m => { this.manifest = m; })
+      .then(m => { this.manifest = m; this.ready = !!m; })
       .catch(() => { this.manifest = null; });
-    // iOS requires a user gesture before audio can play — unlock on first tap
+    // iOS needs a user gesture before audio may play — unlock on first tap
     const unlock = () => {
       if (this._unlocked) return;
       this._unlocked = true;
@@ -41,9 +51,50 @@ const AudioLib = {
   fileFor(text) {
     if (!this.manifest) return null;
     const k = this.norm(text);
-    // Clip filenames drop apostrophes ("let's" is stored as "lets"), so retry
-    // without them before giving up.
+    // Clip names drop apostrophes ("let's" is stored as "lets").
     return this.manifest.words[k] || this.manifest.words[k.replace(/'/g, '')] || null;
+  },
+
+  phFile(tok) {
+    if (!this.manifest) return null;
+    const k = String(tok).toLowerCase();
+    return this.manifest.ph[k] || null;
+  },
+
+  ltrFile(ch) {
+    if (!this.manifest) return null;
+    return this.manifest.ltr[String(ch).toLowerCase()] || null;
+  },
+
+  // Resolve text to playable items and report HOW it was resolved.
+  //   'clip'     one pre-generated recording — the good case
+  //   'stitched' several word clips concatenated — acceptable only for a bare
+  //              word list, never for prose (it sounds robotic and chopped)
+  //   'tts'      browser fallback — should never happen for shipped content
+  resolve(text) {
+    const f = this.fileFor(text);
+    if (f) return { kind: 'clip', items: [{ file: f }] };
+
+    const words = this.norm(text).split(/[^a-z']+/).filter(Boolean);
+    const found = words.map(w => this.manifest &&
+      (this.manifest.words[w] || this.manifest.words[w.replace(/'/g, '')]));
+    // length >= 1 so trailing punctuation ("cat!") still finds the word clip
+    // instead of silently dropping to browser speech.
+    if (words.length >= 1 && found.every(Boolean)) {
+      const items = [];
+      found.forEach((file, i) => {
+        if (i) items.push({ gap: 90 });
+        items.push({ file });
+      });
+      return { kind: 'stitched', items };
+    }
+    return { kind: 'tts', items: [{ tts: text }] };
+  },
+
+  _itemsFor(text, opts) {
+    const r = this.resolve(text);
+    if (r.kind === 'tts' && opts && opts.rate) r.items[0].rate = opts.rate;
+    return r.items;
   },
 
   stop() {
@@ -62,7 +113,6 @@ const AudioLib = {
     });
   },
 
-  // Play a sequence of items; each item is {file} or {tts, rate} or {gap}
   async _playSeq(items) {
     this.stop();
     const token = this._queueToken;
@@ -84,18 +134,12 @@ const AudioLib = {
       u.rate = rate || 0.92; u.pitch = 1.05;
       u.onend = resolve; u.onerror = resolve;
       speechSynthesis.speak(u);
-      setTimeout(resolve, 8000); // safety
+      setTimeout(resolve, 8000);
     });
   },
 
-  // Speak one text: clip if we have it, else split into clip-covered words,
-  // else TTS fallback.
-  speak(text, opts) {
-    const items = this._itemsFor(text, opts);
-    this._playSeq(items);
-  },
+  speak(text, opts) { this._playSeq(this._itemsFor(text, opts)); },
 
-  // Speak several texts in a row with small gaps.
   speakSeq(texts) {
     const items = [];
     texts.forEach((t, i) => {
@@ -105,46 +149,70 @@ const AudioLib = {
     this._playSeq(items);
   },
 
-  _itemsFor(text, opts) {
-    const f = this.fileFor(text);
-    if (f) return [{ file: f }];
-    // try word-by-word coverage (sentences are pre-generated, but this
-    // catches dynamic strings and hyphenated compounds like "wake-up")
-    const words = this.norm(text).split(/[^a-z']+/).filter(Boolean);
-    const found = words.map(w => this.manifest && (this.manifest.words[w] || this.manifest.words[w.replace(/'/g, '')]));
-    if (words.length > 1 && found.every(Boolean)) {
-      const items = [];
-      found.forEach((file, i) => {
-        if (i) items.push({ gap: 90 });
-        items.push({ file });
-      });
-      return items;
-    }
-    return [{ tts: text, rate: opts && opts.rate }];
+  // ── Narration: the composed form used for all teaching lines ──
+  narrationItems(segments) {
+    const items = [];
+    (segments || []).forEach((s, i) => {
+      if (i) items.push({ gap: s.ph || s.ltr ? 260 : 150 });
+      if (s.say != null) items.push(...this._itemsFor(s.say));
+      else if (s.ph != null) {
+        const f = this.phFile(s.ph);
+        items.push(f ? { file: f } : { tts: s.ph, rate: 0.7 });
+      } else if (s.word != null) items.push(...this._itemsFor(s.word));
+      else if (s.ltr != null) {
+        const f = this.ltrFile(s.ltr);
+        items.push(f ? { file: f } : { tts: s.ltr });
+      }
+    });
+    return items;
   },
 
-  // Pure letter-sounds (phoneme clips), spaced for blending practice.
+  // Prefer the single continuous recording of the whole line. Playing the
+  // segments individually works, but the gaps between clips make it sound
+  // chopped and robotic — the one-shot clip has real sentence prosody with the
+  // exact phonemes rendered inside it.
+  narrFile(id) {
+    if (!this.manifest || !this.manifest.narr || !id) return null;
+    return this.manifest.narr[id] || null;
+  },
+
+  playNarration(segments, id) {
+    const whole = this.narrFile(id);
+    if (whole) return this._playSeq([{ file: whole }]);
+    this._playSeq(this.narrationItems(segments));
+  },
+
+  // Report how each segment resolves — used by the build-time audit so a
+  // stitched or missing clip can never ship unnoticed.
+  auditNarration(segments) {
+    return (segments || []).map(s => {
+      if (s.say != null) return { seg: 'say', text: s.say, kind: this.resolve(s.say).kind };
+      if (s.ph != null) return { seg: 'ph', text: s.ph, kind: this.phFile(s.ph) ? 'clip' : 'missing' };
+      if (s.word != null) return { seg: 'word', text: s.word, kind: this.resolve(s.word).kind };
+      if (s.ltr != null) return { seg: 'ltr', text: s.ltr, kind: this.ltrFile(s.ltr) ? 'clip' : 'missing' };
+      return { seg: '?', text: JSON.stringify(s), kind: 'missing' };
+    });
+  },
+
   speakSounds(tokens) {
     const items = [];
     tokens.forEach((t, i) => {
       if (i) items.push({ gap: 420 });
-      const key = String(t).toLowerCase();
-      if (this.manifest && this.manifest.ph[key]) items.push({ file: this.manifest.ph[key] });
-      else if (this.manifest && this.manifest.words[key]) items.push({ file: this.manifest.words[key] });
-      else items.push({ tts: (typeof PHONEME_SPEAK !== 'undefined' && PHONEME_SPEAK[key]) || key, rate: 0.75 });
+      const f = this.phFile(t);
+      if (f) items.push({ file: f });
+      else items.push(...this._itemsFor(String(t)));
     });
     this._playSeq(items);
   },
 
-  // Letter NAMES (for spelling out heart words: "s", "a", "i", "d")
+  // Letter NAMES, for spelling a heart word out loud.
   spellOut(word, opts) {
     const items = [];
-    const pre = opts && opts.prefix ? this._itemsFor(opts.prefix) : [];
-    items.push(...pre);
-    word.toLowerCase().split('').forEach((ch) => {
+    if (opts && opts.prefix) items.push(...this._itemsFor(opts.prefix));
+    word.toLowerCase().split('').forEach(ch => {
       items.push({ gap: 300 });
-      if (this.manifest && this.manifest.ltr[ch]) items.push({ file: this.manifest.ltr[ch] });
-      else items.push({ tts: ch });
+      const f = this.ltrFile(ch);
+      items.push(f ? { file: f } : { tts: ch });
     });
     if (opts && opts.thenWord) {
       items.push({ gap: 420 });

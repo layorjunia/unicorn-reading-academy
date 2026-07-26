@@ -39,27 +39,75 @@ island is finished.
 
 ## Voice / audio
 
-**All speech is pre-generated audio, not live browser text-to-speech.** This
-was a deliberate fix: browser TTS pronounced letters inconsistently (saying
-the letter *name* "bee" where the app needed the *sound* /b/), and varied by
-device.
+**All speech is pre-generated audio files. The browser's speech synthesiser is
+never used for real content.** See `SETUP.md` for the API key step.
 
-`tools/gen_audio.py` renders every word, phrase, story sentence, letter name,
-and letter sound with macOS `say` (voice: Samantha) into `audio/*.m4a`, plus
-`audio/manifest.json` that maps text → file. Letter **sounds** use Apple's
-phoneme input mode (`[[inpt PHON]]`), so /b/, /sh/, /ar/ are true phonemes —
-never letter names. Letter **names** (for spelling out heart words) use
-`[[char LTRL]]`. `js/audio.js` plays clips and only falls back to browser TTS
-for text with no clip.
+### Why narration is structured, not plain text
 
-Regenerate after adding curriculum content:
+A reading app cannot let a voice read a sentence like:
 
-```bash
-python3 tools/gen_audio.py
+> "Short a says ah, like in cat."
+
+Every TTS pronounces the lone `a` as the article ("uh") and a lone `i` as
+"eye" — so the app teaches the wrong sound. This is not fixable by choosing a
+better voice; it is a property of reading letters as text.
+
+So a teaching line is an ordered list of segments, not a string:
+
+```js
+teach: {
+  intro: 'This letter says /a/, like in cat.',        // what you SEE
+  narration: [                                        // what you HEAR
+    { say: 'This letter says' },   // neural voice, prose only
+    { ph:  'a' },                  // a real IPA phoneme clip
+    { say: 'like in' },
+    { word: 'cat' },
+  ],
+}
 ```
 
-Existing clips are skipped, so re-runs are fast; delete `audio/` to force a
-full rebuild. **Requires macOS** (uses `say` + `afconvert`).
+`say` fragments are guaranteed never to contain a bare letter or a grapheme
+spelling. Letter **sounds** only ever come from `ph` clips; letter **names**
+(for spelling heart words) only from `ltr` clips. The two cannot be confused.
+
+### Engines
+
+`tools/gen_audio.py` renders everything through a pluggable engine
+(`tools/tts_engines.py`):
+
+- **google** (default) — Cloud TTS neural voice. Prose sounds natural, and
+  letter sounds use SSML `<phoneme alphabet="ipa">` from the *same* voice, so
+  narration and phonemes match. Needs an API key, see `SETUP.md`.
+- **apple** — offline macOS fallback, noticeably more robotic. Note the legacy
+  `say "[[inpt PHON]]…"` escape is **broken** on current macOS (it speaks the
+  marker aloud), so phonemes go through `AVSpeechSynthesizer`'s IPA attribute
+  via `tools/phoneme_render.swift`.
+
+```bash
+python3 tools/gen_audio.py                 # google (default)
+python3 tools/gen_audio.py --engine apple  # offline
+python3 tools/gen_audio.py --clean         # full rebuild
+```
+
+Unchanged clips are skipped, so re-runs are cheap.
+
+### What the build refuses to ship
+
+`validate()` fails the build on any of:
+
+- a phoneme or letter-name clip that came out **silent** (an IPA symbol the
+  engine rejects renders as ~0.01s of nothing — worse than a wrong sound)
+- a clip listed in the manifest but missing on disk
+- **a narration fragment with no recording of its own** — that would be played
+  as individual word clips stitched together, which sounds chopped and robotic.
+  This check exists because an earlier version shipped exactly that bug and the
+  audit could not tell the difference.
+
+Other traps handled in the generator: single letters never become word clips
+(`say "b"` says "bee"); homographs (`read`, `live`, `close`, `wind`, `bow`,
+`does`) get a pinned pronunciation via `WORD_IPA` because every story word is
+individually tappable and has no sentence context; emoji and ALL-CAPS runs are
+stripped before synthesis.
 
 ## Saving & sync
 

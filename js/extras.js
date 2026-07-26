@@ -1,21 +1,10 @@
 // Heart words, fluency passages, creatures, and phoneme fallback map.
 
-// ── Fallback map: how graphemes are spoken if no audio file exists ──
-// (Real pronunciation comes from pre-generated audio in audio/ph/.)
-const PHONEME_SPEAK = {
-  a: 'ah', e: 'eh', i: 'ih', o: 'aw', u: 'uh',
-  b: 'b', c: 'k', d: 'd', f: 'ff', g: 'g', h: 'h', j: 'j', k: 'k',
-  l: 'l', m: 'mm', n: 'nn', p: 'p', q: 'kw', r: 'rr', s: 'ss', t: 't',
-  v: 'vv', w: 'wuh', x: 'ks', y: 'yuh', z: 'zz',
-  sh: 'shh', ch: 'ch', th: 'th', wh: 'wh', ck: 'k', ll: 'l', ng: 'ng',
-  ar: 'ar', or: 'or', er: 'er', ir: 'er', ur: 'er',
-  ai: 'ay', ay: 'ay', ee: 'ee', ea: 'ee', ey: 'ee',
-  oa: 'oh', igh: 'eye', oi: 'oy', oy: 'oy', ou: 'ow', oo: 'oo',
-  ing: 'ing', ank: 'ank', ink: 'ink', all: 'all', ang: 'ang',
-  'a_e': 'ay', 'i_e': 'eye', 'o_e': 'oh', 'u_e': 'you',
-  ow_o: 'oh', ow_ou: 'ow', y_i: 'eye', gi: 'jih', ce: 'ss',
-  eye: 'eye', kn: 'nn', wr: 'rr', ge: 'j', ci: 'ss', cen: 'sen'
-};
+// NOTE: there is deliberately no "spell the sound as English letters" fallback
+// map here any more. Respellings like b -> 'b' or a -> 'ah' were read aloud as
+// letter NAMES ("bee", "ay"), which is the exact mistake this app must never
+// make. Letter sounds come only from the IPA phoneme clips in audio/ph/, and
+// tools/gen_audio.py fails the build if any of them is missing.
 
 // ── Heart Words ──
 // 100 high-frequency words in 20 sets. `heart` = 0-based positions of the

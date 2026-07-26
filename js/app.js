@@ -46,16 +46,21 @@ const App = {
   speakSounds(sounds) { AudioLib.speakSounds(sounds); },
 
   // "sound ... like ... word" for the Learn screen pattern buttons
+  // Plays "<sound> ... like ... <example word>" for a Learn-screen pattern
+  // button. The sound must come from a phoneme clip: falling back to a word
+  // clip of the raw letters is what made the app say "ay" for /a/.
   playPattern(tok, ex) {
     // Labels like "ce/ci" and "-ful" are display text; the first variant is
-    // the token that has a phoneme clip.
+    // the token that carries the sound.
     const key = String(tok).toLowerCase().split('/')[0].replace(/^-|-$/g, '');
     const items = [];
-    const m = AudioLib.manifest;
-    if (m && m.ph[key]) items.push({ file: m.ph[key] });
-    else if (m && m.words[key]) items.push({ file: m.words[key] });
-    else items.push({ tts: (typeof PHONEME_SPEAK !== 'undefined' && PHONEME_SPEAK[key]) || tok, rate: 0.75 });
-    items.push({ gap: 320 });
+    const ph = AudioLib.phFile(key);
+    if (ph) items.push({ file: ph });
+    else if (key.length > 2 && AudioLib.fileFor(key)) {
+      // A multi-letter pattern that is itself a real word (e.g. "sunset")
+      items.push({ file: AudioLib.fileFor(key) });
+    }
+    if (items.length) items.push({ gap: 320 });
     items.push(...AudioLib._itemsFor('like'));
     items.push({ gap: 200 });
     items.push(...AudioLib._itemsFor(ex));
@@ -360,12 +365,16 @@ const App = {
 
   lockedTap() { this.speak('Finish the island before this one to unlock it!'); },
 
+  // Always the letter NAME clip. Never App.speak(ch) — a bare letter routes to
+  // a word clip, where "a" is voiced as the article "uh".
   sayLetter(ch) {
-    const m = AudioLib.manifest;
-    const k = ch.toLowerCase();
-    if (m && m.ltr[k]) AudioLib._playSeq([{ file: m.ltr[k] }]);
-    else this.speak(ch);
+    const f = AudioLib.ltrFile(ch);
+    if (f) AudioLib._playSeq([{ file: f }]);
   },
+
+  // Tiles carry a disambiguating suffix when one spelling has two sounds
+  // ("ow_o" in glow vs "ow_ou" in owl). Strip it for display only.
+  tileText(t) { return String(t).replace(/_[a-z]+$/, ''); },
 
   // ── Island menu for completed islands: replay or practice ──
   islandMenu(id) {
@@ -431,10 +440,10 @@ const App = {
           <p>Build the word!</p>
           <button class="sound-chip" onclick="App.speak('${w.w}')">🔊 Hear the word</button>
           <div class="build-slots">
-            ${w.tiles.map((t, i) => `<div class="build-slot ${pr.built[i] != null ? 'filled' : ''}">${pr.built[i] != null ? pr.tray[pr.built[i]].t : ''}</div>`).join('')}
+            ${w.tiles.map((t, i) => `<div class="build-slot ${pr.built[i] != null ? 'filled' : ''}">${pr.built[i] != null ? this.tileText(pr.tray[pr.built[i]].t) : ''}</div>`).join('')}
           </div>
           <div class="tile-tray">
-            ${pr.tray.map((x, idx) => `<button class="tile ${pr.built.includes(idx) ? 'used' : ''}" onclick="App.prBuildTap(${idx})">${x.t}</button>`).join('')}
+            ${pr.tray.map((x, idx) => `<button class="tile ${pr.built.includes(idx) ? 'used' : ''}" onclick="App.prBuildTap(${idx})">${this.tileText(x.t)}</button>`).join('')}
           </div>
           <button class="btn ghost small" onclick="App.pr.built=[]; App.renderPractice()">Start over 🔄</button>
         </div>`);
@@ -607,7 +616,7 @@ const App = {
     const island = this.findIsland(id);
     this.isl = { island, step: 'learn', sub: 0, right: 0, tries: 0, built: [], page: 0, q: 0, quizScore: 0 };
     this.renderIsland();
-    setTimeout(() => this.speak(island.teach.intro), 300);
+    setTimeout(() => this.playBubble(), 300);
   },
 
   stepList() { return ['learn', 'sound', 'build', 'sort', 'read', 'quiz']; },
@@ -619,9 +628,22 @@ const App = {
       `<div class="pdot ${i < cur ? 'on' : i === cur ? 'now' : ''}"></div>`).join('')}</div>`;
   },
 
-  islHead(text) {
+  // The guide bubble shows `text` but SPEAKS `narration` (segment array), so a
+  // line can display "Short a says /a/" while the voice plays prose + a real
+  // phoneme clip instead of trying to pronounce a lone letter.
+  bubbleNarr: null,
+  bubbleNarrId: null,
+  playBubble() {
+    if (this.bubbleNarr) AudioLib.playNarration(this.bubbleNarr, this.bubbleNarrId);
+  },
+
+  islHead(text, narration) {
     const isl = this.isl.island;
     const guides = { Pip: '🦄', Mimi: '🐱', Bun: '🐰', Dot: '🐉' };
+    this.bubbleNarr = narration || [{ say: text }];
+    // Only the island's own teaching line has a single-utterance recording;
+    // activity prompts fall through to their ordinary phrase clip.
+    this.bubbleNarrId = narration ? isl.id : null;
     return `
       <div class="topbar">
         <button class="btn ghost small" onclick="App.showHome()">🏠 Map</button>
@@ -631,7 +653,7 @@ const App = {
       ${this.dots()}
       <div class="activity-head">
         <span class="guide-emoji">${guides[isl.guide] || '🦄'}</span>
-        <div class="guide-bubble" onclick="App.speak(this.textContent)">${text}</div>
+        <div class="guide-bubble" onclick="App.playBubble()">${text}</div>
       </div>`;
   },
 
@@ -667,7 +689,7 @@ const App = {
   renderLearn() {
     const t = this.isl.island.teach;
     this.render(`
-      ${this.islHead(t.intro)}
+      ${this.islHead(t.intro, t.narration)}
       <div class="card center">
         <div class="choices">
           ${t.patterns.map(p => `<button class="choice" onclick="App.playPattern('${p.g}','${p.ex}')">${p.g}</button>`).join('')}
@@ -730,10 +752,10 @@ const App = {
       <div class="card center">
         <button class="sound-chip" onclick="App.speak('${it.word}')">🔊 Hear the word</button>
         <div class="build-slots">
-          ${it.tiles.map((t, i) => `<div class="build-slot ${this.isl.built[i] != null ? 'filled' : ''}">${this.isl.built[i] != null ? this.isl.trayOrder[this.isl.built[i]].t : ''}</div>`).join('')}
+          ${it.tiles.map((t, i) => `<div class="build-slot ${this.isl.built[i] != null ? 'filled' : ''}">${this.isl.built[i] != null ? this.tileText(this.isl.trayOrder[this.isl.built[i]].t) : ''}</div>`).join('')}
         </div>
         <div class="tile-tray">
-          ${this.isl.trayOrder.map((x, idx) => `<button class="tile ${this.isl.built.includes(idx) ? 'used' : ''}" onclick="App.buildTap(${idx})">${x.t}</button>`).join('')}
+          ${this.isl.trayOrder.map((x, idx) => `<button class="tile ${this.isl.built.includes(idx) ? 'used' : ''}" onclick="App.buildTap(${idx})">${this.tileText(x.t)}</button>`).join('')}
         </div>
         <button class="btn ghost small" onclick="App.buildClear()">Start over 🔄</button>
         <div class="small-note">${this.isl.sub + 1} of ${items.length}</div>
@@ -752,7 +774,7 @@ const App = {
       const word = this.isl.built.map(i => this.isl.trayOrder[i].t).join('');
       if (word === it.tiles.join('')) {
         this.burst('💖'); this.confetti();
-        setTimeout(() => this.speakQueue(['You built it!', it.word + '!']), 200);
+        setTimeout(() => this.speakQueue(['You built it!', it.word]), 200);
         setTimeout(() => {
           this.isl.sub++; this.isl.trayOrder = null;
           if (this.isl.sub >= this.isl.island.buildIt.length) { this.awardActivity('build', 2); this.nextStep(); }
@@ -1212,7 +1234,7 @@ const App = {
       <div class="card">
         <div class="creature-grid">
           ${CREATURES.map((c, i) => `
-            <div class="creature ${i < unlocked ? '' : 'locked-c'}" onclick="${i < unlocked ? `App.speakQueue(['${c.name}!','Hello!'])` : `App.speak('Keep reading to meet this friend!')`}">
+            <div class="creature ${i < unlocked ? '' : 'locked-c'}" onclick="${i < unlocked ? `App.speakQueue(['${c.name}','Hello!'])` : `App.speak('Keep reading to meet this friend!')`}">
               <div class="c-emoji">${i < unlocked ? c.emoji : '❓'}</div>
               <div class="c-name">${i < unlocked ? c.name : '???'}</div>
             </div>`).join('')}

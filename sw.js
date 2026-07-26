@@ -1,9 +1,9 @@
 // Offline cache for Unicorn Reading Academy.
 // Bump CACHE version whenever app files change so devices pick up updates.
-const CACHE = 'ura-v2';
+const CACHE = 'ura-v4';
 const ASSETS = [
   '.', 'index.html', 'css/style.css', 'manifest.json',
-  'js/extras.js', 'js/banks.js', 'js/storylib.js',
+  'js/ui-speech.js', 'js/extras.js', 'js/banks.js', 'js/storylib.js',
   'js/curriculum-l1.js', 'js/curriculum-l2.js', 'js/curriculum-l3.js',
   'js/audio.js', 'js/firebase-config.js', 'js/sync.js', 'js/app.js',
   'audio/manifest.json',
@@ -27,7 +27,7 @@ self.addEventListener('fetch', e => {
 
   // Voice clips are immutable and latency-critical (a child taps a word and
   // expects instant sound), so serve them cache-first and only fetch on a miss.
-  if (url.pathname.includes('/audio/') && url.pathname.endsWith('.m4a')) {
+  if (url.pathname.includes('/audio/') && /\.(mp3|m4a)$/.test(url.pathname)) {
     e.respondWith(
       caches.match(e.request).then(hit => hit || fetch(e.request).then(res => {
         const copy = res.clone();

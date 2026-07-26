@@ -1,12 +1,12 @@
 // Offline cache for Unicorn Reading Academy.
 // Bump CACHE version whenever app files change so devices pick up updates.
-const CACHE = 'ura-v10';
+const CACHE = 'ura-20260726-1600-87f45b5';
 const ASSETS = [
   '.', 'index.html', 'css/style.css', 'manifest.json',
   'js/characters.js', 'js/story-scenes.js', 'js/ui-speech.js', 'js/extras.js', 'js/banks.js', 'js/storylib.js',
   'js/curriculum-l1.js', 'js/curriculum-l2.js', 'js/curriculum-l3.js',
   'js/audio.js', 'js/firebase-config.js', 'js/sync.js', 'js/app.js',
-  'audio/manifest.json',
+  'audio/manifest.json', 'version.json',
   'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-180.png'
 ];
 
@@ -24,6 +24,13 @@ self.addEventListener('activate', e => {
 self.addEventListener('fetch', e => {
   const url = new URL(e.request.url);
   if (url.origin !== location.origin) return; // let Firebase/CDN requests hit the network
+
+  // version.json is the update signal — it must never come from a cache
+  if (url.pathname.endsWith('version.json')) {
+    e.respondWith(fetch(e.request, { cache: 'no-store' }).catch(() =>
+      new Response('{}', { headers: { 'Content-Type': 'application/json' } })));
+    return;
+  }
 
   // Voice clips are immutable and latency-critical (a child taps a word and
   // expects instant sound), so serve them cache-first and only fetch on a miss.

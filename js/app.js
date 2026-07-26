@@ -14,8 +14,30 @@ const App = {
   hw: null,         // heart word session state
   fl: null,         // fluency session state
 
+  // A device can hold on to an old copy of the app for a long time: an
+  // installed service worker plus cached HTML means a deploy can stay invisible.
+  // So the app checks its own build id against the server on every load and
+  // heals itself rather than relying on anyone clearing caches by hand.
+  async checkForUpdate() {
+    try {
+      const meta = document.querySelector('meta[name="build"]');
+      const running = meta ? meta.getAttribute('content') : null;
+      const res = await fetch('version.json?t=' + Date.now(), { cache: 'no-store' });
+      if (!res.ok) return;
+      const { build } = await res.json();
+      if (!build || !running || build === running) return;
+      if (sessionStorage.getItem('ura-updating') === build) return;  // never loop
+      sessionStorage.setItem('ura-updating', build);
+      for (const k of await caches.keys()) await caches.delete(k);
+      const regs = await navigator.serviceWorker.getRegistrations();
+      for (const r of regs) await r.unregister();
+      location.replace(location.pathname + '?b=' + build);
+    } catch (e) { /* offline: keep running what we have */ }
+  },
+
   // ───────────────────────── init ─────────────────────────
   init() {
+    this.checkForUpdate();
     this.data = Store.load();
     if ('serviceWorker' in navigator && location.protocol === 'https:') {
       navigator.serviceWorker.register('sw.js').catch(() => {});
@@ -1501,6 +1523,7 @@ const App = {
         <h2>Danger zone</h2>
         <button class="btn small" style="background:#c94f4f; box-shadow:0 4px 0 #a03030" onclick="App.resetProgress()">Reset ${p.name}'s progress</button>
       </div>
+      <div class="small-note center mt">Build: <b>${(document.querySelector('meta[name="build"]')||{getAttribute:()=>'?'}).getAttribute('content')}</b></div>
       <div class="small-note center mt">Built with the science of reading: systematic phonics → decodable stories → heart words → repeated-reading fluency. 💖</div>
     `);
   },

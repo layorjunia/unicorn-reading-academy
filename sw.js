@@ -39,11 +39,15 @@ self.addEventListener('fetch', e => {
   }
 
   // App files are network-first so code updates land, with cache for offline.
+  // `cache: 'reload'` is essential: a plain fetch() here can be answered from
+  // the browser's own HTTP cache, which silently served a stale index.html
+  // (and therefore stale script URLs) after a deploy.
   e.respondWith(
-    fetch(e.request).then(res => {
+    fetch(e.request, { cache: 'reload' }).then(res => {
       const copy = res.clone();
       caches.open(CACHE).then(c => c.put(e.request, copy));
       return res;
-    }).catch(() => caches.match(e.request, { ignoreSearch: true }))
+    }).catch(() => fetch(e.request).catch(() =>
+      caches.match(e.request, { ignoreSearch: true })))
   );
 });

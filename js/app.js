@@ -712,7 +712,7 @@ const App = {
         <span class="star-chip">${pg + 1}/${st.pages.length}</span>
       </div>
       <div class="card story-card">
-        ${this.sceneHtml(typeof LIB_SCENES !== 'undefined' ? LIB_SCENES[st.id] : null, pg)}
+        ${this.sceneHtml(typeof LIB_SCENES !== 'undefined' ? LIB_SCENES[st.id] : null, pg, st.id)}
         <div class="story-page">
           ${words.map(w => `<span class="story-word" onclick="App.speak('${w.replace(/[^a-zA-Z'-]/g, '')}')">${w}</span>`).join(' ')}
         </div>
@@ -778,7 +778,32 @@ const App = {
     return null;
   },
 
-  startIsland(id) {
+  questBeat(islandId) {
+    if (typeof QUEST === 'undefined' || !QUEST || !QUEST.beats) return null;
+    return QUEST.beats.find(b => b.islandId === islandId) || null;
+  },
+
+  // Before a lesson, Pip says what she needs here. This is what turns a list of
+  // exercises into helping someone — the child is doing the lesson FOR a reason.
+  showBeat(islandId, then) {
+    const beat = this.questBeat(islandId);
+    if (!beat) return then();
+    const isl = this.findIsland(islandId);
+    const gk = this.GUIDE_KEY[isl.guide] || 'pip';
+    this.render(`
+      <div class="beat-screen">
+        ${this.charHtml(gk, 'beat-char', isl.emoji)}
+        <div class="beat-bubble" onclick="App.speak(this.textContent)">${beat.beat}</div>
+        <button class="btn big green mt" onclick="App.startIsland('${islandId}', true)">Help ${isl.guide}! ➜</button>
+        <div class="mt"><button class="btn ghost small" onclick="App.showHome()">🏠 Not yet</button></div>
+      </div>
+    `);
+    Sfx.play('page', 0.5);
+    setTimeout(() => this.speak(beat.beat), 350);
+  },
+
+  startIsland(id, skipBeat) {
+    if (!skipBeat && this.questBeat(id) && !this.isDone(id)) return this.showBeat(id);
     const island = this.findIsland(id);
     this.isl = { island, step: 'learn', sub: 0, right: 0, tries: 0, built: [], page: 0, q: 0, quizScore: 0 };
     this.renderIsland();
@@ -1012,7 +1037,12 @@ const App = {
   // Draws the picture-book illustration for a story page: painted scene with
   // the characters she collects standing in it. The cast drifts gently and the
   // page turn cross-fades, so it reads as a place rather than a slide.
-  sceneHtml(spec, pageIndex) {
+  sceneHtml(spec, pageIndex, storyId) {
+    // Prefer artwork drawn FOR THIS STORY. The old approach reused four
+    // backdrops with two arbitrary characters dropped on top, which produced
+    // things like a yellow chick illustrating "The Red Hen".
+    const bespoke = (typeof STORY_ART !== 'undefined') && storyId && STORY_ART[storyId];
+    if (bespoke) return `<div class="scene">${bespoke}</div>`;
     if (!spec || typeof SCENES === 'undefined') return '';
     const sc = SCENES[spec.scene];
     if (!sc) return '';
@@ -1052,7 +1082,7 @@ const App = {
     this.render(`
       ${this.islHead('Story time! Read it out loud. Tap any word if you need help. 📖')}
       <div class="card story-card">
-        ${this.sceneHtml(typeof STORY_SCENES !== 'undefined' ? STORY_SCENES[this.isl.island.id] : null, pg)}
+        ${this.sceneHtml(typeof STORY_SCENES !== 'undefined' ? STORY_SCENES[this.isl.island.id] : null, pg, this.isl.island.id)}
         <h2 class="center story-title">${story.title}</h2>
         <div class="story-page">
           ${words.map(w => `<span class="story-word" onclick="App.speak('${w.replace(/[^a-zA-Z'-]/g, '')}')">${w}</span>`).join(' ')}
@@ -1155,6 +1185,8 @@ const App = {
           <div class="sub">You got ${score} out of ${total} on the Sparkle Quiz!</div>
         </div>
         <div class="card center">
+          ${(() => { const b = this.questBeat(this.isl.island.id);
+             return b ? `<div class="beat-reward">${b.reward}</div>` : ''; })()}
           <div style="font-size:2.2rem">⭐ +5 stars!</div>
           ${newCreature > 0 && newCreature <= CREATURES.length ? `<div class="mt">A new friend may be waiting in Creature Cove... 🏝️</div>` : ''}
           <button class="btn big green mt" onclick="App.showUnlock(() => App.showHome())">Back to the map! 🗺️</button>

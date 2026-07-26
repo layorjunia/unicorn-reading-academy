@@ -25,6 +25,12 @@ import urllib.error
 import urllib.request
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+# Keep ALL scratch files inside the project — never the system temp dir.
+_WORK = os.path.join(ROOT, '.work', 'tmp')
+os.makedirs(_WORK, exist_ok=True)
+tempfile.tempdir = _WORK
+
 KEY_FILE = os.path.join(ROOT, 'tools', '.tts-key')
 
 # Neural2 voices are covered by Google's free monthly tier at our volume.

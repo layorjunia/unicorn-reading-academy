@@ -29,6 +29,12 @@ import wave
 import numpy as np
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+# Keep ALL scratch files inside the project — never the system temp dir.
+_WORK = os.path.join(ROOT, '.work', 'tmp')
+os.makedirs(_WORK, exist_ok=True)
+tempfile.tempdir = _WORK
+
 AUDIO = os.path.join(ROOT, 'audio')
 
 # Recogniser quirks, not pronunciation faults.

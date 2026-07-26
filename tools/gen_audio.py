@@ -25,12 +25,19 @@ import json
 import os
 import re
 import subprocess
+import tempfile
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from tts_engines import get_engine  # noqa: E402
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+# Keep ALL scratch files inside the project — never the system temp dir.
+_WORK = os.path.join(ROOT, '.work', 'tmp')
+os.makedirs(_WORK, exist_ok=True)
+tempfile.tempdir = _WORK
+
 AUDIO = os.path.join(ROOT, 'audio')
 
 # ── Letter SOUNDS: grapheme token -> IPA ──

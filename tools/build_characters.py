@@ -12,8 +12,15 @@ import json
 import os
 import re
 import sys
+import tempfile
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+# Keep ALL scratch files inside the project — never the system temp dir.
+_WORK = os.path.join(ROOT, '.work', 'tmp')
+os.makedirs(_WORK, exist_ok=True)
+tempfile.tempdir = _WORK
+
 OUT = os.path.join(ROOT, 'js', 'characters.js')
 
 BANNED = re.compile(r'<(script|style|text|image|foreignObject|use)\b', re.I)

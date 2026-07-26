@@ -449,3 +449,22 @@ input[type=text]:focus { border-color: var(--pink); }
   .story-page { font-size: 1.35rem; }
   .island { width: calc(50% - 6px); }
 }
+
+/* ── Quest beat: why she is doing this lesson ── */
+.beat-screen { text-align: center; padding: 22px 14px; }
+.beat-char { width: 168px; margin: 0 auto 10px; animation: bob 3.2s ease-in-out infinite; }
+.beat-char.char-fallback { font-size: 4.5rem; }
+.beat-bubble {
+  background: #fff; border-radius: 24px; padding: 18px 22px; margin: 0 auto;
+  max-width: 520px; box-shadow: var(--shadow); font-size: 1.2rem; line-height: 1.5;
+  cursor: pointer; position: relative;
+}
+.beat-bubble::before {
+  content: ''; position: absolute; top: -12px; left: 50%; transform: translateX(-50%);
+  border-left: 12px solid transparent; border-right: 12px solid transparent;
+  border-bottom: 13px solid #fff;
+}
+.beat-reward {
+  background: var(--pink-bg); border-radius: 18px; padding: 12px 16px;
+  margin-bottom: 12px; font-size: 1.05rem; color: var(--purple-dark);
+}

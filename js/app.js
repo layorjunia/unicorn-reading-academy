@@ -430,27 +430,83 @@ const App = {
           <div class="h-note">${creatures} friends found</div>
         </div>
       </div>
-      ${LEVELS.map((lv, li) => `
-        <div class="level-section">
-          <div class="level-head"><span class="lv-emoji">${lv.emoji}</span><h2>${lv.name}</h2></div>
-          <div class="island-row">
-            ${lv.islands.map((isl, ii) => {
-              const done = this.isDone(isl.id);
-              const unlocked = this.isUnlocked(li, ii);
-              const click = !unlocked ? 'App.lockedTap()' : done ? `App.islandMenu('${isl.id}')` : `App.startIsland('${isl.id}')`;
-              const gk = this.GUIDE_KEY[isl.guide] || 'pip';
-              return `<div class="island ${done ? 'done' : ''} ${unlocked ? '' : 'locked'}" onclick="Sfx.play('tap',0.4); ${click}">
-                <div class="isl-art">${this.charHtml(gk, 'isl-char', isl.emoji)}<span class="isl-badge">${isl.emoji}</span></div>
-                <div class="isl-title">${isl.title}</div>
-                <div class="isl-sub">${isl.sub}</div>
-              </div>`;
-            }).join('')}
-          </div>
-        </div>`).join('')}
+      ${this.journeyMap()}
     `);
   },
 
-  lockedTap() { this.speak('Finish the island before this one to unlock it!'); },
+  // ── The journey map ──
+  // A list of cards reads like a menu. A winding path reads like a place you
+  // are travelling through: you can see where you have been, where you are
+  // standing, and who is waiting further along.
+  journeyMap() {
+    const flat = LEVELS.flatMap((lv, li) => lv.islands.map((isl, ii) => ({ isl, lv, li, ii })));
+    const currentIdx = flat.findIndex(x => !this.isDone(x.isl.id));
+    const rows = [];
+    let lastLevel = null;
+
+    flat.forEach((node, idx) => {
+      const { isl, lv, li, ii } = node;
+      if (lv.id !== lastLevel) {
+        lastLevel = lv.id;
+        rows.push(`<div class="land-banner land-${lv.id}">
+            <span class="land-emoji">${lv.emoji}</span>
+            <span>${lv.name}</span>
+          </div>`);
+      }
+      const done = this.isDone(isl.id);
+      const unlocked = this.isUnlocked(li, ii);
+      const here = idx === currentIdx;
+      const side = idx % 2 === 0 ? 'left' : 'right';
+      const gk = this.GUIDE_KEY[isl.guide] || 'pip';
+      const click = !unlocked ? 'App.lockedTap()'
+        : done ? `App.islandMenu('${isl.id}')` : `App.startIsland('${isl.id}')`;
+      // a creature she has earned comes along for the ride
+      const buddyIdx = Math.floor(idx / 2);
+      const buddy = (buddyIdx < this.creaturesUnlocked() && idx % 2 === 1)
+        ? `<div class="path-buddy" onclick="event.stopPropagation(); App.greet('${CREATURES[buddyIdx].key}')">
+             ${this.charHtml(CREATURES[buddyIdx].key, 'buddy-char', CREATURES[buddyIdx].emoji)}
+           </div>` : '';
+      rows.push(`
+        <div class="stop stop-${side} ${done ? 'is-done' : ''} ${unlocked ? '' : 'is-locked'} ${here ? 'is-here' : ''}">
+          <div class="stop-node" onclick="Sfx.play('tap',0.4); ${click}">
+            <div class="stop-char">${this.charHtml(gk, 'stop-guide', isl.emoji)}</div>
+            <div class="stop-info">
+              <div class="stop-title">${isl.title}</div>
+              <div class="stop-sub">${isl.sub}</div>
+            </div>
+            ${done ? '<span class="stop-tick">★</span>' : ''}
+            ${!unlocked ? '<span class="stop-lock">🔒</span>' : ''}
+          </div>
+          ${here ? `<div class="you-are-here">${this.profile.avatar}<span>you are here</span></div>` : ''}
+          ${buddy}
+        </div>`);
+    });
+
+    return `<div class="journey">
+      <div class="journey-line"></div>
+      ${rows.join('')}
+      <div class="journey-end">
+        ${this.charHtml('nova', 'end-char', '🌟')}
+        <div class="small-note">More adventures are coming!</div>
+      </div>
+    </div>`;
+  },
+
+  // Tapping a friend on the path makes them say hello — small, but it turns
+  // scenery into company.
+  greet(key) {
+    const c = CREATURES.find(x => x.key === key);
+    if (!c) return;
+    Sfx.play('tap', 0.5);
+    this.speakQueue([c.name, 'Hello!']);
+    const el = document.querySelector(`.path-buddy .char`);
+    if (el) { el.classList.remove('wiggle'); void el.offsetWidth; el.classList.add('wiggle'); }
+  },
+
+  lockedTap() {
+    Sfx.play('retry', 0.4);
+    this.speak('Finish the island before this one to unlock it!');
+  },
 
   // Always the letter NAME clip. Never App.speak(ch) — a bare letter routes to
   // a word clip, where "a" is voiced as the article "uh".

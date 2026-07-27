@@ -4,15 +4,15 @@
 // word, sentence, letter sound and letter name is a file generated at build
 // time by tools/gen_audio.py with a neural voice.
 //
-// NARRATION is the important concept. A teaching line is never one blob of
-// text, because a voice reading "Short a says ah" pronounces the lone "a" as
-// the article ("uh") and "i" as "eye" — teaching the wrong sound. Instead a
-// line is an ordered list of segments:
+// The app does NOT speak isolated letter sounds. Synthesised phonemes were
+// inaccurate enough to teach the wrong thing — /a/ and /i/ came out nearly
+// identical — and they sounded mechanical next to the neural voice. Everything
+// the child hears is a whole word or a whole sentence, in one human voice.
 //
-//   [{say:'This letter says'}, {ph:'a'}, {say:'like in'}, {word:'cat'}]
+// A teaching line is still an ordered list of segments, so prose and example
+// words can be composed:
 //
-// Prose is spoken by the neural voice; letter SOUNDS come from dedicated IPA
-// phoneme clips. The two can never be confused.
+//   [{say:"Let's read some words."}, {word:'cat'}, {word:'sit'}]
 
 const AudioLib = {
   manifest: null,      // { words: {text->file}, ph: {token->file}, ltr: {letter->file} }
@@ -163,12 +163,9 @@ const AudioLib = {
   narrationItems(segments) {
     const items = [];
     (segments || []).forEach((s, i) => {
-      if (i) items.push({ gap: s.ph || s.ltr ? 260 : 150 });
+      if (i) items.push({ gap: s.word ? 320 : 150 });
       if (s.say != null) items.push(...this._itemsFor(s.say));
-      else if (s.ph != null) {
-        const f = this.phFile(s.ph);
-        items.push(f ? { file: f } : { tts: s.ph, rate: 0.7 });
-      } else if (s.word != null) items.push(...this._itemsFor(s.word));
+      else if (s.word != null) items.push(...this._itemsFor(s.word));
       else if (s.ltr != null) {
         const f = this.ltrFile(s.ltr);
         items.push(f ? { file: f } : { tts: s.ltr });
@@ -177,10 +174,8 @@ const AudioLib = {
     return items;
   },
 
-  // Prefer the single continuous recording of the whole line. Playing the
-  // segments individually works, but the gaps between clips make it sound
-  // chopped and robotic — the one-shot clip has real sentence prosody with the
-  // exact phonemes rendered inside it.
+  // Prefer the single continuous recording of the whole line — it has real
+  // sentence prosody, where separate clips sound chopped.
   narrFile(id) {
     if (!this.manifest || !this.manifest.narr || !id) return null;
     return this.manifest.narr[id] || null;
@@ -197,33 +192,18 @@ const AudioLib = {
   auditNarration(segments) {
     return (segments || []).map(s => {
       if (s.say != null) return { seg: 'say', text: s.say, kind: this.resolve(s.say).kind };
-      if (s.ph != null) return { seg: 'ph', text: s.ph, kind: this.phFile(s.ph) ? 'clip' : 'missing' };
       if (s.word != null) return { seg: 'word', text: s.word, kind: this.resolve(s.word).kind };
       if (s.ltr != null) return { seg: 'ltr', text: s.ltr, kind: this.ltrFile(s.ltr) ? 'clip' : 'missing' };
       return { seg: '?', text: JSON.stringify(s), kind: 'missing' };
     });
   },
 
-  // Blending practice: the separate sounds, then the WHOLE WORD.
-  //
-  // Playing only the fragments is not blending — it is the opposite of it. The
-  // point of the exercise is arriving at the word, so the sounds are always
-  // followed by the real word in the natural voice. The individual sounds come
-  // from the phoneme engine (exact); the word comes from the neural voice
-  // (human), which is also what stops the whole thing sounding robotic.
+  // NOTE: the app deliberately does NOT play isolated letter sounds any more.
+  // Synthesised phonemes were inaccurate and unpleasant — /a/ and /i/ came out
+  // near-identical, so the lesson actively taught the wrong thing. A child
+  // hears whole words in a human voice and matches them; that is the exercise.
   speakSounds(tokens, word) {
-    const items = [];
-    tokens.forEach((t, i) => {
-      if (i) items.push({ gap: 500 });
-      const f = this.phFile(t);
-      if (f) items.push({ file: f });
-      else items.push(...this._itemsFor(String(t)));
-    });
-    if (word) {
-      items.push({ gap: 700 });             // a beat, then the payoff
-      items.push(...this._itemsFor(word));
-    }
-    this._playSeq(items);
+    if (word) this.speak(word);
   },
 
   // Letter NAMES, for spelling a heart word out loud.

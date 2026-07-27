@@ -71,22 +71,13 @@ const App = {
   // Plays "<sound> ... like ... <example word>" for a Learn-screen pattern
   // button. The sound must come from a phoneme clip: falling back to a word
   // clip of the raw letters is what made the app say "ay" for /a/.
+  // The letter pattern is SHOWN on screen; the voice says the example word.
+  // The app never pronounces a letter in isolation — synthesised phonemes were
+  // inaccurate to the point of teaching the wrong thing (/a/ and /i/ came out
+  // near-identical), so a child hears whole words in a human voice instead.
   playPattern(tok, ex) {
-    // Labels like "ce/ci" and "-ful" are display text; the first variant is
-    // the token that carries the sound.
-    const key = String(tok).toLowerCase().split('/')[0].replace(/^-|-$/g, '');
-    const items = [];
-    const ph = AudioLib.phFile(key);
-    if (ph) items.push({ file: ph });
-    else if (key.length > 2 && AudioLib.fileFor(key)) {
-      // A multi-letter pattern that is itself a real word (e.g. "sunset")
-      items.push({ file: AudioLib.fileFor(key) });
-    }
-    if (items.length) items.push({ gap: 320 });
-    items.push(...AudioLib._itemsFor('like'));
-    items.push({ gap: 200 });
-    items.push(...AudioLib._itemsFor(ex));
-    AudioLib._playSeq(items);
+    Sfx.play('tap', 0.4);
+    this.speak(ex);
   },
 
   praise() { this.speak(PRAISE[Math.floor(Math.random() * PRAISE.length)]); },
@@ -609,13 +600,13 @@ const App = {
       const choices = [w.w, ...this.prDistractors(w, 2, pr.bank)].sort(() => Math.random() - 0.5);
       this.render(`${head}
         <div class="card center">
-          <p>Tap the robot, listen to the sounds, tap the word!</p>
-          <div style="font-size:4rem; cursor:pointer" onclick='App.speakSounds(${JSON.stringify(w.sounds)}, "${w.w}")'>🤖</div>
+          <p>Listen to the word, then tap it!</p>
+          <button class="btn purple big" onclick='App.speak("${w.w}")'>🔊 Hear the word</button>
           <div class="choices">
             ${choices.map(c => `<button class="choice" onclick="App.prPick(this,'${c}','${w.w}')">${c}</button>`).join('')}
           </div>
         </div>`);
-      setTimeout(() => this.speakSounds(w.sounds, w.w), 400);
+      setTimeout(() => this.speak(w.w), 400);
     } else if (mode === 'build') {
       if (!pr.tray) {
         const pool = [...new Set(pr.bank.flatMap(b => b.tiles))].filter(t => !w.tiles.includes(t));
@@ -664,7 +655,7 @@ const App = {
     const pr = this.pr;
     const w = pr.words[pr.idx];
     if (pr.built.includes(idx) || pr.built.length >= w.tiles.length) return;
-    Sfx.play('tap', 0.4); this.speakSounds([pr.tray[idx].t]);
+    Sfx.play('tap', 0.4);
     pr.built.push(idx);
     if (pr.built.length === w.tiles.length) {
       const made = pr.built.map(i => pr.tray[i].t).join('');
@@ -933,17 +924,17 @@ const App = {
     const items = this.isl.island.soundIt;
     const it = items[this.isl.sub];
     this.render(`
-      ${this.islHead('Robot talk! Tap the robot, listen to the sounds, and tap the word you hear!')}
+      ${this.islHead('Listen to the word, then tap the word you hear!')}
       <div class="card center">
-        <div style="font-size:4rem; cursor:pointer" onclick="App.speakSounds(${JSON.stringify(it.sounds).replace(/"/g, '&quot;')}, '${it.word}')">🤖</div>
-        <div class="small-note">tap the robot to hear the sounds</div>
+        <button class="btn purple big" onclick="App.speak('${it.word}')">🔊 Hear the word</button>
+        <div class="small-note">listen, then tap the word you hear</div>
         <div class="choices">
           ${it.choices.map(c => `<button class="choice" onclick="App.soundPick(this,'${c}')">${c}</button>`).join('')}
         </div>
         <div class="small-note">${this.isl.sub + 1} of ${items.length}</div>
       </div>
     `);
-    setTimeout(() => this.speakSounds(it.sounds, it.word), 400);
+    setTimeout(() => this.speak(it.word), 400);
   },
 
   soundPick(el, chosen) {
@@ -960,7 +951,7 @@ const App = {
     } else {
       el.classList.add('wrong'); Sfx.play('retry', 0.55);
       this.encourage();
-      setTimeout(() => { el.classList.remove('wrong'); this.speakSounds(it.sounds, it.word); }, 700);
+      setTimeout(() => { el.classList.remove('wrong'); this.speak(it.word); }, 700);
     }
   },
 
@@ -995,7 +986,7 @@ const App = {
     const it = this.isl.island.buildIt[this.isl.sub];
     if (this.isl.built.includes(idx)) return;
     const tile = this.isl.trayOrder[idx];
-    Sfx.play('tap', 0.4); this.speakSounds([tile.t]);
+    Sfx.play('tap', 0.4);
     this.isl.built.push(idx);
     if (this.isl.built.length === it.tiles.length) {
       const word = this.isl.built.map(i => this.isl.trayOrder[i].t).join('');

@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
-"""Build each lesson's narration as ONE recording, from two different voices.
+"""Build each lesson's narration as ONE recording in the neural voice.
+
+The app no longer speaks isolated letter sounds at all: synthesised phonemes
+were inaccurate (/a/ and /i/ were near-identical) and sounded mechanical, so a
+child now hears whole words in one human voice and matches them. Narration is
+therefore pure prose and example words — no phoneme engine involved.
 
 The teaching lines need two things that no single engine gives:
 
@@ -40,8 +45,8 @@ sys.path.insert(0, os.path.join(ROOT, 'tools'))
 
 # Silence around each piece. A letter sound gets clear air on both sides so a
 # child hears it as its own thing rather than part of the sentence.
-GAP_PROSE = 0.10
-GAP_SOUND = 0.34
+GAP_PROSE = 0.12
+GAP_SOUND = 0.40   # air around each example word
 
 
 def read_any(path):
@@ -138,15 +143,16 @@ def main():
     for island, segs in narrations:
         parts = []
         for s in segs:
-            if s.get('say') is not None or s.get('word') is not None:
+            if s.get('say') is not None:
                 if parts:
                     parts.append(silence(GAP_PROSE))
-                parts.append(prose(s.get('say') or s.get('word')))
-            elif s.get('ph') is not None:
+                parts.append(prose(s['say']))
+            elif s.get('word') is not None:
                 if parts:
                     parts.append(silence(GAP_SOUND))
-                parts.append(sound(s['ph']))
-                parts.append(silence(GAP_SOUND))
+                parts.append(prose(s['word']))
+            elif s.get('ph') is not None:
+                continue   # phonemes are no longer spoken anywhere
             elif s.get('ltr') is not None:
                 if parts:
                     parts.append(silence(GAP_SOUND))
@@ -169,7 +175,7 @@ def main():
         manifest['narr'][island] = f'n/{island}.m4a'
         built += 1
 
-    manifest['narration_engine'] = 'piper+espeak'
+    manifest['narration_engine'] = 'piper'
     json.dump(manifest, open(os.path.join(AUDIO, 'manifest.json'), 'w'),
               separators=(',', ':'))
     print(f'built {built} narration lines, {len(problems)} problems')

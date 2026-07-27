@@ -14,6 +14,7 @@ cannot come back silently.
 import json
 import os
 import re
+import subprocess
 import sys
 import tempfile
 
@@ -24,10 +25,16 @@ _WORK = os.path.join(ROOT, '.work', 'tmp')
 os.makedirs(_WORK, exist_ok=True)
 tempfile.tempdir = _WORK
 
-# Meaningless exclamations that made the old stories read as nonsense.
-FILLER = re.compile(
-    r'\b(so fine|what fun|so neat|how fun|so nice|what a day|so good)\b[!.]?',
-    re.I)
+# The defect was a phrase like "So fine!" standing alone as a whole sentence,
+# attached to nothing. The same words inside a real sentence are fine — "That
+# cake smells so good" is exactly what we want — so match only the standalone
+# case, or the guard rejects good writing.
+FILLER_PHRASE = r'(so fine|what fun|so neat|how fun|so nice|so good|what a day|so fun|how neat)'
+FILLER = re.compile(r'^[\'"\s]*' + FILLER_PHRASE + r'[!.?\'"\s]*$', re.I)
+
+
+def sentences(text):
+    return [s for s in re.split(r'(?<=[.!?])\s+', text) if s.strip()]
 
 
 def load(path):
@@ -52,9 +59,9 @@ def js_str(s):
 def check(rec):
     bad = []
     for p in rec.get('pages', []):
-        m = FILLER.search(p)
-        if m:
-            bad.append(f"filler {m.group(0)!r} in: {p[:60]}")
+        for s in sentences(p):
+            if FILLER.match(s.strip()):
+                bad.append(f"standalone filler sentence {s.strip()!r} in: {p[:50]}")
     if len(rec.get('pages', [])) < 3:
         bad.append('too few pages')
     for q in rec.get('questions', []):
@@ -96,12 +103,32 @@ def replace_block(src, story_id, rec, is_library):
         e2 = anchor.start() + qm.end()
         src = src[:s2] + new_q + src[e2:]
 
-    # title, where the file has one
+    # Title. In a curriculum file the FIRST title after the id belongs to the
+    # island (its phonics skill — "Short a & i", "Digraphs"), and the story's
+    # own title lives inside readIt. Anchoring on the first title therefore
+    # renames the skill and leaves the story untouched — exactly backwards — so
+    # curriculum titles are matched inside readIt only.
+    # The existing title may contain an escaped apostrophe ("The Knight\'s
+    # Puzzle"); a naive [^']* stops at that backslash-quote and leaves the tail
+    # of the old title behind, producing a broken string literal.
     if rec.get('title'):
-        tm = re.search(r"(id:\s*'" + re.escape(story_id) + r"'[\s\S]{0,400}?title:\s*)'[^']*'", src)
+        anchor_pat = (r"(id:\s*'" + re.escape(story_id) + r"'[\s\S]{0,400}?title:\s*)"
+                      if is_library else
+                      r"(id:\s*'" + re.escape(story_id) +
+                      r"'[\s\S]*?readIt:\s*\{[\s\S]{0,300}?title:\s*)")
+        tm = re.search(anchor_pat + r"'(?:\\.|[^'\\])*'", src)
         if tm:
             src = src[:tm.end(1)] + js_str(rec['title']) + src[tm.end():]
     return src, True
+
+
+def syntax_ok(src, path):
+    probe = os.path.join(_WORK, 'probe-' + os.path.basename(path))
+    open(probe, 'w', encoding='utf-8').write(src)
+    r = subprocess.run(['node', '--check', probe], capture_output=True, text=True)
+    if r.returncode != 0:
+        print('    ', r.stderr.strip().split('\n')[-1][:120])
+    return r.returncode == 0
 
 
 def main():
@@ -138,6 +165,13 @@ def main():
         src = open(path, encoding='utf-8').read()
         src, ok = replace_block(src, sid, rec, key == 'S')
         if ok:
+            # Parse-check before committing the write. A quoting slip inside a
+            # replacement produces a file that looks fine and breaks the app at
+            # load time; catching it here keeps a bad edit from reaching disk.
+            if not syntax_ok(src, path):
+                print(f'  ! {sid}: edit would break {os.path.basename(path)} '
+                      f'— skipped, file left unchanged')
+                continue
             if not dry:
                 open(path, 'w', encoding='utf-8').write(src)
             applied[key].append(sid)

@@ -5,3 +5,4 @@ tools/voices/
 .work/
 tools/verify-report.json
 tools/audio-repair-report.json
+tools/verify-phrases-report.json

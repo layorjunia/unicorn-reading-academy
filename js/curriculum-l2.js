@@ -58,17 +58,17 @@ const LEVEL2 = {
         ]
       },
       readIt: {
-        title: 'The Cake by the Lake',
+        title: 'A Bite for the Snake',
         emoji: '🎂🌊',
         pages: [
-          'Pip made a cake to take to the lake.',
-          'Mimi came on a bike. Bun came on skates!',
-          'A snake slid up. "I like cake," said the snake with a smile.',
-          'They gave the snake a slice. It was a fine time at the lake!'
+          'Kate made a cake with her mom. She took it down to the lake to eat by the water.',
+          'A snake slid out of the tall grass, and Kate froze. She did not like snakes one bit.',
+          '"That cake smells so good," said the snake. "I have not had one bite all day. Can I have some, please?"',
+          'He said please, so Kate cut him a bite. Her hands shook, but she sat down and they ate side by side.'
         ],
         questions: [
-          { q: 'What did Pip make?', choices: ['a kite', 'a cake', 'a gate'], answer: 1 },
-          { q: 'How did Mimi get to the lake?', choices: ['on a bike', 'on a plane', 'she swam'], answer: 0 }
+          { q: 'What did the snake want?', choices: ['A ride on her bike', 'A bite of the cake', 'A swim in the lake'], answer: 1 },
+          { q: 'Kate did not like snakes. Why did she give this one a bite?', choices: ['Her mom told her to', 'He took the cake from her', 'He said please'], answer: 2 }
         ]
       },
       mastery: [
@@ -133,17 +133,17 @@ const LEVEL2 = {
         ]
       },
       readIt: {
-        title: 'The Mole at Home',
+        title: 'The Mole and the Flute',
         emoji: '🦫🏠',
         pages: [
-          'A mole made a home under a stone.',
-          'Dot came with a flute. She played a cute tune.',
-          'The mole woke up! "I love that tune," said the mole.',
-          'The mole gave Dot a rose. Dot rode home with a smile.'
+          'Dot sat on a stone and made up a tune on her flute. It went fast and loud, and she was proud of it.',
+          'A mole shot up out of a hole, with dirt on his nose. "Stop! Your flute woke me up!" he said.',
+          '"Oh no! I did not mean to wake you," said Dot. "Let me play a slow one. It will help you sleep."',
+          'The mole shut his eyes till the tune was done. "Come back at noon," he said, "and play me that fast tune!"'
         ],
         questions: [
-          { q: 'Where was the mole\'s home?', choices: ['under a stone', 'in a rose', 'up a pole'], answer: 0 },
-          { q: 'What did Dot play?', choices: ['a drum', 'a cute tune on her flute', 'a game'], answer: 1 }
+          { q: 'Why did the mole come up out of his hole?', choices: ['He was out to find a snack.', 'Dot\'s loud tune woke him up.', 'He fell down in the grass.'], answer: 1 },
+          { q: 'What did the mole ask Dot to do at noon?', choices: ['Come back and play the fast tune for him.', 'Dig him a new hole.', 'Put her flute away for good.'], answer: 0 }
         ]
       },
       mastery: [
@@ -208,17 +208,17 @@ const LEVEL2 = {
         ]
       },
       readIt: {
-        title: 'The Storm at the Barn',
+        title: 'Mimi and the Storm',
         emoji: '⛈️🚜',
         pages: [
-          'Mimi went to the farm in her car. She had corn for the horse.',
-          'A storm came! The dark sky went CRACK!',
-          'Mimi ran to the barn. The horse was scared.',
-          '"Do not be scared," said Mimi. They shared the corn until the stars came out.'
+          'Dark clouds came fast over the farm. "Look at that storm!" said Mimi. "I have to get Star in the barn."',
+          'Rain came down hard and the wind was loud. Star stood in the yard. He shook all over and would not go.',
+          'Mimi took off her coat and held it over his eyes. "Now you can not see the storm," she said. "Come with me."',
+          'Star went with her, step by step, to the barn. Rain hit the roof, but Star did not shake at all.'
         ],
         questions: [
-          { q: 'What did Mimi bring to the farm?', choices: ['a fork', 'corn for the horse', 'a torch'], answer: 1 },
-          { q: 'Where did Mimi go when the storm came?', choices: ['to the barn', 'home', 'to the park'], answer: 0 }
+          { q: 'Why would Star not go with Mimi?', choices: ['He was scared of the storm', 'He wanted to eat more grass', 'He liked to stand in the rain'], answer: 0 },
+          { q: 'What did Mimi do to get Star to come?', choices: ['She gave him a snack', 'She held her coat over his eyes', 'She ran off to get help'], answer: 1 }
         ]
       },
       mastery: [
@@ -278,17 +278,17 @@ const LEVEL2 = {
         ]
       },
       readIt: {
-        title: 'The Bird and the Fern',
+        title: 'The Bird Under the Fern',
         emoji: '🐦🌿',
         pages: [
-          'A little bird hid under a fern. Her wing was hurt.',
-          'Mimi found her first. "Purr, purr," said Mimi. "Do not be scared."',
-          'Bun got a nurse. The nurse fixed the wing.',
-          'The bird gave a twirl in the sky. "Thank you!" she chirped. Mimi purred.'
+          'A soft chirp came from under the fern. Bert bent down and found a little bird with a hurt wing.',
+          'Bert held out his hand, but the bird gave a sharp chirp and hid. "I will not hurt you," he said.',
+          'Bert sat still as a stone. At last she let him lift her, and he made her a bed in a box.',
+          'Her wing got strong, and one day she went up over the trees. She still comes back to chirp for Bert.'
         ],
         questions: [
-          { q: 'What was wrong with the bird?', choices: ['her wing was hurt', 'she was lost', 'she was hungry'], answer: 0 },
-          { q: 'Who fixed the wing?', choices: ['Mimi', 'the nurse', 'the fern'], answer: 1 }
+          { q: 'What did Bert find under the fern?', choices: ['A nest of eggs', 'A little bird with a hurt wing', 'A little cat'], answer: 1 },
+          { q: 'What does the bird do now that her wing is strong?', choices: ['She still comes back to chirp for Bert', 'She sleeps in the box all day', 'She hides under the fern'], answer: 0 }
         ]
       },
       mastery: [
@@ -353,17 +353,17 @@ const LEVEL2 = {
         ]
       },
       readIt: {
-        title: 'A Rainy Day to Play',
+        title: 'Pip and the Snail',
         emoji: '🌧️🐌',
         pages: [
-          'Rain, rain, rain! Pip could not play all day.',
-          'Then Pip saw a snail on the trail. The snail did not mind the rain!',
-          '"Wait for me!" said Pip. She got her rain hat.',
-          'Pip and the snail played in the rain. It was a great day after all!'
+          'Pip had a plan to play ball in the sun all day. Then the rain came down, and she felt sad.',
+          'A snail slid up the wet porch step. "The rain got in the way of my plan," Pip said to him.',
+          '"Rain? Rain is the best," said the snail. "On hot days I must hide. Come and play with me."',
+          'Pip got her rain hat and ran out. "Rain is the best," she said, and they went down the path all day.'
         ],
         questions: [
-          { q: 'Why couldn\'t Pip play at first?', choices: ['it was raining', 'she was sick', 'it was dark'], answer: 0 },
-          { q: 'Who did Pip play with?', choices: ['a whale', 'a snail', 'the mail'], answer: 1 }
+          { q: 'What made Pip sad?', choices: ['The rain came and got in the way of her plan.', 'The snail went away from her.', 'She lost her rain hat.'], answer: 0 },
+          { q: 'Why did Pip go out in the rain?', choices: ['The rain went away.', 'The snail said rain is the best day to play.', 'She lost her ball in the grass.'], answer: 1 }
         ]
       },
       mastery: [
@@ -429,17 +429,17 @@ const LEVEL2 = {
         ]
       },
       readIt: {
-        title: 'The Queen Bee\'s Key',
+        title: 'The Queen Bee\'s Lost Key',
         emoji: '🐝🔑',
         pages: [
-          'The queen bee lost the key to her tree!',
-          'Mimi and Pip went to the beach to seek it. They peeked under each leaf.',
-          'A crab had the key! "Please give it back," said Mimi. "It is not a treat to eat!"',
-          'The crab agreed. The queen bee was so happy she gave them sweet honey. Yum!'
+          'Queen Bee kept the key to her tree on a green string. At night she felt for it, and the key was gone.',
+          '"My bees need to get in and sleep!" said Queen Bee. Mimi said, "Where did you go today?"',
+          '"The peach tree!" said Queen Bee. They ran there and dug in the leaves. "Hey! I see the green string!" said Mimi.',
+          'Mimi gave it a tug, and up came the key. Queen Bee let all the bees in and said, "Thank you, Mimi!"'
         ],
         questions: [
-          { q: 'What did the queen bee lose?', choices: ['her wings', 'the key to her tree', 'a leaf'], answer: 1 },
-          { q: 'Who had the key?', choices: ['a crab', 'a seal', 'Pip'], answer: 0 }
+          { q: 'Why did Queen Bee need the key?', choices: ['To let her bees in to sleep', 'To dig up a weed', 'To pick a peach'], answer: 0 },
+          { q: 'How did Mimi find the key?', choices: ['She saw the green string in the leaves', 'She saw it up in the peach tree', 'It was on Queen Bee\'s neck the whole time'], answer: 0 }
         ]
       },
       mastery: [
@@ -506,17 +506,17 @@ const LEVEL2 = {
         ]
       },
       readIt: {
-        title: 'The Boat in the Night',
+        title: 'Glow Lights the Way',
         emoji: '⛵🌙',
         pages: [
-          'One night, Dot took her boat out on the sea. The moon was high and bright.',
-          'Snow began to fall. Oh no! Dot could not see the coast.',
-          'Then a firefly came by. Its light made a bright glow!',
-          'The firefly showed Dot the way. "You saved the night!" said Dot with a sigh.'
+          'Dot took her boat out at night to see the stars. But clouds hid the sky, and soon she was lost.',
+          'Then a small cry came from the waves. "Help! I am Glow, and I am too wet to fly," said a bug.',
+          'Dot held out her hand, and Glow got on. Soon he was dry, and he lit up bright as a star.',
+          'Glow went up high, and his light led the boat home. "I did not see the stars," said Dot, "but I found you."'
         ],
         questions: [
-          { q: 'When did Dot take her boat out?', choices: ['at night', 'in the morning', 'at lunch'], answer: 0 },
-          { q: 'Who helped Dot find the way?', choices: ['a firefly with a bright glow', 'a goat', 'the snow'], answer: 0 }
+          { q: 'Why could the bug not fly?', choices: ['He was too wet', 'He was too small', 'It was too dark'], answer: 0 },
+          { q: 'What did Glow do after Dot got him out of the waves?', choices: ['He went to sleep on her hand', 'He hid in the boat', 'He went up high and lit the way home'], answer: 2 }
         ]
       },
       mastery: [
@@ -584,17 +584,17 @@ const LEVEL2 = {
         ]
       },
       readIt: {
-        title: 'The Owl and the Moon Coin',
+        title: 'Hoot Finds a Moon',
         emoji: '🦉🪙',
         pages: [
-          'An owl found a round coin under a cloud of leaves. It looked like the moon!',
-          '"Wow!" said Bun. "That is a moon coin. It brings good luck!"',
-          'The owl and Bun took the coin to town. A loud crowd came to look.',
-          'The owl let each friend hold it. Joy went all around town!'
+          'Each night Hoot the owl sat on the roof to see the moon. But this night, thick clouds hid it.',
+          '"I miss the moon," said Hoot. So he went down and found a round, bright coin. "You can be my moon!"',
+          'Then a boy came down the road. "I lost my coin!" he said. Hoot did not want to give up his moon.',
+          'But he gave the coin back. "You found it! Thank you!" said the boy. Then the moon came out, big and round.'
         ],
         questions: [
-          { q: 'What did the owl find?', choices: ['a round coin', 'a book', 'a toy'], answer: 0 },
-          { q: 'What did the coin look like?', choices: ['a cloud', 'the moon', 'a crown'], answer: 1 }
+          { q: 'Why did Hoot want to keep the coin?', choices: ['It was round and bright, like the moon the clouds hid', 'He wanted to give it to the boy', 'He wanted to get some food with it'], answer: 0 },
+          { q: 'What did Hoot do when the boy said he lost his coin?', choices: ['He kept it and went back up to the roof', 'He gave the coin back to the boy', 'He hid the coin under his wing'], answer: 1 }
         ]
       },
       mastery: [

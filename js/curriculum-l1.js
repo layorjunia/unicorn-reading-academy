@@ -60,17 +60,17 @@ const LEVEL1 = {
         ]
       },
       readIt: {
-        title: 'Mimi and the Pig',
+        title: 'The Mat That Was Not Big Enough',
         emoji: '🐱🐷',
         pages: [
-          'Mimi is a cat. Mimi sat on a mat.',
-          'A pig ran in! The pig is big.',
-          'The pig sat on the mat. The mat is flat!',
-          'Mimi and the pig nap on the mat.'
+          'Mimi the cat had a red mat. It sat in the sun, and it was the best spot in the house to nap.',
+          'Then Pat the pig sat down on it with a plop. "Hop off, Pat!" said Mimi. "I nap on that mat."',
+          '"But it is soft," said Pat. Mimi sat back to back with him, but the mat was not big enough, and Mimi slid off.',
+          'Then Mimi had a plan. Mimi got up and sat on top of Pat. "You are soft, Pat!" And the two had a nap.'
         ],
         questions: [
-          { q: 'Who is Mimi?', choices: ['a cat', 'a pig', 'a hat'], answer: 0 },
-          { q: 'What did the pig do to the mat?', choices: ['bit it', 'sat on it and made it flat', 'hid it'], answer: 1 }
+          { q: 'Why did Pat want to sit on the mat?', choices: ['The mat was wet', 'The mat was soft', 'The mat was big'], answer: 1 },
+          { q: 'How did Mimi and Pat get a nap in the end?', choices: ['They got a bigger mat', 'Pat ran off and left the mat', 'Mimi sat on top of Pat'], answer: 2 }
         ]
       },
       mastery: [
@@ -136,17 +136,17 @@ const LEVEL1 = {
         ]
       },
       readIt: {
-        title: 'The Bug in the Mud',
+        title: 'Dot and the Bug in the Mud',
         emoji: '🐞🥁',
         pages: [
-          'Dot the dragon sat on a log.',
-          'A bug hops in the mud. Hop, hop, hop!',
-          'The bug is wet. The bug is sad.',
-          'Dot got the bug. The bug sat in the sun. The bug is not sad now!'
+          'Dot sat on a log at the pond. "Help! Help!" A little bug was stuck down in the wet mud.',
+          'Dot ran to help, but the mud was soft and wet. "If I get in, I will sink as well," she said.',
+          'Dot did not want to give up. She got a big stick and held it down in the mud.',
+          'The bug ran up the stick and sat in the sun. "Thank you, Dot," he said. "You did not give up on me."'
         ],
         questions: [
-          { q: 'Where did the bug hop?', choices: ['in the mud', 'on a bed', 'in a cup'], answer: 0 },
-          { q: 'How did Dot help?', choices: ['She hid the bug', 'She got the bug out and it sat in the sun', 'She ran away'], answer: 1 }
+          { q: 'Dot did not get in the mud. What did she tell the bug?', choices: ['She said she would sink in the mud as well.', 'She said she did not want to help.', 'She said the mud was not wet.'], answer: 0 },
+          { q: 'What did Dot get to help the bug get out?', choices: ['She got a big rock and set it in the pond.', 'She got a big stick and held it down in the mud.', 'She got in the mud and dug the bug up.'], answer: 1 }
         ]
       },
       mastery: [
@@ -214,17 +214,17 @@ const LEVEL1 = {
         ]
       },
       readIt: {
-        title: 'The Chick and the Duck',
+        title: 'The Tin Tub Ship',
         emoji: '🐣🦆',
         pages: [
-          'A chick and a duck sat in the shed.',
-          '"I wish I had a ship," said the chick.',
-          'The duck got a box. Chop, chop! The box is a ship!',
-          'The chick and the duck sat in the ship. What fun!'
+          '"Ducks can swim on the pond, but chicks can not," said Chick. "I wish I had a ship."',
+          'Duck ran to the shed and got a big tin tub. When Duck set it in the pond, it did not sink.',
+          'Chick got in, and then a gust of wind sent the tub out on the pond. "Duck, help! I can not stop!"',
+          'Duck swam out and got the tub back to the bank. "Thanks, Duck!" said Chick. "When can I do that again?"'
         ],
         questions: [
-          { q: 'What did the chick wish for?', choices: ['a fish', 'a ship', 'a sock'], answer: 1 },
-          { q: 'What did the duck make the ship from?', choices: ['a box', 'a shell', 'mud'], answer: 0 }
+          { q: 'Why did Chick want a ship?', choices: ['Chicks can not swim', 'Chicks do not like ducks', 'The pond was too hot'], answer: 0 },
+          { q: 'How did the tub get back to the bank?', choices: ['The wind sent it back', 'Chick swam with it', 'Duck swam out and got it'], answer: 2 }
         ]
       },
       mastery: [
@@ -292,17 +292,17 @@ const LEVEL1 = {
         ]
       },
       readIt: {
-        title: 'Pip and the Frog',
+        title: 'Pip and the Stuck Frog',
         emoji: '🦄🐸',
         pages: [
-          'Pip the unicorn ran to the pond. Splish, splash!',
-          'A frog sat on a rock. "I am stuck!" said the frog.',
-          'Pip did not stop. Pip swam to the rock.',
-          'The frog got on Pip. They swam back. The frog did a big grin!'
+          'Pip sat at the pond. On a flat rock, a small frog was stuck in the hot sun. "Help!" said the frog.',
+          '"This rock is wet and slick," he said. "When I jump, I slip. I want to get back in the pond!"',
+          'Pip got a big stick. He set it from the rock down to the pond. "Step on it," he said.',
+          'The frog got a grip on the stick and slid down. Plop! "Thank you, Pip!" said the frog. "Come swim with me!"'
         ],
         questions: [
-          { q: 'Who was stuck on the rock?', choices: ['Pip', 'a frog', 'a crab'], answer: 1 },
-          { q: 'How did Pip help the frog?', choices: ['She swam to the rock and carried it back', 'She got a net', 'She called Mimi'], answer: 0 }
+          { q: 'Why can the frog not jump back into the pond?', choices: ['He is full from lunch and wants a nap', 'The rock is wet and slick, so he slips', 'He does not know how to swim'], answer: 1 },
+          { q: 'How does Pip help the frog?', choices: ['He splashes water on the hot rock', 'He picks the frog up in his hands', 'He sets a stick from the rock down to the pond'], answer: 2 }
         ]
       },
       mastery: [
@@ -370,17 +370,17 @@ const LEVEL1 = {
         ]
       },
       readIt: {
-        title: 'The Best Nest',
+        title: 'The Nest in the Wind',
         emoji: '🪺🏕️',
         pages: [
-          'Bun and Mimi went to camp. They set up a tent in the sand.',
-          'A bird had a nest by the tent. The wind sent the nest — plop! — into the sand.',
-          '"We must help!" said Bun. They got the nest.',
-          'Mimi put the nest back. The bird sang. It was the best camp!'
+          'Pip and Dad set up camp under a tall elm. "A nest with eggs!" said Pip. "I want to watch them hatch."',
+          'Then a big wind bent the elm. The nest fell in the grass with a bump, but the eggs did not crack.',
+          '"Will the mom finch come back?" said Pip. "Not down in the grass," said Dad. "But I can lift you up."',
+          'Dad held Pip up, and Pip set the nest back in the elm. At last the mom finch went back to the eggs.'
         ],
         questions: [
-          { q: 'What fell into the sand?', choices: ['the tent', 'the nest', 'the milk'], answer: 1 },
-          { q: 'Who put the nest back?', choices: ['Mimi', 'the wind', 'the bird'], answer: 0 }
+          { q: 'Why did the nest have to go back up in the elm?', choices: ['The mom finch will not land down in the grass', 'The eggs did not crack', 'The tent was in the grass'], answer: 0 },
+          { q: 'How did the nest get back up in the elm?', choices: ['Pip went up the elm', 'The wind put it back', 'Dad held Pip up so Pip could set it back'], answer: 2 }
         ]
       },
       mastery: [
@@ -447,17 +447,17 @@ const LEVEL1 = {
         ]
       },
       readIt: {
-        title: 'The King of Sparkle Meadow',
+        title: 'The King\'s Lost Ring',
         emoji: '👑🦄',
         pages: [
-          'The king lost his ring! "It is pink and small," said the king.',
-          'Pip, Mimi, Bun and Dot all went to help.',
-          'Bun went to the tall grass. Wink, wink! What is that?',
-          'The pink ring! The king said, "Thank you all!" And they all sang a song.'
+          'The king had a nap in the tall grass. When the king sat up, his ring was gone.',
+          '"That ring was a gift from Mother," said the king. "I must get it back!" Pip, Bun and Dot ran to help.',
+          'The grass was up to Bun\'s chin. "Do not stomp!" said Dot. "The ring will sink down. Hunt with your hands."',
+          'Then Bun felt a lump in the grass. It was the ring! "Thank you all!" said the king.'
         ],
         questions: [
-          { q: 'What did the king lose?', choices: ['his crown', 'his pink ring', 'his song'], answer: 1 },
-          { q: 'Where was the ring?', choices: ['in the tall grass', 'in the sink', 'in a box'], answer: 0 }
+          { q: 'What did the king tell them about the ring?', choices: ['It was a gift from Mother', 'It was pink and small', 'It was lost in the sand'], answer: 0 },
+          { q: 'What did Dot tell them to do?', choices: ['Stomp in the grass', 'Hunt with their hands', 'Nap in the tall grass'], answer: 1 }
         ]
       },
       mastery: [

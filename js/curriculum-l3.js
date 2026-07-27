@@ -62,14 +62,14 @@ const LEVEL3 = {
         title: 'The Rainbow Cupcake',
         emoji: '🌈🧁',
         pages: [
-          'It was the weekend! Pip wanted to make something for bedtime snack time.',
-          'She made a cupcake with rainbow frosting on top.',
-          'Mimi made popcorn. Bun made a fruit cup with starfruit.',
-          'They ate outside at sunset. "Teamwork makes the best snacks!" said Pip.'
+          'It was Mom\'s birthday, so Pip made a rainbow cupcake for the sunset picnic. The frosting was pink, green, and yellow.',
+          'Pip and her brother took it up the hilltop in her lunchbox. Then she tripped, and the cupcake landed upside down.',
+          'The frosting was smashed flat, and Pip felt like crying. But her brother said, "Wait. I know what to do."',
+          'They picked blackberries and set them on top in rows. At sunset Mom took a bite and said, "My best birthday yet."'
         ],
         questions: [
-          { q: 'What did Pip make?', choices: ['popcorn', 'a rainbow cupcake', 'pancakes'], answer: 1 },
-          { q: 'When did they eat their snacks?', choices: ['at sunrise', 'at lunchtime', 'at sunset'], answer: 2 }
+          { q: 'Why did Pip make the rainbow cupcake?', choices: ['It was Mom\'s birthday.', 'She wanted to eat it herself.', 'Her brother asked her to.'], answer: 0 },
+          { q: 'How did Pip and her brother fix the smashed cupcake?', choices: ['They baked a new one at home.', 'They set blackberries on top.', 'They hid it in the lunchbox.'], answer: 1 }
         ]
       },
       mastery: [
@@ -135,17 +135,17 @@ const LEVEL3 = {
         ]
       },
       readIt: {
-        title: 'The Picnic Puzzle',
+        title: 'The Missing Muffin',
         emoji: '🧺🐰',
         pages: [
-          'Bun packed a basket for a picnic: muffins, napkins, and a velvet blanket.',
-          'At the picnic, one muffin was missing! "A puzzle!" said Bun.',
-          'They found little footprints in the grass. They followed them to a bush.',
-          'A tiny kitten had the muffin! They let her keep it and gave her a napkin too.'
+          'Pip and Bun set six muffins on the picnic blanket. "Three for you and three for me," said Pip.',
+          'Bun went to fill the water cup. When she got back, just five muffins sat on the blanket.',
+          '"You ate it!" said Bun. "Not me," said Pip, pointing at a trail of muffin bits in the grass.',
+          'The trail stopped at a chipmunk with fat, stuffed cheeks. "Sorry I blamed you," said Bun, "but he can keep it."'
         ],
         questions: [
-          { q: 'What went missing at the picnic?', choices: ['a napkin', 'a muffin', 'the blanket'], answer: 1 },
-          { q: 'Who took it?', choices: ['a tiny kitten', 'a rabbit', 'a puppet'], answer: 0 }
+          { q: 'Who took the missing muffin?', choices: ['A chipmunk', 'Pip', 'Bun'], answer: 0 },
+          { q: 'Why did Bun say sorry?', choices: ['She blamed Pip when Pip did not take it', 'She ate the last muffin', 'She spilled the water cup'], answer: 0 }
         ]
       },
       mastery: [
@@ -211,17 +211,17 @@ const LEVEL3 = {
         ]
       },
       readIt: {
-        title: 'The Pony and the Baby Bunny',
+        title: 'Poppy and the Baby Bunny',
         emoji: '🐴🐰',
         pages: [
-          'A tiny baby bunny was lost on a windy day. She was very sleepy.',
-          'A kind pony found her. "Do not cry, little lady," said the pony.',
-          'The pony carried the bunny over the rocky hill, past the lily pond.',
-          'Mommy bunny was so happy! She gave the pony a shiny berry. What a lucky day!'
+          'Poppy the pony found a tiny baby bunny crying in the tall grass. "Are you lost?" she asked.',
+          '"Yes," said the bunny. "My family lives under the big oak tree." "Then hop on my back," said Poppy.',
+          '"But you are so big! I can not get up," said the bunny. Poppy lay down flat, and the bunny hopped on.',
+          'Poppy went slowly up the muddy path to the oak tree. "My baby!" cried the mother bunny. "Thank you, Poppy!"'
         ],
         questions: [
-          { q: 'Who was lost?', choices: ['the pony', 'a tiny baby bunny', 'a puppy'], answer: 1 },
-          { q: 'What did mommy bunny give the pony?', choices: ['a shiny berry', 'candy', 'a lily'], answer: 0 }
+          { q: 'Why did Poppy lie down flat?', choices: ['So she could take a nap', 'So the tiny bunny could hop on her back', 'So she could eat the tall grass'], answer: 1 },
+          { q: 'Where does the baby bunny\'s family live?', choices: ['In the tall grass where Poppy found it', 'On the muddy path', 'Under the big oak tree'], answer: 2 }
         ]
       },
       mastery: [
@@ -287,17 +287,17 @@ const LEVEL3 = {
         ]
       },
       readIt: {
-        title: 'The Little Purple Turtle',
+        title: 'Nell\'s Purple Shell',
         emoji: '💜🐢',
         pages: [
-          'A little purple turtle lived by a puddle in the middle of Crystal Castle.',
-          'Her shell did not sparkle like the other turtles. She felt simple and small.',
-          'Dot gave her a gentle hug. "Your purple shell is special," said Dot.',
-          'The sun hit her shell — and it began to sparkle and twinkle! The turtle did a happy giggle.'
+          'Nell was a little purple turtle. "Kip has spots on his shell," she said to her brother Gus. "I want spots too!"',
+          'Then Nell stuck pebbles on her shell with mud. They made her wobble, and the mud hid every bit of purple.',
+          '"Nell! Where are you?" Gus called from the tall grass. Nell jumped in a puddle and rubbed off all the mud.',
+          '"There you are!" Gus yelled and hugged her tight. "I can spot purple from way off!" Nell left the pebbles in the puddle.'
         ],
         questions: [
-          { q: 'What color was the little turtle?', choices: ['purple', 'green', 'pink'], answer: 0 },
-          { q: 'What made her shell sparkle?', choices: ['a magic apple', 'the sun', 'a candle'], answer: 1 }
+          { q: 'Why did Nell stick pebbles on her shell?', choices: ['She wanted spots like Kip has', 'She wanted to hide from Gus', 'She wanted her shell to be hard'], answer: 0 },
+          { q: 'What did Nell do so Gus could find her?', choices: ['She stuck on more pebbles', 'She rubbed the mud off her purple shell', 'She ran to the tall grass'], answer: 1 }
         ]
       },
       mastery: [
@@ -363,17 +363,17 @@ const LEVEL3 = {
         ]
       },
       readIt: {
-        title: 'The Unhappy Dragon',
+        title: 'Dot Remakes the Fort',
         emoji: '🐉😢',
         pages: [
-          'Dot the dragon was unhappy. Her sandcastle was unmade by the waves!',
-          '"Do not worry," said Pip. "We can rebuild it. Let\'s redo it together!"',
-          'They remade the walls. They refilled the moat. Bun untied her ribbon for the flag.',
-          'The new castle was even better. Dot was unhappy no more — she was overjoyed!'
+          'Dot dug all morning to make the biggest sand fort on the beach. Then a big wave rushed in and undid it.',
+          '"All that work is undone!" said Dot. "Let\'s remake it up by the rocks," said Bun. "Waves never reach that far."',
+          'So they remade the fort up by the rocks. Dot packed the walls thick and tall, and Bun dug a deep moat.',
+          'The next wave rushed up the beach and stopped at the moat. "We were prepared this time!" said Dot, and Bun grinned.'
         ],
         questions: [
-          { q: 'Why was Dot unhappy?', choices: ['the waves unmade her sandcastle', 'she lost her toy', 'it was raining'], answer: 0 },
-          { q: 'What does "rebuild" mean?', choices: ['build again', 'knock down', 'not build'], answer: 0 }
+          { q: 'What happened to Dot\'s first sand fort?', choices: ['Bun stepped on it', 'A wave rushed in and undid it', 'Dot dug it up herself'], answer: 1 },
+          { q: 'Why did Dot and Bun remake the fort up by the rocks?', choices: ['The sand was drier there', 'Waves never reach that far', 'It was closer to their house'], answer: 1 }
         ]
       },
       mastery: [
@@ -440,17 +440,17 @@ const LEVEL3 = {
         ]
       },
       readIt: {
-        title: 'The Bravest Kitten',
+        title: 'Kit and the Thin Wall',
         emoji: '🏅🐱',
         pages: [
-          'Mimi\'s little sister was the smallest kitten in Crystal Castle. But she was fearless!',
-          'One day, a playful puppy got stuck on the highest wall. He barked loudly.',
-          'The small kitten climbed up quickly and softly. Everyone watched, breathless.',
-          'She led the puppy safely down. "You are the bravest of all!" they cheered joyfully.'
+          'Kit was the smallest kitten on the farm. "You are too little to be helpful," said her big sisters.',
+          'Then Bud the puppy yelped. He had run up the hay pile onto the tallest wall, and he was too afraid to move.',
+          '"The wall is too thin for us. It is hopeless," said her sisters. But Kit was the lightest, so up she went.',
+          '"Look at me, Bud," said Kit, and slowly she led him back to the hay. "You were helpful after all," said her sisters.'
         ],
         questions: [
-          { q: 'What does "fearless" mean?', choices: ['full of fear', 'without fear', 'a little scared'], answer: 1 },
-          { q: 'Who got stuck on the wall?', choices: ['a playful puppy', 'the kitten', 'Mimi'], answer: 0 }
+          { q: 'Why did Kit go up on the wall instead of her big sisters?', choices: ['She had the longest legs.', 'She was the lightest cat.', 'She could jump the highest.'], answer: 1 },
+          { q: 'How did Bud get down off the wall?', choices: ['He jumped down all by himself.', 'The big sisters lifted him down.', 'Kit led him back to the hay pile.'], answer: 2 }
         ]
       },
       mastery: [
@@ -517,17 +517,17 @@ const LEVEL3 = {
         ]
       },
       readIt: {
-        title: 'The Knight Who Could Write',
+        title: 'Wren the Knight Writes a Note',
         emoji: '⚔️✍️',
         pages: [
-          'In the center of the city lived a gentle knight. He loved to write!',
-          'A giant came to the castle. Everyone hid — but the knight did not budge.',
-          'The knight wrote a nice note: "Would you like to dance at our party?"',
-          'The giant smiled a huge smile. The giant loved to dance! And that is how the city made a giant friend.'
+          'Every night a giant stomped past the town. The beds shook, the cups danced on the shelf, and no one could sleep.',
+          'Wren the knight was too small to fight a giant. "But I can write," she said. So she wrote a huge note.',
+          'She left it on his path. The note said, "Giant, your steps shake our beds. Can you stomp on the soft grass?"',
+          'The giant read it. "Oh no! I did not know," he said. Now he stomps on the grass, and the town sleeps.'
         ],
         questions: [
-          { q: 'What did the gentle knight love to do?', choices: ['fight', 'write', 'race'], answer: 1 },
-          { q: 'How did the knight make friends with the giant?', choices: ['he wrote a nice note', 'he built a fence', 'he rang a bell'], answer: 0 }
+          { q: 'Why could no one in the town sleep?', choices: ['A giant stomped past every night', 'The beds were much too small', 'A big storm shook the town'], answer: 0 },
+          { q: 'How did Wren get the giant to stop shaking the beds?', choices: ['She yelled at him all night', 'She wrote him a huge note', 'She hid under her bed'], answer: 1 }
         ]
       },
       mastery: [

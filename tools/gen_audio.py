@@ -485,7 +485,20 @@ def validate(manifest, phrases):
     missing = [f for f in manifest['words'].values()
                if not os.path.exists(os.path.join(AUDIO, f))]
     if missing:
-        problems.append(f'{len(missing)} word/phrase clips missing on disk')
+        problems.append(f'{len(missing)} word/phrase clips missing on disk: '
+                        + ', '.join(sorted(missing)[:6]))
+    # A truncated encode leaves a file that exists but holds no audio.
+    empty = [f for f in manifest['words'].values()
+             if os.path.exists(os.path.join(AUDIO, f))
+             and os.path.getsize(os.path.join(AUDIO, f)) < 900]
+    if empty:
+        problems.append(f'{len(empty)} clips are too small to contain audio: '
+                        + ', '.join(sorted(empty)[:6]))
+    # Narration is the one recording per island the lesson actually plays; a
+    # missing file here means the guide says nothing at all on that screen.
+    for island, f in sorted((manifest.get('narr') or {}).items()):
+        if not os.path.exists(os.path.join(AUDIO, f)):
+            problems.append(f'narration for {island} missing on disk ({f})')
     for p in phrases:
         if norm(p) not in manifest['words']:
             problems.append(f'phrase would be stitched from words: {p[:70]!r}')

@@ -413,6 +413,13 @@ const App = {
 
   showHome() {
     const p = this.profile;
+    // The premise is the reason any of this matters — she hears it once, the
+    // first time she arrives, and can replay it from the map.
+    if (typeof QUEST !== 'undefined' && QUEST && !p.progress.heardPremise) {
+      p.progress.heardPremise = true;
+      this.save();
+      return this.showPremise();
+    }
     const q = this.quest();
     const creatures = Math.min(CREATURES.length, Math.floor(p.progress.stars / STARS_PER_CREATURE));
     const chip = (done, label) => `<span class="star-chip" style="${done ? 'background:var(--green);color:#fff' : ''}">${done ? '✅' : '⭕'} ${label}</span>`;
@@ -470,9 +477,13 @@ const App = {
       const { isl, lv, li, ii } = node;
       if (lv.id !== lastLevel) {
         lastLevel = lv.id;
-        rows.push(`<div class="land-banner land-${lv.id}">
-            <span class="land-emoji">${lv.emoji}</span>
-            <span>${lv.name}</span>
+        const land = (typeof QUEST !== 'undefined' && QUEST && QUEST.lands)
+          ? QUEST.lands.find(l => l.level === lv.name) : null;
+        rows.push(`<div class="land-block">
+            <div class="land-banner land-${lv.id}">
+              <span class="land-emoji">${lv.emoji}</span><span>${lv.name}</span>
+            </div>
+            ${land ? `<div class="land-goal">${land.goal}</div>` : ''}
           </div>`);
       }
       const done = this.isDone(isl.id);
@@ -523,6 +534,18 @@ const App = {
     this.speakQueue([c.name, 'Hello!']);
     const el = document.querySelector(`.path-buddy .char`);
     if (el) { el.classList.remove('wiggle'); void el.offsetWidth; el.classList.add('wiggle'); }
+  },
+
+  showPremise() {
+    Sfx.play('page', 0.6);
+    this.render(`
+      <div class="beat-screen">
+        ${this.charHtml('pip', 'beat-char', '🦄')}
+        <div class="beat-bubble" onclick="App.speak(this.textContent)">${QUEST.premise}</div>
+        <button class="btn big green mt" onclick="Sfx.play('tap',0.5); App.showHome()">I'll help you, Pip! ➜</button>
+      </div>
+    `);
+    setTimeout(() => this.speak(QUEST.premise), 400);
   },
 
   lockedTap() {

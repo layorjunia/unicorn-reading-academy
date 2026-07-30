@@ -1,0 +1,2922 @@
+{
+ "groups": [
+  {
+   "key": "consonants",
+   "title": "Consonant sounds",
+   "items": [
+    "b",
+    "k",
+    "d",
+    "f",
+    "g",
+    "h",
+    "j",
+    "l",
+    "m",
+    "n",
+    "p",
+    "r",
+    "s",
+    "t",
+    "v",
+    "w",
+    "y",
+    "z",
+    "sh",
+    "ch",
+    "th",
+    "ng",
+    "kw",
+    "ks"
+   ]
+  },
+  {
+   "key": "vowels",
+   "title": "Vowel sounds",
+   "items": [
+    "short-a",
+    "short-e",
+    "short-i",
+    "short-o",
+    "short-u",
+    "long-a",
+    "long-e",
+    "long-i",
+    "long-o",
+    "long-u",
+    "oo",
+    "ar",
+    "or",
+    "er",
+    "ow",
+    "oy"
+   ]
+  },
+  {
+   "key": "glued",
+   "title": "Glued sounds",
+   "items": [
+    "ing",
+    "ang",
+    "ank",
+    "ink",
+    "all",
+    "ant"
+   ]
+  },
+  {
+   "key": "chunks",
+   "title": "Level 3 syllables (optional)",
+   "items": [
+    "chunk-ap",
+    "chunk-ba",
+    "chunk-back",
+    "chunk-bas",
+    "chunk-bath",
+    "chunk-bed",
+    "chunk-bel",
+    "chunk-ber",
+    "chunk-bit",
+    "chunk-blan",
+    "chunk-ble",
+    "chunk-bo",
+    "chunk-boat",
+    "chunk-bon",
+    "chunk-bot",
+    "chunk-bow",
+    "chunk-boy",
+    "chunk-brav",
+    "chunk-brave",
+    "chunk-bright",
+    "chunk-bub",
+    "chunk-build",
+    "chunk-bun",
+    "chunk-by",
+    "chunk-ca",
+    "chunk-cake",
+    "chunk-can",
+    "chunk-care",
+    "chunk-cat",
+    "chunk-cen",
+    "chunk-chan",
+    "chunk-cheer",
+    "chunk-cher",
+    "chunk-cil",
+    "chunk-cle",
+    "chunk-coat",
+    "chunk-col",
+    "chunk-con",
+    "chunk-corn",
+    "chunk-cot",
+    "chunk-cow",
+    "chunk-cup",
+    "chunk-cus",
+    "chunk-dan",
+    "chunk-day",
+    "chunk-den",
+    "chunk-der",
+    "chunk-dex",
+    "chunk-dle",
+    "chunk-do",
+    "chunk-dy",
+    "chunk-end",
+    "chunk-est",
+    "chunk-et",
+    "chunk-fair",
+    "chunk-fast",
+    "chunk-fear",
+    "chunk-fen",
+    "chunk-fill",
+    "chunk-fin",
+    "chunk-fish",
+    "chunk-fo",
+    "chunk-ful",
+    "chunk-fun",
+    "chunk-gen",
+    "chunk-ger",
+    "chunk-gig",
+    "chunk-glad",
+    "chunk-gle",
+    "chunk-han",
+    "chunk-hap",
+    "chunk-harm",
+    "chunk-heat",
+    "chunk-hel",
+    "chunk-help",
+    "chunk-hill",
+    "chunk-home",
+    "chunk-hope",
+    "chunk-ic",
+    "chunk-in",
+    "chunk-jel",
+    "chunk-joy",
+    "chunk-jun",
+    "chunk-ket",
+    "chunk-kin",
+    "chunk-kind",
+    "chunk-kit",
+    "chunk-kle",
+    "chunk-la",
+    "chunk-lap",
+    "chunk-lem",
+    "chunk-less",
+    "chunk-light",
+    "chunk-lit",
+    "chunk-lock",
+    "chunk-loud",
+    "chunk-luck",
+    "chunk-ly",
+    "chunk-ma",
+    "chunk-mag",
+    "chunk-make",
+    "chunk-man",
+    "chunk-mas",
+    "chunk-ment",
+    "chunk-met",
+    "chunk-mid",
+    "chunk-mit",
+    "chunk-mo",
+    "chunk-moon",
+    "chunk-mu",
+    "chunk-muf",
+    "chunk-na",
+    "chunk-nap",
+    "chunk-net",
+    "chunk-nic",
+    "chunk-nis",
+    "chunk-nus",
+    "chunk-ny",
+    "chunk-out",
+    "chunk-pa",
+    "chunk-pack",
+    "chunk-pad",
+    "chunk-paint",
+    "chunk-pan",
+    "chunk-pen",
+    "chunk-per",
+    "chunk-pet",
+    "chunk-pic",
+    "chunk-pil",
+    "chunk-play",
+    "chunk-ple",
+    "chunk-po",
+    "chunk-pock",
+    "chunk-pop",
+    "chunk-pre",
+    "chunk-prin",
+    "chunk-prob",
+    "chunk-pu",
+    "chunk-pud",
+    "chunk-pump",
+    "chunk-pup",
+    "chunk-pur",
+    "chunk-py",
+    "chunk-quick",
+    "chunk-rab",
+    "chunk-rain",
+    "chunk-re",
+    "chunk-read",
+    "chunk-rib",
+    "chunk-rid",
+    "chunk-rip",
+    "chunk-rise",
+    "chunk-ro",
+    "chunk-rob",
+    "chunk-rock",
+    "chunk-ry",
+    "chunk-sad",
+    "chunk-safe",
+    "chunk-sail",
+    "chunk-san",
+    "chunk-school",
+    "chunk-sea",
+    "chunk-sect",
+    "chunk-set",
+    "chunk-sic",
+    "chunk-side",
+    "chunk-sil",
+    "chunk-sim",
+    "chunk-slow",
+    "chunk-small",
+    "chunk-snow",
+    "chunk-soft",
+    "chunk-spar",
+    "chunk-spi",
+    "chunk-spot",
+    "chunk-star",
+    "chunk-sto",
+    "chunk-sud",
+    "chunk-sun",
+    "chunk-sweet",
+    "chunk-ta",
+    "chunk-tall",
+    "chunk-tell",
+    "chunk-ten",
+    "chunk-ter",
+    "chunk-test",
+    "chunk-thank",
+    "chunk-ti",
+    "chunk-tie",
+    "chunk-time",
+    "chunk-tist",
+    "chunk-tle",
+    "chunk-top",
+    "chunk-trum",
+    "chunk-tub",
+    "chunk-tur",
+    "chunk-turn",
+    "chunk-twin",
+    "chunk-ty",
+    "chunk-un",
+    "chunk-vel",
+    "chunk-vet",
+    "chunk-view",
+    "chunk-vy",
+    "chunk-weed",
+    "chunk-week",
+    "chunk-wig",
+    "chunk-win",
+    "chunk-wob",
+    "chunk-yard",
+    "chunk-zip"
+   ]
+  }
+ ],
+ "sounds": {
+  "b": {
+   "label": "/b/",
+   "type": "stop",
+   "graphemes": [
+    "b"
+   ],
+   "examples": [
+    {
+     "w": "bat",
+     "clip": "audio/w/bat.m4a"
+    },
+    {
+     "w": "big",
+     "clip": "audio/w/big.m4a"
+    },
+    {
+     "w": "bed",
+     "clip": "audio/w/bed.m4a"
+    }
+   ]
+  },
+  "k": {
+   "label": "/k/",
+   "type": "stop",
+   "graphemes": [
+    "c",
+    "k",
+    "ck"
+   ],
+   "examples": [
+    {
+     "w": "cat",
+     "clip": "audio/w/cat.m4a"
+    },
+    {
+     "w": "kit",
+     "clip": "audio/w/kit.m4a"
+    },
+    {
+     "w": "duck",
+     "clip": "audio/w/duck.m4a"
+    }
+   ]
+  },
+  "d": {
+   "label": "/d/",
+   "type": "stop",
+   "graphemes": [
+    "d"
+   ],
+   "examples": [
+    {
+     "w": "dog",
+     "clip": "audio/w/dog.m4a"
+    },
+    {
+     "w": "dad",
+     "clip": "audio/w/dad.m4a"
+    },
+    {
+     "w": "mud",
+     "clip": "audio/w/mud.m4a"
+    }
+   ]
+  },
+  "f": {
+   "label": "/f/",
+   "type": "cont",
+   "graphemes": [
+    "f"
+   ],
+   "examples": [
+    {
+     "w": "fan",
+     "clip": "audio/w/fan.m4a"
+    },
+    {
+     "w": "fish",
+     "clip": "audio/w/fish.m4a"
+    },
+    {
+     "w": "fun",
+     "clip": "audio/w/fun.m4a"
+    }
+   ]
+  },
+  "g": {
+   "label": "/g/",
+   "type": "stop",
+   "graphemes": [
+    "g"
+   ],
+   "examples": [
+    {
+     "w": "got",
+     "clip": "audio/w/got.m4a"
+    },
+    {
+     "w": "bag",
+     "clip": "audio/w/bag.m4a"
+    },
+    {
+     "w": "pig",
+     "clip": "audio/w/pig.m4a"
+    }
+   ]
+  },
+  "h": {
+   "label": "/h/",
+   "type": "glide",
+   "graphemes": [
+    "h"
+   ],
+   "examples": [
+    {
+     "w": "hat",
+     "clip": "audio/w/hat.m4a"
+    },
+    {
+     "w": "hen",
+     "clip": "audio/w/hen.m4a"
+    },
+    {
+     "w": "hop",
+     "clip": "audio/w/hop.m4a"
+    }
+   ]
+  },
+  "j": {
+   "label": "/j/",
+   "type": "stop",
+   "graphemes": [
+    "j",
+    "ge",
+    "gi"
+   ],
+   "examples": [
+    {
+     "w": "jam",
+     "clip": "audio/w/jam.m4a"
+    },
+    {
+     "w": "jet",
+     "clip": "audio/w/jet.m4a"
+    },
+    {
+     "w": "jug",
+     "clip": "audio/w/jug.m4a"
+    }
+   ]
+  },
+  "l": {
+   "label": "/l/",
+   "type": "cont",
+   "graphemes": [
+    "l",
+    "ll"
+   ],
+   "examples": [
+    {
+     "w": "lap",
+     "clip": "audio/w/lap.m4a"
+    },
+    {
+     "w": "leg",
+     "clip": "audio/w/leg.m4a"
+    },
+    {
+     "w": "shell",
+     "clip": "audio/w/shell.m4a"
+    }
+   ]
+  },
+  "m": {
+   "label": "/m/",
+   "type": "cont",
+   "graphemes": [
+    "m"
+   ],
+   "examples": [
+    {
+     "w": "map",
+     "clip": "audio/w/map.m4a"
+    },
+    {
+     "w": "man",
+     "clip": "audio/w/man.m4a"
+    },
+    {
+     "w": "ham",
+     "clip": "audio/w/ham.m4a"
+    }
+   ]
+  },
+  "n": {
+   "label": "/n/",
+   "type": "cont",
+   "graphemes": [
+    "n",
+    "kn"
+   ],
+   "examples": [
+    {
+     "w": "net",
+     "clip": "audio/w/net.m4a"
+    },
+    {
+     "w": "nap",
+     "clip": "audio/w/nap.m4a"
+    },
+    {
+     "w": "sun",
+     "clip": "audio/w/sun.m4a"
+    }
+   ]
+  },
+  "p": {
+   "label": "/p/",
+   "type": "stop",
+   "graphemes": [
+    "p"
+   ],
+   "examples": [
+    {
+     "w": "pan",
+     "clip": "audio/w/pan.m4a"
+    },
+    {
+     "w": "pig",
+     "clip": "audio/w/pig.m4a"
+    },
+    {
+     "w": "cup",
+     "clip": "audio/w/cup.m4a"
+    }
+   ]
+  },
+  "r": {
+   "label": "/r/",
+   "type": "cont",
+   "graphemes": [
+    "r",
+    "wr"
+   ],
+   "examples": [
+    {
+     "w": "run",
+     "clip": "audio/w/run.m4a"
+    },
+    {
+     "w": "red",
+     "clip": "audio/w/red.m4a"
+    },
+    {
+     "w": "rat",
+     "clip": "audio/w/rat.m4a"
+    }
+   ]
+  },
+  "s": {
+   "label": "/s/",
+   "type": "cont",
+   "graphemes": [
+    "s",
+    "ce",
+    "ci"
+   ],
+   "examples": [
+    {
+     "w": "sun",
+     "clip": "audio/w/sun.m4a"
+    },
+    {
+     "w": "sit",
+     "clip": "audio/w/sit.m4a"
+    },
+    {
+     "w": "bus",
+     "clip": "audio/w/bus.m4a"
+    }
+   ]
+  },
+  "t": {
+   "label": "/t/",
+   "type": "stop",
+   "graphemes": [
+    "t"
+   ],
+   "examples": [
+    {
+     "w": "top",
+     "clip": "audio/w/top.m4a"
+    },
+    {
+     "w": "ten",
+     "clip": "audio/w/ten.m4a"
+    },
+    {
+     "w": "cat",
+     "clip": "audio/w/cat.m4a"
+    }
+   ]
+  },
+  "v": {
+   "label": "/v/",
+   "type": "cont",
+   "graphemes": [
+    "v"
+   ],
+   "examples": [
+    {
+     "w": "vet",
+     "clip": "audio/w/vet.m4a"
+    },
+    {
+     "w": "van",
+     "clip": null
+    }
+   ]
+  },
+  "w": {
+   "label": "/w/",
+   "type": "glide",
+   "graphemes": [
+    "w",
+    "wh"
+   ],
+   "examples": [
+    {
+     "w": "wet",
+     "clip": "audio/w/wet.m4a"
+    },
+    {
+     "w": "wig",
+     "clip": "audio/w/wig.m4a"
+    },
+    {
+     "w": "when",
+     "clip": "audio/w/when.m4a"
+    }
+   ]
+  },
+  "y": {
+   "label": "/y/",
+   "type": "glide",
+   "graphemes": [
+    "y"
+   ],
+   "examples": [
+    {
+     "w": "yes",
+     "clip": "audio/w/yes.m4a"
+    },
+    {
+     "w": "yak",
+     "clip": null
+    }
+   ]
+  },
+  "z": {
+   "label": "/z/",
+   "type": "cont",
+   "graphemes": [
+    "z"
+   ],
+   "examples": [
+    {
+     "w": "zip",
+     "clip": "audio/w/zip.m4a"
+    },
+    {
+     "w": "buzz",
+     "clip": "audio/w/buzz.m4a"
+    }
+   ]
+  },
+  "sh": {
+   "label": "/sh/",
+   "type": "cont",
+   "graphemes": [
+    "sh"
+   ],
+   "examples": [
+    {
+     "w": "ship",
+     "clip": "audio/w/ship.m4a"
+    },
+    {
+     "w": "fish",
+     "clip": "audio/w/fish.m4a"
+    },
+    {
+     "w": "shop",
+     "clip": "audio/w/shop.m4a"
+    }
+   ]
+  },
+  "ch": {
+   "label": "/ch/",
+   "type": "stop",
+   "graphemes": [
+    "ch"
+   ],
+   "examples": [
+    {
+     "w": "chat",
+     "clip": "audio/w/chat.m4a"
+    },
+    {
+     "w": "chip",
+     "clip": "audio/w/chip.m4a"
+    },
+    {
+     "w": "much",
+     "clip": "audio/w/much.m4a"
+    }
+   ]
+  },
+  "th": {
+   "label": "/th/",
+   "type": "cont",
+   "graphemes": [
+    "th"
+   ],
+   "examples": [
+    {
+     "w": "thin",
+     "clip": "audio/w/thin.m4a"
+    },
+    {
+     "w": "bath",
+     "clip": "audio/w/bath.m4a"
+    },
+    {
+     "w": "math",
+     "clip": "audio/w/math.m4a"
+    }
+   ]
+  },
+  "ng": {
+   "label": "/ng/",
+   "type": "cont",
+   "graphemes": [
+    "ng"
+   ],
+   "examples": [
+    {
+     "w": "ring",
+     "clip": "audio/w/ring.m4a"
+    },
+    {
+     "w": "song",
+     "clip": "audio/w/song.m4a"
+    }
+   ]
+  },
+  "kw": {
+   "label": "/kw/",
+   "type": "stop",
+   "graphemes": [
+    "qu"
+   ],
+   "examples": [
+    {
+     "w": "quick",
+     "clip": "audio/w/quick.m4a"
+    },
+    {
+     "w": "quit",
+     "clip": "audio/w/quit.m4a"
+    }
+   ]
+  },
+  "ks": {
+   "label": "/ks/",
+   "type": "cont",
+   "graphemes": [
+    "x"
+   ],
+   "examples": [
+    {
+     "w": "six",
+     "clip": "audio/w/six.m4a"
+    },
+    {
+     "w": "box",
+     "clip": "audio/w/box.m4a"
+    },
+    {
+     "w": "fox",
+     "clip": "audio/w/fox.m4a"
+    }
+   ]
+  },
+  "short-a": {
+   "label": "/a/",
+   "type": "vowel",
+   "graphemes": [
+    "a"
+   ],
+   "examples": [
+    {
+     "w": "cat",
+     "clip": "audio/w/cat.m4a"
+    },
+    {
+     "w": "hat",
+     "clip": "audio/w/hat.m4a"
+    },
+    {
+     "w": "map",
+     "clip": "audio/w/map.m4a"
+    }
+   ]
+  },
+  "short-e": {
+   "label": "/e/",
+   "type": "vowel",
+   "graphemes": [
+    "e"
+   ],
+   "examples": [
+    {
+     "w": "bed",
+     "clip": "audio/w/bed.m4a"
+    },
+    {
+     "w": "pen",
+     "clip": "audio/w/pen.m4a"
+    },
+    {
+     "w": "net",
+     "clip": "audio/w/net.m4a"
+    }
+   ]
+  },
+  "short-i": {
+   "label": "/i/",
+   "type": "vowel",
+   "graphemes": [
+    "i"
+   ],
+   "examples": [
+    {
+     "w": "sit",
+     "clip": "audio/w/sit.m4a"
+    },
+    {
+     "w": "pig",
+     "clip": "audio/w/pig.m4a"
+    },
+    {
+     "w": "win",
+     "clip": "audio/w/win.m4a"
+    }
+   ]
+  },
+  "short-o": {
+   "label": "/o/",
+   "type": "vowel",
+   "graphemes": [
+    "o"
+   ],
+   "examples": [
+    {
+     "w": "hot",
+     "clip": "audio/w/hot.m4a"
+    },
+    {
+     "w": "dog",
+     "clip": "audio/w/dog.m4a"
+    },
+    {
+     "w": "top",
+     "clip": "audio/w/top.m4a"
+    }
+   ]
+  },
+  "short-u": {
+   "label": "/u/",
+   "type": "vowel",
+   "graphemes": [
+    "u"
+   ],
+   "examples": [
+    {
+     "w": "sun",
+     "clip": "audio/w/sun.m4a"
+    },
+    {
+     "w": "bug",
+     "clip": "audio/w/bug.m4a"
+    },
+    {
+     "w": "cup",
+     "clip": "audio/w/cup.m4a"
+    }
+   ]
+  },
+  "long-a": {
+   "label": "/\u0101/",
+   "type": "vowel",
+   "graphemes": [
+    "a_e",
+    "ai",
+    "ay"
+   ],
+   "examples": [
+    {
+     "w": "cake",
+     "clip": "audio/w/cake.m4a"
+    },
+    {
+     "w": "rain",
+     "clip": "audio/w/rain.m4a"
+    },
+    {
+     "w": "play",
+     "clip": "audio/w/play.m4a"
+    }
+   ]
+  },
+  "long-e": {
+   "label": "/\u0113/",
+   "type": "vowel",
+   "graphemes": [
+    "ee",
+    "ea",
+    "ey",
+    "y_e"
+   ],
+   "examples": [
+    {
+     "w": "see",
+     "clip": "audio/w/see.m4a"
+    },
+    {
+     "w": "read",
+     "clip": "audio/w/read.m4a"
+    },
+    {
+     "w": "key",
+     "clip": "audio/w/key.m4a"
+    }
+   ]
+  },
+  "long-i": {
+   "label": "/\u012b/",
+   "type": "vowel",
+   "graphemes": [
+    "i_e",
+    "igh",
+    "y_i",
+    "eye",
+    "ie"
+   ],
+   "examples": [
+    {
+     "w": "ride",
+     "clip": "audio/w/ride.m4a"
+    },
+    {
+     "w": "light",
+     "clip": "audio/w/light.m4a"
+    },
+    {
+     "w": "sky",
+     "clip": "audio/w/sky.m4a"
+    }
+   ]
+  },
+  "long-o": {
+   "label": "/\u014d/",
+   "type": "vowel",
+   "graphemes": [
+    "o_e",
+    "oa",
+    "ow_o"
+   ],
+   "examples": [
+    {
+     "w": "home",
+     "clip": "audio/w/home.m4a"
+    },
+    {
+     "w": "boat",
+     "clip": "audio/w/boat.m4a"
+    },
+    {
+     "w": "snow",
+     "clip": "audio/w/snow.m4a"
+    }
+   ]
+  },
+  "long-u": {
+   "label": "/\u016b/",
+   "type": "vowel",
+   "graphemes": [
+    "u_e"
+   ],
+   "examples": [
+    {
+     "w": "cube",
+     "clip": "audio/w/cube.m4a"
+    },
+    {
+     "w": "mule",
+     "clip": "audio/w/mule.m4a"
+    },
+    {
+     "w": "cute",
+     "clip": "audio/w/cute.m4a"
+    }
+   ]
+  },
+  "oo": {
+   "label": "/oo/",
+   "type": "vowel",
+   "graphemes": [
+    "oo"
+   ],
+   "examples": [
+    {
+     "w": "moon",
+     "clip": "audio/w/moon.m4a"
+    },
+    {
+     "w": "zoo",
+     "clip": "audio/w/zoo.m4a"
+    },
+    {
+     "w": "food",
+     "clip": "audio/w/food.m4a"
+    }
+   ]
+  },
+  "ar": {
+   "label": "/ar/",
+   "type": "vowel",
+   "graphemes": [
+    "ar"
+   ],
+   "examples": [
+    {
+     "w": "star",
+     "clip": "audio/w/star.m4a"
+    },
+    {
+     "w": "car",
+     "clip": "audio/w/car.m4a"
+    },
+    {
+     "w": "barn",
+     "clip": "audio/w/barn.m4a"
+    }
+   ]
+  },
+  "or": {
+   "label": "/or/",
+   "type": "vowel",
+   "graphemes": [
+    "or"
+   ],
+   "examples": [
+    {
+     "w": "corn",
+     "clip": "audio/w/corn.m4a"
+    },
+    {
+     "w": "fort",
+     "clip": "audio/w/fort.m4a"
+    },
+    {
+     "w": "storm",
+     "clip": "audio/w/storm.m4a"
+    }
+   ]
+  },
+  "er": {
+   "label": "/er/",
+   "type": "vowel",
+   "graphemes": [
+    "er",
+    "ir",
+    "ur"
+   ],
+   "examples": [
+    {
+     "w": "her",
+     "clip": "audio/w/her.m4a"
+    },
+    {
+     "w": "bird",
+     "clip": "audio/w/bird.m4a"
+    },
+    {
+     "w": "turn",
+     "clip": "audio/w/turn.m4a"
+    }
+   ]
+  },
+  "ow": {
+   "label": "/ow/",
+   "type": "vowel",
+   "graphemes": [
+    "ou",
+    "ow_ou"
+   ],
+   "examples": [
+    {
+     "w": "out",
+     "clip": "audio/w/out.m4a"
+    },
+    {
+     "w": "cow",
+     "clip": "audio/w/cow.m4a"
+    },
+    {
+     "w": "loud",
+     "clip": "audio/w/loud.m4a"
+    }
+   ]
+  },
+  "oy": {
+   "label": "/oy/",
+   "type": "vowel",
+   "graphemes": [
+    "oi",
+    "oy"
+   ],
+   "examples": [
+    {
+     "w": "coin",
+     "clip": "audio/w/coin.m4a"
+    },
+    {
+     "w": "boy",
+     "clip": "audio/w/boy.m4a"
+    },
+    {
+     "w": "joy",
+     "clip": "audio/w/joy.m4a"
+    }
+   ]
+  },
+  "ing": {
+   "label": "-ing",
+   "type": "glued",
+   "graphemes": [
+    "ing"
+   ],
+   "examples": [
+    {
+     "w": "ring",
+     "clip": "audio/w/ring.m4a"
+    },
+    {
+     "w": "king",
+     "clip": "audio/w/king.m4a"
+    }
+   ]
+  },
+  "ang": {
+   "label": "-ang",
+   "type": "glued",
+   "graphemes": [
+    "ang"
+   ],
+   "examples": [
+    {
+     "w": "sang",
+     "clip": "audio/w/sang.m4a"
+    },
+    {
+     "w": "bang",
+     "clip": "audio/w/bang.m4a"
+    }
+   ]
+  },
+  "ank": {
+   "label": "-ank",
+   "type": "glued",
+   "graphemes": [
+    "ank"
+   ],
+   "examples": [
+    {
+     "w": "thank",
+     "clip": "audio/w/thank.m4a"
+    },
+    {
+     "w": "bank",
+     "clip": "audio/w/bank.m4a"
+    }
+   ]
+  },
+  "ink": {
+   "label": "-ink",
+   "type": "glued",
+   "graphemes": [
+    "ink"
+   ],
+   "examples": [
+    {
+     "w": "pink",
+     "clip": "audio/w/pink.m4a"
+    },
+    {
+     "w": "wink",
+     "clip": "audio/w/wink.m4a"
+    }
+   ]
+  },
+  "all": {
+   "label": "-all",
+   "type": "glued",
+   "graphemes": [
+    "all"
+   ],
+   "examples": [
+    {
+     "w": "ball",
+     "clip": "audio/w/ball.m4a"
+    },
+    {
+     "w": "tall",
+     "clip": "audio/w/tall.m4a"
+    }
+   ]
+  },
+  "ant": {
+   "label": "-ant",
+   "type": "glued",
+   "graphemes": [
+    "ant"
+   ],
+   "examples": [
+    {
+     "w": "ant",
+     "clip": "audio/w/ant.m4a"
+    },
+    {
+     "w": "plant",
+     "clip": "audio/w/plant.m4a"
+    }
+   ]
+  },
+  "chunk-ap": {
+   "label": "ap",
+   "type": "chunk",
+   "graphemes": [
+    "ap"
+   ],
+   "examples": []
+  },
+  "chunk-ba": {
+   "label": "ba",
+   "type": "chunk",
+   "graphemes": [
+    "ba"
+   ],
+   "examples": []
+  },
+  "chunk-back": {
+   "label": "back",
+   "type": "chunk",
+   "graphemes": [
+    "back"
+   ],
+   "examples": []
+  },
+  "chunk-bas": {
+   "label": "bas",
+   "type": "chunk",
+   "graphemes": [
+    "bas"
+   ],
+   "examples": []
+  },
+  "chunk-bath": {
+   "label": "bath",
+   "type": "chunk",
+   "graphemes": [
+    "bath"
+   ],
+   "examples": []
+  },
+  "chunk-bed": {
+   "label": "bed",
+   "type": "chunk",
+   "graphemes": [
+    "bed"
+   ],
+   "examples": []
+  },
+  "chunk-bel": {
+   "label": "bel",
+   "type": "chunk",
+   "graphemes": [
+    "bel"
+   ],
+   "examples": []
+  },
+  "chunk-ber": {
+   "label": "ber",
+   "type": "chunk",
+   "graphemes": [
+    "ber"
+   ],
+   "examples": []
+  },
+  "chunk-bit": {
+   "label": "bit",
+   "type": "chunk",
+   "graphemes": [
+    "bit"
+   ],
+   "examples": []
+  },
+  "chunk-blan": {
+   "label": "blan",
+   "type": "chunk",
+   "graphemes": [
+    "blan"
+   ],
+   "examples": []
+  },
+  "chunk-ble": {
+   "label": "ble",
+   "type": "chunk",
+   "graphemes": [
+    "ble"
+   ],
+   "examples": []
+  },
+  "chunk-bo": {
+   "label": "bo",
+   "type": "chunk",
+   "graphemes": [
+    "bo"
+   ],
+   "examples": []
+  },
+  "chunk-boat": {
+   "label": "boat",
+   "type": "chunk",
+   "graphemes": [
+    "boat"
+   ],
+   "examples": []
+  },
+  "chunk-bon": {
+   "label": "bon",
+   "type": "chunk",
+   "graphemes": [
+    "bon"
+   ],
+   "examples": []
+  },
+  "chunk-bot": {
+   "label": "bot",
+   "type": "chunk",
+   "graphemes": [
+    "bot"
+   ],
+   "examples": []
+  },
+  "chunk-bow": {
+   "label": "bow",
+   "type": "chunk",
+   "graphemes": [
+    "bow"
+   ],
+   "examples": []
+  },
+  "chunk-boy": {
+   "label": "boy",
+   "type": "chunk",
+   "graphemes": [
+    "boy"
+   ],
+   "examples": []
+  },
+  "chunk-brav": {
+   "label": "brav",
+   "type": "chunk",
+   "graphemes": [
+    "brav"
+   ],
+   "examples": []
+  },
+  "chunk-brave": {
+   "label": "brave",
+   "type": "chunk",
+   "graphemes": [
+    "brave"
+   ],
+   "examples": []
+  },
+  "chunk-bright": {
+   "label": "bright",
+   "type": "chunk",
+   "graphemes": [
+    "bright"
+   ],
+   "examples": []
+  },
+  "chunk-bub": {
+   "label": "bub",
+   "type": "chunk",
+   "graphemes": [
+    "bub"
+   ],
+   "examples": []
+  },
+  "chunk-build": {
+   "label": "build",
+   "type": "chunk",
+   "graphemes": [
+    "build"
+   ],
+   "examples": []
+  },
+  "chunk-bun": {
+   "label": "bun",
+   "type": "chunk",
+   "graphemes": [
+    "bun"
+   ],
+   "examples": []
+  },
+  "chunk-by": {
+   "label": "by",
+   "type": "chunk",
+   "graphemes": [
+    "by"
+   ],
+   "examples": []
+  },
+  "chunk-ca": {
+   "label": "ca",
+   "type": "chunk",
+   "graphemes": [
+    "ca"
+   ],
+   "examples": []
+  },
+  "chunk-cake": {
+   "label": "cake",
+   "type": "chunk",
+   "graphemes": [
+    "cake"
+   ],
+   "examples": []
+  },
+  "chunk-can": {
+   "label": "can",
+   "type": "chunk",
+   "graphemes": [
+    "can"
+   ],
+   "examples": []
+  },
+  "chunk-care": {
+   "label": "care",
+   "type": "chunk",
+   "graphemes": [
+    "care"
+   ],
+   "examples": []
+  },
+  "chunk-cat": {
+   "label": "cat",
+   "type": "chunk",
+   "graphemes": [
+    "cat"
+   ],
+   "examples": []
+  },
+  "chunk-cen": {
+   "label": "cen",
+   "type": "chunk",
+   "graphemes": [
+    "cen"
+   ],
+   "examples": []
+  },
+  "chunk-chan": {
+   "label": "chan",
+   "type": "chunk",
+   "graphemes": [
+    "chan"
+   ],
+   "examples": []
+  },
+  "chunk-cheer": {
+   "label": "cheer",
+   "type": "chunk",
+   "graphemes": [
+    "cheer"
+   ],
+   "examples": []
+  },
+  "chunk-cher": {
+   "label": "cher",
+   "type": "chunk",
+   "graphemes": [
+    "cher"
+   ],
+   "examples": []
+  },
+  "chunk-cil": {
+   "label": "cil",
+   "type": "chunk",
+   "graphemes": [
+    "cil"
+   ],
+   "examples": []
+  },
+  "chunk-cle": {
+   "label": "cle",
+   "type": "chunk",
+   "graphemes": [
+    "cle"
+   ],
+   "examples": []
+  },
+  "chunk-coat": {
+   "label": "coat",
+   "type": "chunk",
+   "graphemes": [
+    "coat"
+   ],
+   "examples": []
+  },
+  "chunk-col": {
+   "label": "col",
+   "type": "chunk",
+   "graphemes": [
+    "col"
+   ],
+   "examples": []
+  },
+  "chunk-con": {
+   "label": "con",
+   "type": "chunk",
+   "graphemes": [
+    "con"
+   ],
+   "examples": []
+  },
+  "chunk-corn": {
+   "label": "corn",
+   "type": "chunk",
+   "graphemes": [
+    "corn"
+   ],
+   "examples": []
+  },
+  "chunk-cot": {
+   "label": "cot",
+   "type": "chunk",
+   "graphemes": [
+    "cot"
+   ],
+   "examples": []
+  },
+  "chunk-cow": {
+   "label": "cow",
+   "type": "chunk",
+   "graphemes": [
+    "cow"
+   ],
+   "examples": []
+  },
+  "chunk-cup": {
+   "label": "cup",
+   "type": "chunk",
+   "graphemes": [
+    "cup"
+   ],
+   "examples": []
+  },
+  "chunk-cus": {
+   "label": "cus",
+   "type": "chunk",
+   "graphemes": [
+    "cus"
+   ],
+   "examples": []
+  },
+  "chunk-dan": {
+   "label": "dan",
+   "type": "chunk",
+   "graphemes": [
+    "dan"
+   ],
+   "examples": []
+  },
+  "chunk-day": {
+   "label": "day",
+   "type": "chunk",
+   "graphemes": [
+    "day"
+   ],
+   "examples": []
+  },
+  "chunk-den": {
+   "label": "den",
+   "type": "chunk",
+   "graphemes": [
+    "den"
+   ],
+   "examples": []
+  },
+  "chunk-der": {
+   "label": "der",
+   "type": "chunk",
+   "graphemes": [
+    "der"
+   ],
+   "examples": []
+  },
+  "chunk-dex": {
+   "label": "dex",
+   "type": "chunk",
+   "graphemes": [
+    "dex"
+   ],
+   "examples": []
+  },
+  "chunk-dle": {
+   "label": "dle",
+   "type": "chunk",
+   "graphemes": [
+    "dle"
+   ],
+   "examples": []
+  },
+  "chunk-do": {
+   "label": "do",
+   "type": "chunk",
+   "graphemes": [
+    "do"
+   ],
+   "examples": []
+  },
+  "chunk-dy": {
+   "label": "dy",
+   "type": "chunk",
+   "graphemes": [
+    "dy"
+   ],
+   "examples": []
+  },
+  "chunk-end": {
+   "label": "end",
+   "type": "chunk",
+   "graphemes": [
+    "end"
+   ],
+   "examples": []
+  },
+  "chunk-est": {
+   "label": "est",
+   "type": "chunk",
+   "graphemes": [
+    "est"
+   ],
+   "examples": []
+  },
+  "chunk-et": {
+   "label": "et",
+   "type": "chunk",
+   "graphemes": [
+    "et"
+   ],
+   "examples": []
+  },
+  "chunk-fair": {
+   "label": "fair",
+   "type": "chunk",
+   "graphemes": [
+    "fair"
+   ],
+   "examples": []
+  },
+  "chunk-fast": {
+   "label": "fast",
+   "type": "chunk",
+   "graphemes": [
+    "fast"
+   ],
+   "examples": []
+  },
+  "chunk-fear": {
+   "label": "fear",
+   "type": "chunk",
+   "graphemes": [
+    "fear"
+   ],
+   "examples": []
+  },
+  "chunk-fen": {
+   "label": "fen",
+   "type": "chunk",
+   "graphemes": [
+    "fen"
+   ],
+   "examples": []
+  },
+  "chunk-fill": {
+   "label": "fill",
+   "type": "chunk",
+   "graphemes": [
+    "fill"
+   ],
+   "examples": []
+  },
+  "chunk-fin": {
+   "label": "fin",
+   "type": "chunk",
+   "graphemes": [
+    "fin"
+   ],
+   "examples": []
+  },
+  "chunk-fish": {
+   "label": "fish",
+   "type": "chunk",
+   "graphemes": [
+    "fish"
+   ],
+   "examples": []
+  },
+  "chunk-fo": {
+   "label": "fo",
+   "type": "chunk",
+   "graphemes": [
+    "fo"
+   ],
+   "examples": []
+  },
+  "chunk-ful": {
+   "label": "ful",
+   "type": "chunk",
+   "graphemes": [
+    "ful"
+   ],
+   "examples": []
+  },
+  "chunk-fun": {
+   "label": "fun",
+   "type": "chunk",
+   "graphemes": [
+    "fun"
+   ],
+   "examples": []
+  },
+  "chunk-gen": {
+   "label": "gen",
+   "type": "chunk",
+   "graphemes": [
+    "gen"
+   ],
+   "examples": []
+  },
+  "chunk-ger": {
+   "label": "ger",
+   "type": "chunk",
+   "graphemes": [
+    "ger"
+   ],
+   "examples": []
+  },
+  "chunk-gig": {
+   "label": "gig",
+   "type": "chunk",
+   "graphemes": [
+    "gig"
+   ],
+   "examples": []
+  },
+  "chunk-glad": {
+   "label": "glad",
+   "type": "chunk",
+   "graphemes": [
+    "glad"
+   ],
+   "examples": []
+  },
+  "chunk-gle": {
+   "label": "gle",
+   "type": "chunk",
+   "graphemes": [
+    "gle"
+   ],
+   "examples": []
+  },
+  "chunk-han": {
+   "label": "han",
+   "type": "chunk",
+   "graphemes": [
+    "han"
+   ],
+   "examples": []
+  },
+  "chunk-hap": {
+   "label": "hap",
+   "type": "chunk",
+   "graphemes": [
+    "hap"
+   ],
+   "examples": []
+  },
+  "chunk-harm": {
+   "label": "harm",
+   "type": "chunk",
+   "graphemes": [
+    "harm"
+   ],
+   "examples": []
+  },
+  "chunk-heat": {
+   "label": "heat",
+   "type": "chunk",
+   "graphemes": [
+    "heat"
+   ],
+   "examples": []
+  },
+  "chunk-hel": {
+   "label": "hel",
+   "type": "chunk",
+   "graphemes": [
+    "hel"
+   ],
+   "examples": []
+  },
+  "chunk-help": {
+   "label": "help",
+   "type": "chunk",
+   "graphemes": [
+    "help"
+   ],
+   "examples": []
+  },
+  "chunk-hill": {
+   "label": "hill",
+   "type": "chunk",
+   "graphemes": [
+    "hill"
+   ],
+   "examples": []
+  },
+  "chunk-home": {
+   "label": "home",
+   "type": "chunk",
+   "graphemes": [
+    "home"
+   ],
+   "examples": []
+  },
+  "chunk-hope": {
+   "label": "hope",
+   "type": "chunk",
+   "graphemes": [
+    "hope"
+   ],
+   "examples": []
+  },
+  "chunk-ic": {
+   "label": "ic",
+   "type": "chunk",
+   "graphemes": [
+    "ic"
+   ],
+   "examples": []
+  },
+  "chunk-in": {
+   "label": "in",
+   "type": "chunk",
+   "graphemes": [
+    "in"
+   ],
+   "examples": []
+  },
+  "chunk-jel": {
+   "label": "jel",
+   "type": "chunk",
+   "graphemes": [
+    "jel"
+   ],
+   "examples": []
+  },
+  "chunk-joy": {
+   "label": "joy",
+   "type": "chunk",
+   "graphemes": [
+    "joy"
+   ],
+   "examples": []
+  },
+  "chunk-jun": {
+   "label": "jun",
+   "type": "chunk",
+   "graphemes": [
+    "jun"
+   ],
+   "examples": []
+  },
+  "chunk-ket": {
+   "label": "ket",
+   "type": "chunk",
+   "graphemes": [
+    "ket"
+   ],
+   "examples": []
+  },
+  "chunk-kin": {
+   "label": "kin",
+   "type": "chunk",
+   "graphemes": [
+    "kin"
+   ],
+   "examples": []
+  },
+  "chunk-kind": {
+   "label": "kind",
+   "type": "chunk",
+   "graphemes": [
+    "kind"
+   ],
+   "examples": []
+  },
+  "chunk-kit": {
+   "label": "kit",
+   "type": "chunk",
+   "graphemes": [
+    "kit"
+   ],
+   "examples": []
+  },
+  "chunk-kle": {
+   "label": "kle",
+   "type": "chunk",
+   "graphemes": [
+    "kle"
+   ],
+   "examples": []
+  },
+  "chunk-la": {
+   "label": "la",
+   "type": "chunk",
+   "graphemes": [
+    "la"
+   ],
+   "examples": []
+  },
+  "chunk-lap": {
+   "label": "lap",
+   "type": "chunk",
+   "graphemes": [
+    "lap"
+   ],
+   "examples": []
+  },
+  "chunk-lem": {
+   "label": "lem",
+   "type": "chunk",
+   "graphemes": [
+    "lem"
+   ],
+   "examples": []
+  },
+  "chunk-less": {
+   "label": "less",
+   "type": "chunk",
+   "graphemes": [
+    "less"
+   ],
+   "examples": []
+  },
+  "chunk-light": {
+   "label": "light",
+   "type": "chunk",
+   "graphemes": [
+    "light"
+   ],
+   "examples": []
+  },
+  "chunk-lit": {
+   "label": "lit",
+   "type": "chunk",
+   "graphemes": [
+    "lit"
+   ],
+   "examples": []
+  },
+  "chunk-lock": {
+   "label": "lock",
+   "type": "chunk",
+   "graphemes": [
+    "lock"
+   ],
+   "examples": []
+  },
+  "chunk-loud": {
+   "label": "loud",
+   "type": "chunk",
+   "graphemes": [
+    "loud"
+   ],
+   "examples": []
+  },
+  "chunk-luck": {
+   "label": "luck",
+   "type": "chunk",
+   "graphemes": [
+    "luck"
+   ],
+   "examples": []
+  },
+  "chunk-ly": {
+   "label": "ly",
+   "type": "chunk",
+   "graphemes": [
+    "ly"
+   ],
+   "examples": []
+  },
+  "chunk-ma": {
+   "label": "ma",
+   "type": "chunk",
+   "graphemes": [
+    "ma"
+   ],
+   "examples": []
+  },
+  "chunk-mag": {
+   "label": "mag",
+   "type": "chunk",
+   "graphemes": [
+    "mag"
+   ],
+   "examples": []
+  },
+  "chunk-make": {
+   "label": "make",
+   "type": "chunk",
+   "graphemes": [
+    "make"
+   ],
+   "examples": []
+  },
+  "chunk-man": {
+   "label": "man",
+   "type": "chunk",
+   "graphemes": [
+    "man"
+   ],
+   "examples": []
+  },
+  "chunk-mas": {
+   "label": "mas",
+   "type": "chunk",
+   "graphemes": [
+    "mas"
+   ],
+   "examples": []
+  },
+  "chunk-ment": {
+   "label": "ment",
+   "type": "chunk",
+   "graphemes": [
+    "ment"
+   ],
+   "examples": []
+  },
+  "chunk-met": {
+   "label": "met",
+   "type": "chunk",
+   "graphemes": [
+    "met"
+   ],
+   "examples": []
+  },
+  "chunk-mid": {
+   "label": "mid",
+   "type": "chunk",
+   "graphemes": [
+    "mid"
+   ],
+   "examples": []
+  },
+  "chunk-mit": {
+   "label": "mit",
+   "type": "chunk",
+   "graphemes": [
+    "mit"
+   ],
+   "examples": []
+  },
+  "chunk-mo": {
+   "label": "mo",
+   "type": "chunk",
+   "graphemes": [
+    "mo"
+   ],
+   "examples": []
+  },
+  "chunk-moon": {
+   "label": "moon",
+   "type": "chunk",
+   "graphemes": [
+    "moon"
+   ],
+   "examples": []
+  },
+  "chunk-mu": {
+   "label": "mu",
+   "type": "chunk",
+   "graphemes": [
+    "mu"
+   ],
+   "examples": []
+  },
+  "chunk-muf": {
+   "label": "muf",
+   "type": "chunk",
+   "graphemes": [
+    "muf"
+   ],
+   "examples": []
+  },
+  "chunk-na": {
+   "label": "na",
+   "type": "chunk",
+   "graphemes": [
+    "na"
+   ],
+   "examples": []
+  },
+  "chunk-nap": {
+   "label": "nap",
+   "type": "chunk",
+   "graphemes": [
+    "nap"
+   ],
+   "examples": []
+  },
+  "chunk-net": {
+   "label": "net",
+   "type": "chunk",
+   "graphemes": [
+    "net"
+   ],
+   "examples": []
+  },
+  "chunk-nic": {
+   "label": "nic",
+   "type": "chunk",
+   "graphemes": [
+    "nic"
+   ],
+   "examples": []
+  },
+  "chunk-nis": {
+   "label": "nis",
+   "type": "chunk",
+   "graphemes": [
+    "nis"
+   ],
+   "examples": []
+  },
+  "chunk-nus": {
+   "label": "nus",
+   "type": "chunk",
+   "graphemes": [
+    "nus"
+   ],
+   "examples": []
+  },
+  "chunk-ny": {
+   "label": "ny",
+   "type": "chunk",
+   "graphemes": [
+    "ny"
+   ],
+   "examples": []
+  },
+  "chunk-out": {
+   "label": "out",
+   "type": "chunk",
+   "graphemes": [
+    "out"
+   ],
+   "examples": []
+  },
+  "chunk-pa": {
+   "label": "pa",
+   "type": "chunk",
+   "graphemes": [
+    "pa"
+   ],
+   "examples": []
+  },
+  "chunk-pack": {
+   "label": "pack",
+   "type": "chunk",
+   "graphemes": [
+    "pack"
+   ],
+   "examples": []
+  },
+  "chunk-pad": {
+   "label": "pad",
+   "type": "chunk",
+   "graphemes": [
+    "pad"
+   ],
+   "examples": []
+  },
+  "chunk-paint": {
+   "label": "paint",
+   "type": "chunk",
+   "graphemes": [
+    "paint"
+   ],
+   "examples": []
+  },
+  "chunk-pan": {
+   "label": "pan",
+   "type": "chunk",
+   "graphemes": [
+    "pan"
+   ],
+   "examples": []
+  },
+  "chunk-pen": {
+   "label": "pen",
+   "type": "chunk",
+   "graphemes": [
+    "pen"
+   ],
+   "examples": []
+  },
+  "chunk-per": {
+   "label": "per",
+   "type": "chunk",
+   "graphemes": [
+    "per"
+   ],
+   "examples": []
+  },
+  "chunk-pet": {
+   "label": "pet",
+   "type": "chunk",
+   "graphemes": [
+    "pet"
+   ],
+   "examples": []
+  },
+  "chunk-pic": {
+   "label": "pic",
+   "type": "chunk",
+   "graphemes": [
+    "pic"
+   ],
+   "examples": []
+  },
+  "chunk-pil": {
+   "label": "pil",
+   "type": "chunk",
+   "graphemes": [
+    "pil"
+   ],
+   "examples": []
+  },
+  "chunk-play": {
+   "label": "play",
+   "type": "chunk",
+   "graphemes": [
+    "play"
+   ],
+   "examples": []
+  },
+  "chunk-ple": {
+   "label": "ple",
+   "type": "chunk",
+   "graphemes": [
+    "ple"
+   ],
+   "examples": []
+  },
+  "chunk-po": {
+   "label": "po",
+   "type": "chunk",
+   "graphemes": [
+    "po"
+   ],
+   "examples": []
+  },
+  "chunk-pock": {
+   "label": "pock",
+   "type": "chunk",
+   "graphemes": [
+    "pock"
+   ],
+   "examples": []
+  },
+  "chunk-pop": {
+   "label": "pop",
+   "type": "chunk",
+   "graphemes": [
+    "pop"
+   ],
+   "examples": []
+  },
+  "chunk-pre": {
+   "label": "pre",
+   "type": "chunk",
+   "graphemes": [
+    "pre"
+   ],
+   "examples": []
+  },
+  "chunk-prin": {
+   "label": "prin",
+   "type": "chunk",
+   "graphemes": [
+    "prin"
+   ],
+   "examples": []
+  },
+  "chunk-prob": {
+   "label": "prob",
+   "type": "chunk",
+   "graphemes": [
+    "prob"
+   ],
+   "examples": []
+  },
+  "chunk-pu": {
+   "label": "pu",
+   "type": "chunk",
+   "graphemes": [
+    "pu"
+   ],
+   "examples": []
+  },
+  "chunk-pud": {
+   "label": "pud",
+   "type": "chunk",
+   "graphemes": [
+    "pud"
+   ],
+   "examples": []
+  },
+  "chunk-pump": {
+   "label": "pump",
+   "type": "chunk",
+   "graphemes": [
+    "pump"
+   ],
+   "examples": []
+  },
+  "chunk-pup": {
+   "label": "pup",
+   "type": "chunk",
+   "graphemes": [
+    "pup"
+   ],
+   "examples": []
+  },
+  "chunk-pur": {
+   "label": "pur",
+   "type": "chunk",
+   "graphemes": [
+    "pur"
+   ],
+   "examples": []
+  },
+  "chunk-py": {
+   "label": "py",
+   "type": "chunk",
+   "graphemes": [
+    "py"
+   ],
+   "examples": []
+  },
+  "chunk-quick": {
+   "label": "quick",
+   "type": "chunk",
+   "graphemes": [
+    "quick"
+   ],
+   "examples": []
+  },
+  "chunk-rab": {
+   "label": "rab",
+   "type": "chunk",
+   "graphemes": [
+    "rab"
+   ],
+   "examples": []
+  },
+  "chunk-rain": {
+   "label": "rain",
+   "type": "chunk",
+   "graphemes": [
+    "rain"
+   ],
+   "examples": []
+  },
+  "chunk-re": {
+   "label": "re",
+   "type": "chunk",
+   "graphemes": [
+    "re"
+   ],
+   "examples": []
+  },
+  "chunk-read": {
+   "label": "read",
+   "type": "chunk",
+   "graphemes": [
+    "read"
+   ],
+   "examples": []
+  },
+  "chunk-rib": {
+   "label": "rib",
+   "type": "chunk",
+   "graphemes": [
+    "rib"
+   ],
+   "examples": []
+  },
+  "chunk-rid": {
+   "label": "rid",
+   "type": "chunk",
+   "graphemes": [
+    "rid"
+   ],
+   "examples": []
+  },
+  "chunk-rip": {
+   "label": "rip",
+   "type": "chunk",
+   "graphemes": [
+    "rip"
+   ],
+   "examples": []
+  },
+  "chunk-rise": {
+   "label": "rise",
+   "type": "chunk",
+   "graphemes": [
+    "rise"
+   ],
+   "examples": []
+  },
+  "chunk-ro": {
+   "label": "ro",
+   "type": "chunk",
+   "graphemes": [
+    "ro"
+   ],
+   "examples": []
+  },
+  "chunk-rob": {
+   "label": "rob",
+   "type": "chunk",
+   "graphemes": [
+    "rob"
+   ],
+   "examples": []
+  },
+  "chunk-rock": {
+   "label": "rock",
+   "type": "chunk",
+   "graphemes": [
+    "rock"
+   ],
+   "examples": []
+  },
+  "chunk-ry": {
+   "label": "ry",
+   "type": "chunk",
+   "graphemes": [
+    "ry"
+   ],
+   "examples": []
+  },
+  "chunk-sad": {
+   "label": "sad",
+   "type": "chunk",
+   "graphemes": [
+    "sad"
+   ],
+   "examples": []
+  },
+  "chunk-safe": {
+   "label": "safe",
+   "type": "chunk",
+   "graphemes": [
+    "safe"
+   ],
+   "examples": []
+  },
+  "chunk-sail": {
+   "label": "sail",
+   "type": "chunk",
+   "graphemes": [
+    "sail"
+   ],
+   "examples": []
+  },
+  "chunk-san": {
+   "label": "san",
+   "type": "chunk",
+   "graphemes": [
+    "san"
+   ],
+   "examples": []
+  },
+  "chunk-school": {
+   "label": "school",
+   "type": "chunk",
+   "graphemes": [
+    "school"
+   ],
+   "examples": []
+  },
+  "chunk-sea": {
+   "label": "sea",
+   "type": "chunk",
+   "graphemes": [
+    "sea"
+   ],
+   "examples": []
+  },
+  "chunk-sect": {
+   "label": "sect",
+   "type": "chunk",
+   "graphemes": [
+    "sect"
+   ],
+   "examples": []
+  },
+  "chunk-set": {
+   "label": "set",
+   "type": "chunk",
+   "graphemes": [
+    "set"
+   ],
+   "examples": []
+  },
+  "chunk-sic": {
+   "label": "sic",
+   "type": "chunk",
+   "graphemes": [
+    "sic"
+   ],
+   "examples": []
+  },
+  "chunk-side": {
+   "label": "side",
+   "type": "chunk",
+   "graphemes": [
+    "side"
+   ],
+   "examples": []
+  },
+  "chunk-sil": {
+   "label": "sil",
+   "type": "chunk",
+   "graphemes": [
+    "sil"
+   ],
+   "examples": []
+  },
+  "chunk-sim": {
+   "label": "sim",
+   "type": "chunk",
+   "graphemes": [
+    "sim"
+   ],
+   "examples": []
+  },
+  "chunk-slow": {
+   "label": "slow",
+   "type": "chunk",
+   "graphemes": [
+    "slow"
+   ],
+   "examples": []
+  },
+  "chunk-small": {
+   "label": "small",
+   "type": "chunk",
+   "graphemes": [
+    "small"
+   ],
+   "examples": []
+  },
+  "chunk-snow": {
+   "label": "snow",
+   "type": "chunk",
+   "graphemes": [
+    "snow"
+   ],
+   "examples": []
+  },
+  "chunk-soft": {
+   "label": "soft",
+   "type": "chunk",
+   "graphemes": [
+    "soft"
+   ],
+   "examples": []
+  },
+  "chunk-spar": {
+   "label": "spar",
+   "type": "chunk",
+   "graphemes": [
+    "spar"
+   ],
+   "examples": []
+  },
+  "chunk-spi": {
+   "label": "spi",
+   "type": "chunk",
+   "graphemes": [
+    "spi"
+   ],
+   "examples": []
+  },
+  "chunk-spot": {
+   "label": "spot",
+   "type": "chunk",
+   "graphemes": [
+    "spot"
+   ],
+   "examples": []
+  },
+  "chunk-star": {
+   "label": "star",
+   "type": "chunk",
+   "graphemes": [
+    "star"
+   ],
+   "examples": []
+  },
+  "chunk-sto": {
+   "label": "sto",
+   "type": "chunk",
+   "graphemes": [
+    "sto"
+   ],
+   "examples": []
+  },
+  "chunk-sud": {
+   "label": "sud",
+   "type": "chunk",
+   "graphemes": [
+    "sud"
+   ],
+   "examples": []
+  },
+  "chunk-sun": {
+   "label": "sun",
+   "type": "chunk",
+   "graphemes": [
+    "sun"
+   ],
+   "examples": []
+  },
+  "chunk-sweet": {
+   "label": "sweet",
+   "type": "chunk",
+   "graphemes": [
+    "sweet"
+   ],
+   "examples": []
+  },
+  "chunk-ta": {
+   "label": "ta",
+   "type": "chunk",
+   "graphemes": [
+    "ta"
+   ],
+   "examples": []
+  },
+  "chunk-tall": {
+   "label": "tall",
+   "type": "chunk",
+   "graphemes": [
+    "tall"
+   ],
+   "examples": []
+  },
+  "chunk-tell": {
+   "label": "tell",
+   "type": "chunk",
+   "graphemes": [
+    "tell"
+   ],
+   "examples": []
+  },
+  "chunk-ten": {
+   "label": "ten",
+   "type": "chunk",
+   "graphemes": [
+    "ten"
+   ],
+   "examples": []
+  },
+  "chunk-ter": {
+   "label": "ter",
+   "type": "chunk",
+   "graphemes": [
+    "ter"
+   ],
+   "examples": []
+  },
+  "chunk-test": {
+   "label": "test",
+   "type": "chunk",
+   "graphemes": [
+    "test"
+   ],
+   "examples": []
+  },
+  "chunk-thank": {
+   "label": "thank",
+   "type": "chunk",
+   "graphemes": [
+    "thank"
+   ],
+   "examples": []
+  },
+  "chunk-ti": {
+   "label": "ti",
+   "type": "chunk",
+   "graphemes": [
+    "ti"
+   ],
+   "examples": []
+  },
+  "chunk-tie": {
+   "label": "tie",
+   "type": "chunk",
+   "graphemes": [
+    "tie"
+   ],
+   "examples": []
+  },
+  "chunk-time": {
+   "label": "time",
+   "type": "chunk",
+   "graphemes": [
+    "time"
+   ],
+   "examples": []
+  },
+  "chunk-tist": {
+   "label": "tist",
+   "type": "chunk",
+   "graphemes": [
+    "tist"
+   ],
+   "examples": []
+  },
+  "chunk-tle": {
+   "label": "tle",
+   "type": "chunk",
+   "graphemes": [
+    "tle"
+   ],
+   "examples": []
+  },
+  "chunk-top": {
+   "label": "top",
+   "type": "chunk",
+   "graphemes": [
+    "top"
+   ],
+   "examples": []
+  },
+  "chunk-trum": {
+   "label": "trum",
+   "type": "chunk",
+   "graphemes": [
+    "trum"
+   ],
+   "examples": []
+  },
+  "chunk-tub": {
+   "label": "tub",
+   "type": "chunk",
+   "graphemes": [
+    "tub"
+   ],
+   "examples": []
+  },
+  "chunk-tur": {
+   "label": "tur",
+   "type": "chunk",
+   "graphemes": [
+    "tur"
+   ],
+   "examples": []
+  },
+  "chunk-turn": {
+   "label": "turn",
+   "type": "chunk",
+   "graphemes": [
+    "turn"
+   ],
+   "examples": []
+  },
+  "chunk-twin": {
+   "label": "twin",
+   "type": "chunk",
+   "graphemes": [
+    "twin"
+   ],
+   "examples": []
+  },
+  "chunk-ty": {
+   "label": "ty",
+   "type": "chunk",
+   "graphemes": [
+    "ty"
+   ],
+   "examples": []
+  },
+  "chunk-un": {
+   "label": "un",
+   "type": "chunk",
+   "graphemes": [
+    "un"
+   ],
+   "examples": []
+  },
+  "chunk-vel": {
+   "label": "vel",
+   "type": "chunk",
+   "graphemes": [
+    "vel"
+   ],
+   "examples": []
+  },
+  "chunk-vet": {
+   "label": "vet",
+   "type": "chunk",
+   "graphemes": [
+    "vet"
+   ],
+   "examples": []
+  },
+  "chunk-view": {
+   "label": "view",
+   "type": "chunk",
+   "graphemes": [
+    "view"
+   ],
+   "examples": []
+  },
+  "chunk-vy": {
+   "label": "vy",
+   "type": "chunk",
+   "graphemes": [
+    "vy"
+   ],
+   "examples": []
+  },
+  "chunk-weed": {
+   "label": "weed",
+   "type": "chunk",
+   "graphemes": [
+    "weed"
+   ],
+   "examples": []
+  },
+  "chunk-week": {
+   "label": "week",
+   "type": "chunk",
+   "graphemes": [
+    "week"
+   ],
+   "examples": []
+  },
+  "chunk-wig": {
+   "label": "wig",
+   "type": "chunk",
+   "graphemes": [
+    "wig"
+   ],
+   "examples": []
+  },
+  "chunk-win": {
+   "label": "win",
+   "type": "chunk",
+   "graphemes": [
+    "win"
+   ],
+   "examples": []
+  },
+  "chunk-wob": {
+   "label": "wob",
+   "type": "chunk",
+   "graphemes": [
+    "wob"
+   ],
+   "examples": []
+  },
+  "chunk-yard": {
+   "label": "yard",
+   "type": "chunk",
+   "graphemes": [
+    "yard"
+   ],
+   "examples": []
+  },
+  "chunk-zip": {
+   "label": "zip",
+   "type": "chunk",
+   "graphemes": [
+    "zip"
+   ],
+   "examples": []
+  }
+ }
+}

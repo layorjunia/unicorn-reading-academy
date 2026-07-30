@@ -67,17 +67,18 @@ const App = {
   speakQueue(parts) { AudioLib.speakSeq(parts.filter(p => p !== '...')); },
   speakSounds(sounds, word) { AudioLib.speakSounds(sounds, word); },
 
-  // "sound ... like ... word" for the Learn screen pattern buttons
-  // Plays "<sound> ... like ... <example word>" for a Learn-screen pattern
-  // button. The sound must come from a phoneme clip: falling back to a word
-  // clip of the raw letters is what made the app say "ay" for /a/.
-  // The letter pattern is SHOWN on screen; the voice says the example word.
-  // The app never pronounces a letter in isolation — synthesised phonemes were
-  // inaccurate to the point of teaching the wrong thing (/a/ and /i/ came out
-  // near-identical), so a child hears whole words in a human voice instead.
+  // Learn-screen pattern button: "/sh/ … ship" when the human-recorded sound
+  // exists, else just the example word. Sounds only ever come from a person —
+  // synthesised phonemes taught the wrong thing and are permanently banned
+  // (see the note above AudioLib.speakSounds).
   playPattern(tok, ex) {
-    Sfx.play('tap', 0.4);
-    this.speak(ex);
+    const ids = AudioLib.soundIdsFor(tok);
+    if (ids && ids.every(id => AudioLib.sndInfo(id))) {
+      AudioLib.speakSounds([tok], ex);
+    } else {
+      Sfx.play('tap', 0.4);
+      this.speak(ex);
+    }
   },
 
   praise() { this.speak(PRAISE[Math.floor(Math.random() * PRAISE.length)]); },
@@ -555,6 +556,17 @@ const App = {
   // ("ow_o" in glow vs "ow_ou" in owl). Strip it for display only.
   tileText(t) { return String(t).replace(/_[a-z]+$/, ''); },
 
+  // Display for SOUND tiles. Differs from tileText in one crucial way: the
+  // magic-e tokens keep their notation. tileText('a_e') is 'a' — right for a
+  // letter tile, but on the sound-out scaffold it made "cake" display as
+  // c·a·k and "cute" as c·u·t, literally spelling a wrong answer during the
+  // island whose whole lesson is the silent e. The child already knows the
+  // a_e notation from the Learn screen's pattern buttons.
+  soundTileText(t) {
+    if (/^[aiou]_e$/.test(t)) return t;
+    return String(t).replace(/_[a-z]+$/, '');
+  },
+
   // ── Island menu for completed islands: replay or practice ──
   islandMenu(id) {
     const isl = this.findIsland(id);
@@ -909,7 +921,7 @@ const App = {
       ${this.islHead(t.intro, t.narration)}
       <div class="card center">
         <div class="choices">
-          ${t.patterns.map(p => `<button class="choice" onclick="App.playPattern('${p.g}','${p.ex}')">${p.g}</button>`).join('')}
+          ${t.patterns.map(p => `<button class="choice" onclick="App.playPattern('${p.sk || p.g}','${p.ex}')">${p.g}</button>`).join('')}
         </div>
         <div class="sound-btns">
           ${t.examples.map(w => `<button class="sound-chip" onclick="App.speak('${w}')">${w}</button>`).join('')}
@@ -919,14 +931,27 @@ const App = {
     `);
   },
 
-  // ── Sound it (robot blending) ──
+  // ── Sound it (segment and blend) ──
+  // With human sound recordings imported, this is real phonics: the sounds
+  // play one by one while their tiles light up, then the whole word. Without
+  // recordings it falls back to hear-the-word / tap-the-word, which still
+  // works — the scaffold lights up as soon as the sounds are imported.
   renderSound() {
     const items = this.isl.island.soundIt;
     const it = items[this.isl.sub];
+    const canSO = AudioLib.canSoundOut(it.sounds);
+    const tiles = canSO ? `
+        <div class="build-slots" id="so-tiles">
+          ${it.sounds.map(s => `<div class="build-slot filled">${this.soundTileText(s)}</div>`).join('')}
+        </div>
+        <button class="btn purple big" onclick="App.soundOut()">👂 Sound it out</button>` : `
+        <button class="btn purple big" onclick="App.speak('${it.word}')">🔊 Hear the word</button>`;
     this.render(`
-      ${this.islHead('Listen to the word, then tap the word you hear!')}
+      ${this.islHead(canSO
+        ? 'Listen to each sound, blend them together, then tap the word you hear!'
+        : 'Listen to the word, then tap the word you hear!')}
       <div class="card center">
-        <button class="btn purple big" onclick="App.speak('${it.word}')">🔊 Hear the word</button>
+        ${tiles}
         <div class="small-note">listen, then tap the word you hear</div>
         <div class="choices">
           ${it.choices.map(c => `<button class="choice" onclick="App.soundPick(this,'${c}')">${c}</button>`).join('')}
@@ -934,7 +959,25 @@ const App = {
         <div class="small-note">${this.isl.sub + 1} of ${items.length}</div>
       </div>
     `);
-    setTimeout(() => this.speak(it.word), 400);
+    setTimeout(() => canSO ? this.soundOut() : this.speak(it.word), 400);
+  },
+
+  // Play the sounds with tile highlights, then the word with all tiles lit.
+  soundOut() {
+    const it = this.isl.island.soundIt[this.isl.sub];
+    const row = document.getElementById('so-tiles');
+    const cells = row ? [...row.children] : [];
+    const clear = () => cells.forEach(c => { c.style.background = ''; c.style.transform = ''; });
+    AudioLib.speakSounds(it.sounds, it.word, {
+      onSound: i => {
+        clear();
+        if (cells[i]) { cells[i].style.background = '#ffd93d'; cells[i].style.transform = 'scale(1.15)'; }
+      },
+      onWord: () => {
+        cells.forEach(c => { c.style.background = '#a8e6a3'; c.style.transform = ''; });
+        setTimeout(clear, 900);
+      },
+    });
   },
 
   soundPick(el, chosen) {
@@ -951,7 +994,13 @@ const App = {
     } else {
       el.classList.add('wrong'); Sfx.play('retry', 0.55);
       this.encourage();
-      setTimeout(() => { el.classList.remove('wrong'); this.speak(it.word); }, 700);
+      // After a miss, give the scaffold again — sound by sound — not just the
+      // word. Hearing the segments is what lets her fix her own comparison.
+      setTimeout(() => {
+        el.classList.remove('wrong');
+        if (AudioLib.canSoundOut(it.sounds)) this.soundOut();
+        else this.speak(it.word);
+      }, 900);
     }
   },
 

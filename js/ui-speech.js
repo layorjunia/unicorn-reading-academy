@@ -38,6 +38,8 @@ const UI_PHRASES = [
   'Which team does this word belong to? Tap the word to hear it, then tap its team!',
   'Story time! Read it out loud. Tap any word if you need help.',
   'Sparkle Quiz! Listen to the word and tap it!',
+  'Listen to each sound, blend them together, then tap the word you hear!',
+  'Listen to the word, then tap the word you hear!',
   'Tap the robot, listen to the sounds, tap the word!',
   'Listen and tap the word!', 'Build the word!',
   'Build the word', 'It was', 'It is spelled', 'You built it!', 'like',

@@ -31,10 +31,39 @@ The app now uses **Piper**, a neural text-to-speech model that runs locally on
 your Mac. No API key, no billing, no account, no internet at build time — and it
 sounds like a person rather than a synthesiser.
 
-It was also the right technical choice, not just the free one: Piper exposes its
-phoneme layer, so a teaching line is generated as **one continuous utterance**
-whose prose is phonemised naturally while the letter sounds use our exact IPA.
-Natural delivery and guaranteed-correct phonics in the same recording.
+Each teaching line is generated as **one continuous utterance**, so it has real
+sentence prosody instead of sounding like glued-together fragments.
+
+**Letter sounds are HUMAN recordings, never synthesised.** Four synthesis
+attempts (browser TTS, eSpeak, Piper phonemes, Apple IPA) all produced sounds
+that were robotic or wrong — short a and short i came out near-identical, which
+taught the wrong thing. Isolated sounds are outside what TTS can do; every real
+reading app records them with a person. Do not reintroduce phoneme synthesis.
+(The leftover `audio/ph/` clips are dead weight from that era; nothing plays
+them.)
+
+## 3. Letter sounds — record once, ~20 minutes
+
+Double-click **`Record Sounds.command`**. It opens a guided booth that walks
+through the 46 sounds the curriculum teaches, with coaching for each one and
+the app's own word clips as pronunciation anchors. Read
+[RECORDING-GUIDE.md](RECORDING-GUIDE.md) first — the one rule that matters:
+**stops like /b/ get no "uh"** (say /b/, never "buh").
+
+Then validate and import:
+
+```bash
+cd "/Users/jacob/Desktop/Schooling Apps/unicorn-reading-academy" && python3 tools/import_sounds.py
+```
+
+It rejects takes that are too quiet or have a vowel tacked onto a stop, and
+tells you exactly which sounds to redo. Once imported, sounding-out lights up
+automatically in every lesson whose sounds are all recorded — nothing else to
+configure. Ship it:
+
+```bash
+cd "/Users/jacob/Desktop/Schooling Apps/unicorn-reading-academy" && python3 tools/stamp_version.py && git add -A && git commit -m "Add recorded letter sounds" && git push
+```
 
 To regenerate after adding curriculum:
 
@@ -45,8 +74,14 @@ cd "/Users/jacob/Desktop/Schooling Apps/unicorn-reading-academy" && .venv-tts/bi
 If `.venv-tts` is ever missing (new Mac, cleaned checkout):
 
 ```bash
-cd "/Users/jacob/Desktop/Schooling Apps/unicorn-reading-academy" && uv venv --python 3.12 .venv-tts && uv pip install --python .venv-tts/bin/python piper-tts && .venv-tts/bin/python -m piper.download_voices --download-dir tools/voices en_US-hfc_female-medium
+cd "/Users/jacob/Desktop/Schooling Apps/unicorn-reading-academy" && uv venv --python 3.12 .venv-tts && uv pip install --python .venv-tts/bin/python piper-tts faster-whisper && .venv-tts/bin/python -m piper.download_voices --download-dir tools/voices en_US-lessac-high
 ```
+
+`en_US-lessac-high` is the voice the app actually ships — see
+`PiperEngine.VOICE_NAME` in `tools/tts_engines.py`. Download that one. Fetching
+a different model leaves `tools/voices/en_US-lessac-high.onnx` missing and every
+render fails. `faster-whisper` is needed by the verification tools, not by
+generation.
 
 To try a different voice, download another model and point at it:
 
@@ -86,7 +121,7 @@ is cheap because unchanged clips are skipped.
 6. Regenerate all the audio with the neural voice:
 
    ```bash
-   cd "/Users/jacob/Desktop/Schooling Apps/unicorn-reading-academy" && python3 tools/gen_audio.py --engine google --clean
+   cd "/Users/jacob/Desktop/Schooling Apps/unicorn-reading-academy" && .venv-tts/bin/python tools/gen_audio.py --engine google --clean
    ```
 
    Takes a few minutes. It validates every clip and refuses to finish if any
@@ -102,5 +137,5 @@ To hear a different voice first, try `en-US-Neural2-C`, `en-US-Neural2-E`, or
 the higher-end `en-US-Studio-O`:
 
 ```bash
-cd "/Users/jacob/Desktop/Schooling Apps/unicorn-reading-academy" && GOOGLE_TTS_VOICE=en-US-Studio-O python3 tools/gen_audio.py --engine google --clean
+cd "/Users/jacob/Desktop/Schooling Apps/unicorn-reading-academy" && GOOGLE_TTS_VOICE=en-US-Studio-O .venv-tts/bin/python tools/gen_audio.py --engine google --clean
 ```

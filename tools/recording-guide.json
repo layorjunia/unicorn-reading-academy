@@ -1,0 +1,254 @@
+{
+ "sounds": [
+  {
+   "id": "b",
+   "how": "Press your lips together, turn your voice on, and pop them open \u2014 the tiny first sound of \"bat\" and \"big\". Stop the instant the pop happens.",
+   "trap": "Saying \"buh\". The little puff after the pop is fine, but a full \"uh\" means the child hears buh-a-tuh instead of bat. And don't whisper it \u2014 fingers on your throat (buzz test): it must buzz during the pop, or /b/ becomes /p/."
+  },
+  {
+   "id": "k",
+   "how": "Back of your tongue touches the roof of your mouth, then release a small puff of air with NO voice \u2014 the quiet start of \"cat\" and \"kit\". Say \"cat\" and stop right after the very first sound: a small puff off the back of your tongue, no buzz under your fingers.",
+   "trap": "Saying \"kuh\". Fingers on your throat: a buzz during the pop itself means you've said /g/; a buzz that comes AFTER the puff is the tacked-on \"uh\" \u2014 cut the clip at the puff. Quiet, but not inaudible: at the volume where your /m/ clip is clear, this puff must still be plainly heard."
+  },
+  {
+   "id": "d",
+   "how": "Tap your tongue tip just behind your top teeth with your voice ON \u2014 the quick start of \"dog\" and \"dad\". Cut it off right after the tap.",
+   "trap": "\"Duh\" is the classic. Tap and stop. And keep your voice on during the tap \u2014 fingers on your throat, it must buzz \u2014 or whispered /d/ turns into /t/."
+  },
+  {
+   "id": "f",
+   "how": "Rest your top teeth on your bottom lip and blow \u2014 hold \"ffff\" for a full second, the start of \"fan\" and \"fish\". Air only, no voice.",
+   "trap": "Adding \"fuh\" at the end when you pull your lip away \u2014 let the air just fade to silence. And no buzz under your fingers, or it becomes /v/."
+  },
+  {
+   "id": "g",
+   "how": "Back of the tongue up, voice ON, quick release \u2014 the start of \"got\" and the end of \"bag\". One short voiced pop.",
+   "trap": "\"Guh\". Cut it off at the pop. Fingers on your throat: it must buzz during the pop \u2014 whispered /g/ is /k/."
+  },
+  {
+   "id": "h",
+   "how": "A quick, light puff of breath, like fogging a mirror \u2014 the start of \"hat\" and \"hop\". Quick, air only.",
+   "trap": "Dragging it into a voiced grunt \"huh\". Keep it a quick whisper of air with no vowel attached \u2014 and check that at the volume where your /m/ clip is clear, the breath is still plainly audible."
+  },
+  {
+   "id": "j",
+   "how": "Tongue in /d/ position behind your top teeth, voice ON, and release into a soft buzzy \"zh\" \u2014 the start of \"jam\" and \"jet\". The soft buzzy tail IS part of the sound; keep it, then stop before any \"uh\" appears.",
+   "trap": "\"Juh\" \u2014 holding past the buzz into a vowel. Self-test: play the clip back \u2014 if it sounds like plain /d/, you cut too early; if you hear \"juh\", you held too long. Keep the buzzy release, lose the vowel."
+  },
+  {
+   "id": "l",
+   "how": "Tongue tip UP behind your top teeth and hum around it \u2014 hold \"llll\" for a full second, the start of \"lap\" and \"leg\".",
+   "trap": "\"Luh\" comes from dropping the tongue tip at the end \u2014 keep it pressed up and just stop your voice. The letter name \"ell\" is the opposite error: it puts a vowel in FRONT \u2014 your tongue tip must already be touching and your voice already humming at the very first instant of the clip, nothing before the hum."
+  },
+  {
+   "id": "m",
+   "how": "Lips closed, hum \"mmmm\" like something smells delicious \u2014 hold it a full second. The start of \"map\" and \"man\".",
+   "trap": "Opening your lips at the end, which adds \"muh\". Finish the clip with your lips still closed."
+  },
+  {
+   "id": "n",
+   "how": "Tongue tip behind your top teeth, hum through your nose \u2014 hold \"nnnn\" for a full second, the start of \"net\" and \"nap\".",
+   "trap": "\"Nuh\", or the letter name \"en\" (which puts a vowel in FRONT). Just the held nasal hum, nothing before or after."
+  },
+  {
+   "id": "p",
+   "how": "Lips together, release a tiny puff of air with NO voice \u2014 the near-silent start of \"pan\" and end of \"cup\".",
+   "trap": "\"Puh\" \u2014 a vowel escaping after the puff; stop the clip at the puff. Separately, if your throat buzzes during the pop (fingers on throat), you've recorded /b/. Angle off-mic so the puff doesn't thump \u2014 but quiet doesn't mean inaudible: at the volume where your /m/ clip is clear, the puff must still be plainly heard."
+  },
+  {
+   "id": "r",
+   "how": "Say \"red\" and freeze on the very first instant \u2014 hold that for a full second. Tongue curled back and tense, not touching anything, lips slightly rounded \u2014 the growly start of \"run\" and \"red\".",
+   "trap": "\"Ruh\" or the letter name \"are\". Self-test: play this clip, then your short-u and /n/ clips back-to-back \u2014 you should hear \"run\". If it plays back as \"er-un\" with a wobble in the middle, re-record with rounder lips and a tenser tongue."
+  },
+  {
+   "id": "s",
+   "how": "Hiss like a snake \u2014 \"ssss\" held for a full second, the start of \"sun\" and end of \"bus\". Air only.",
+   "trap": "\"Suh\" at the release, or your voice sneaking in at the end \u2014 fingers on throat: no buzz allowed \u2014 which turns it into /z/. Pure quiet hiss, fading to nothing."
+  },
+  {
+   "id": "t",
+   "how": "Tongue tip taps behind your top teeth with a tiny puff, NO voice \u2014 the quiet start of \"top\" and crisp end of \"cat\".",
+   "trap": "\"Tuh\" \u2014 the most common mistake in the whole set. Fingers on your throat: a buzz during the tap means you've recorded /d/; a buzz after the puff is the tacked-on \"uh\" \u2014 cut the clip at the puff. And at the volume where your /m/ clip is clear, the tap must still be plainly audible."
+  },
+  {
+   "id": "v",
+   "how": "Top teeth on bottom lip like /f/, but turn your voice ON \u2014 hold \"vvvv\" like a little motor, the start of \"vet\" and \"van\".",
+   "trap": "Letting the buzz drop out \u2014 fingers on throat: it must buzz the whole time, or it becomes /f/ \u2014 or releasing with \"vuh\". Keep the buzz steady, then just stop."
+  },
+  {
+   "id": "w",
+   "how": "Round your lips like blowing a kiss, then glide open quickly with voice on \u2014 the fast start of \"wet\" and \"wig\". Keep it short.",
+   "trap": "The letter name \"double-u\", or a heavy \"wuh\". A tiny vowel tail is unavoidable on a glide \u2014 keep it as short and light as you can."
+  },
+  {
+   "id": "y",
+   "how": "A quick springy glide, the very start of \"yes\" and \"yak\". Tongue high like \"ee\", then release fast. Short.",
+   "trap": "The letter name \"why\", or a heavy \"yuh\". Quick and light \u2014 it should sound like you're about to say \"yes\" and stopped after the first instant."
+  },
+  {
+   "id": "z",
+   "how": "Buzz like a bee \u2014 \"zzzz\" held for a full second with your voice on, the start of \"zip\" and end of \"buzz\".",
+   "trap": "The buzz going silent at the end \u2014 fingers on throat: it must buzz the whole time, or it decays into /s/ \u2014 or releasing with \"zuh\". Keep the voice humming, then stop clean."
+  },
+  {
+   "id": "sh",
+   "how": "The quieting-a-baby sound \u2014 \"shhhh\" held for a full second, the start of \"ship\" and \"shop\". Air only, lips pushed forward.",
+   "trap": "\"Shuh\" at the release. Hold the hush, then fade to silence \u2014 no vowel escape at the end."
+  },
+  {
+   "id": "ch",
+   "how": "Say the very start of \"chat\" or \"chip\" and stop instantly \u2014 one sharp burst with a short soft \"sh\"-like tail, no vowel.",
+   "trap": "\"Chuh\", or softening it into \"shh\". Self-test: play your clip and imagine \"ip\" right after it \u2014 together they should make \"chip\", not \"chuh-ip\" or \"choo-ip\". A short sharp burst, not a held sound."
+  },
+  {
+   "id": "th",
+   "how": "Tongue tip lightly between your teeth, blow air \u2014 hold a soft \"thhh\" for a full second, like in \"thin\", \"bath\", \"math\". NO voice, just quiet air.",
+   "trap": "Voicing it into the th of \"this/that\" \u2014 fingers on throat: no buzz; the anchor words thin and bath use the quiet, air-only th. Also don't let it drift into /f/; the tongue must peek between the teeth."
+  },
+  {
+   "id": "ng",
+   "how": "Say \"ring\" and freeze on the final hum \u2014 hold \"ng\" for a full second with the back of your tongue up and the sound coming through your nose, like the end of \"song\".",
+   "trap": "Adding a hard g-pop at the end (\"ng-guh\") or saying it as two sounds \"n\" + \"g\". It's one held nasal hum with no release."
+  },
+  {
+   "id": "kw",
+   "how": "A quick /k/ puff that slides straight into /w/ \u2014 the start of \"quick\" and \"quit\". One smooth fast move, over in under half a second.",
+   "trap": "\"Kwuh\" \u2014 landing on a vowel \u2014 or the letter name \"cue\". Self-test: play this clip, then your short-i and /k/ clips back-to-back. If you hear \"quick\", it's right; if you hear \"kwuh-ick\", cut the next take shorter."
+  },
+  {
+   "id": "ks",
+   "how": "A quick /k/ pop then a snake hiss \u2014 \"ksss\", the end of \"six\", \"box\", \"fox\". You can hold the hiss for a beat.",
+   "trap": "The letter name \"ex\" \u2014 that puts an \"eh\" vowel in FRONT. Start straight on the k-pop with nothing before it, and keep the hiss voiceless \u2014 no buzz under your fingers."
+  },
+  {
+   "id": "short-a",
+   "how": "Say \"cat\" slowly and freeze the middle \u2014 \"aaaa\" with an open, wide jaw. Hold it steady for a full second, same sound as \"hat\" and \"map\".",
+   "trap": "The letter name \"ay\", or letting the sound sag into \"uh\" as it fades. It must sound identical at the start and the end of the clip."
+  },
+  {
+   "id": "short-e",
+   "how": "Freeze the middle of \"bed\" \u2014 a steady \"ehhh\", jaw half open. Same vowel as \"pen\" and \"net\". Hold one second.",
+   "trap": "Drifting toward short-i (so \"bed\" would sound like \"bid\") or saying the letter name \"ee\". Check it against \"bed\" before recording."
+  },
+  {
+   "id": "short-i",
+   "how": "Freeze the middle of \"sit\" \u2014 a quick, relaxed \"ihhh\", same as \"pig\" and \"win\". Hold it steady.",
+   "trap": "The letter name \"eye\", or tensing into \"ee\" (so \"sit\" becomes \"seat\"). Keep the mouth relaxed, not smiling hard."
+  },
+  {
+   "id": "short-o",
+   "how": "The doctor's \"ahhh\" \u2014 jaw wide open, the middle of \"hot\", \"top\", \"mop\". Hold it steady for a second.",
+   "trap": "The letter name \"oh\" \u2014 completely different sound. Say \"hot\" first to load the right vowel, then hold just the middle \u2014 and check against \"hot\", not \"dog\" or \"log\", which in many American accents carry a different \"aw\" vowel."
+  },
+  {
+   "id": "short-u",
+   "how": "The plain \"uhhh\" in the middle of \"sun\", \"bug\", \"cup\". Relaxed mouth, hold it clean and steady for a second.",
+   "trap": "The letter name \"you\", or grunting it too short. This is the one sound that really IS \"uh\" \u2014 give it a full, even beat like every other vowel."
+  },
+  {
+   "id": "long-a",
+   "how": "Say \"ay\" once at natural talking speed \u2014 the vowel in \"cake\", \"rain\", \"play\" \u2014 and don't stretch it. This one happens to match the letter name.",
+   "trap": "Stretching it \u2014 stretching is exactly what creates the exaggerated \"ay-EE\" two-parter. Self-test: play the clip, then your /t/ clip \u2014 together they should sound like \"ate\"."
+  },
+  {
+   "id": "long-e",
+   "how": "Smile and hold \"eeee\" \u2014 the vowel in \"see\", \"read\", \"key\". Steady for a full second.",
+   "trap": "Cutting it too short, or adding a little \"yuh\" tail at the end. Hold, then stop clean."
+  },
+  {
+   "id": "long-i",
+   "how": "Say \"eye\" \u2014 the vowel in \"ride\", \"light\", \"sky\". It naturally glides from \"ah\" to \"ee\"; say it as one smooth word.",
+   "trap": "Breaking it into two separate sounds \"ah\" + \"ee\", or chopping the glide off so only \"ah\" is left. One smooth motion, like saying the word \"eye\" itself."
+  },
+  {
+   "id": "long-o",
+   "how": "Round your lips and say a natural \"oh\" once at talking speed \u2014 the vowel in \"home\", \"boat\", \"snow\" \u2014 and don't stretch it.",
+   "trap": "Stretching it into an over-rounded \"oh-oo-w\" tail \u2014 the stretch is what creates it. Self-test: play the clip, then your /t/ clip \u2014 together they should sound like \"oat\"."
+  },
+  {
+   "id": "long-u",
+   "how": "Say \"you\" \u2014 a tiny y-glide into \"oo\", the vowel in \"cube\", \"mule\", \"cute\" (kyoob, not koob).",
+   "trap": "Dropping the y and recording plain \"oo\" (that's the moon sound, a different clip). Check with \"cute\" \u2014 if your recording blends into \"coot\", redo it."
+  },
+  {
+   "id": "oo",
+   "how": "Tight round lips, ghost sound \u2014 \"oooo\" held steady, the vowel in \"moon\", \"zoo\", \"food\".",
+   "trap": "Recording the OTHER oo \u2014 the short one in \"book\" or \"look\". Anchor to \"moon\" every time. Also don't let it drift toward \"oh\"."
+  },
+  {
+   "id": "ar",
+   "how": "The pirate sound \u2014 \"arrr\", one welded piece, the vowel-plus-growl in \"star\", \"car\", \"barn\". Open with \"ah\" and roll straight into the r growl, holding the growl.",
+   "trap": "Splitting it into two sounds \u2014 flat cat-a then \"rrr\". It's one glued unit; say \"car\" and drop the c, don't build it from parts."
+  },
+  {
+   "id": "or",
+   "how": "One piece: \"or\" as in \"corn\", \"fort\", \"storm\". Round lips into \"aw\" flowing straight into the r growl \u2014 hold the growl for a full second.",
+   "trap": "Adding \"uh\" after the r (\"or-uh\"), or saying two separate sounds. Say \"corn\" first, then record just the middle-to-end without the c and n."
+  },
+  {
+   "id": "er",
+   "how": "One held growly vowel \u2014 \"errr\" as in \"her\", \"bird\", \"turn\". The whole sound is r-colored from the very start. Hold a full second.",
+   "trap": "Saying \"eh\" then \"rrr\" as two pieces. There is no \"eh\" in it \u2014 your tongue is in r-position from the first instant. Say \"her\" and drop the h."
+  },
+  {
+   "id": "ow",
+   "how": "\"Ow!\" like you stubbed your toe \u2014 the vowel in \"out\", \"cow\", \"loud\". It glides ah-to-oo; say it as one smooth ouch.",
+   "trap": "Confusing it with the ow in \"snow\" (that's long-o, a different clip) \u2014 anchor to \"cow\". And don't break the glide into \"ah\" + \"oo\"."
+  },
+  {
+   "id": "oy",
+   "how": "\"Oy!\" like \"ahoy\" \u2014 the vowel in \"coin\", \"boy\", \"joy\". One smooth glide, aw-to-ee.",
+   "trap": "Splitting it into \"aw\" + \"yuh\" or adding a \"yuh\" tail. One smooth piece, ending clean \u2014 say \"boy\" and drop the b."
+  },
+  {
+   "id": "ing",
+   "how": "Say \"ring\" and drop the r \u2014 \"ing\" as one natural chunk (same in \"king\"), ending on the held ng hum.",
+   "trap": "Spelling it out as three crisp sounds \"i-n-g\", or adding a hard g-pop at the end (\"ing-guh\"). It ends on a hum, not a pop."
+  },
+  {
+   "id": "ang",
+   "how": "Say \"sang\" and drop the s \u2014 \"ang\" as one natural chunk, same as in \"bang\". End on the ng hum.",
+   "trap": "Building it from parts \u2014 flat cat-a + n + g. The vowel changes inside this chunk; trust how \"sang\" actually sounds and don't add a g-pop."
+  },
+  {
+   "id": "ank",
+   "how": "Say \"bank\" and drop the b \u2014 \"ank\" as one chunk (same in \"thank\"), finishing with a light, quiet k.",
+   "trap": "Forcing a flat cat-a and spelling out a-n-k. Say it the way it really sounds in \"thank\", and keep the final k an unvoiced puff \u2014 no \"kuh\"."
+  },
+  {
+   "id": "ink",
+   "how": "Say \"pink\" and drop the p \u2014 \"ink\" as one chunk (same in \"wink\"), ending with a light quiet k.",
+   "trap": "Over-segmenting into i-n-k, or releasing the k with \"kuh\". One smooth chunk, crisp airy finish."
+  },
+  {
+   "id": "all",
+   "how": "Say \"ball\" and drop the b \u2014 \"all\" (aw + l) as one chunk, same as \"tall\". Finish holding the l with your tongue tip up.",
+   "trap": "Using the flat cat-a (\"al\" as in \"pal\") \u2014 this chunk says \"awl\". And no \"uh\" after the l; end with the tongue still up."
+  },
+  {
+   "id": "ant",
+   "how": "The word \"ant\" itself \u2014 said naturally as one chunk (same in \"plant\"), ending with a crisp, quiet t.",
+   "trap": "Releasing the t as \"tuh\" (\"an-tuh\"). The final t is a whisper-quiet tap; stop right after it."
+  }
+ ],
+ "session_tips": [
+  "THE BUZZ TEST \u2014 learn this once before you record anything: put two fingers flat on the front of your throat and hum \"mmm\" \u2014 that vibration is your voice being ON. Now whisper \"ssss\" \u2014 no vibration, voice OFF. Every voice-ON sound must buzz under your fingers the whole time; every air-only sound must not buzz at all. Check with your fingers, not your ears.",
+  "Two lengths, used everywhere: held sounds (m, n, s, f, v, z, l, r, sh, th, ng, and all the vowels) get about ONE second \u2014 count \"one-mississippi\" in your head. Quick sounds (b, d, g, p, t, k, j, ch, h, w, y) are over in under half a second.",
+  "Record in a small, soft space \u2014 a closet full of clothes or a carpeted bedroom beats any room with bare walls \u2014 and turn off fans, AC, and anything that hums. Keep the mic a consistent 6-8 inches away and slightly OFF to the side of your mouth: stops like /p/, /b/, /t/ fire a puff of air that thumps the mic if you speak straight into it.",
+  "Say the anchor word out loud first, then record just the sound: \"cat... /k/\". The word loads the correct sound into your mouth; recording it cold is when letter names sneak in. Leave a second of silence before and after every sound \u2014 trimming is easy; a clipped-off start is a redo.",
+  "Do the whole set in one sitting with the same setup and distance. Keep it consistent the concrete way: before starting each batch, replay the very first clip you recorded in the sitting and match its loudness and your distance from the mic.",
+  "Batch by type so you stay in one mode. Batch 1 \u2014 held sounds: m, n, s, f, v, z, l, r, sh, th, ng. Batch 2 \u2014 quick sounds: b, d, g, p, t, k, j, ch, h, w, y, kw, ks. Batch 3 \u2014 vowels: all the short and long vowels, oo, ow, oy. Batch 4 \u2014 glued chunks: ar, or, er, ing, ang, ank, ink, all, ant.",
+  "Don't fight the volume of quiet sounds \u2014 /p/, /t/, /k/, /h/ are naturally near-silent, and pushing them louder is exactly what adds the \"uh\". But quiet doesn't mean inaudible: play each one back at the volume where your /m/ clip is clearly heard, and if the puff isn't plainly audible, re-record a little closer to the mic, still angled off to the side.",
+  "Self-test before uploading \u2014 play these sequences back-to-back: b-a-t (\"bat\"), m-short-a-p (\"map\"), s-short-u-n (\"sun\"), r-short-e-d (\"red\"), and ch-short-i-p (\"chip\"). Each should sound like the word. Any sequence with an audible \"uh\" between sounds means re-record the offending clip."
+ ],
+ "common_mistakes": [
+  "The tacked-on \"uh\" (schwa) after stops \u2014 \"buh, duh, guh, tuh, puh, kuh, juh, chuh\". This is the number one blending-killer: buh-a-tuh can never blend into \"bat\". A tiny release is fine; a full vowel is not.",
+  "Saying the letter NAME instead of the sound: \"ay\" for a, \"are\" for r, \"ell\" for l, \"ex\" for x, \"double-u\" for w, \"why\" for y. Letter names are a different thing the child learns separately.",
+  "Whispering voiced stops: with the voice off, /b/ IS /p/, /d/ IS /t/, /g/ IS /k/. Voiced stops need the throat buzzing during the pop \u2014 check with two fingers flat on your throat (the buzz test), not your ears.",
+  "Voicing unvoiced sounds: /p/, /t/, /k/, /s/, /f/, /sh/, /ch/ and the th in \"thin\" are pure air \u2014 no buzz under your fingers. Any throat buzz turns them into their voiced twins (b, d, g, z, v).",
+  "Clipping continuants short. m, s, f, l, r, n, v, z, sh, th, ng should each be HELD for about one second \u2014 that hold is what makes continuous blending (\"mmmaaap\") possible.",
+  "Splitting single sounds into pieces: \"er\" is not eh+r, \"ng\" is not n+g, \"ar/or\" are welded units, and glued chunks like -ing and -ank are said as natural wholes, not spelled out sound by sound.",
+  "Vowels drifting mid-clip \u2014 starting on the right vowel and sagging into \"uh\" or growing a glide by the end. A vowel clip should sound identical at its start and its end.",
+  "A hard g-pop after ng sounds: \"ring\" and every -ng glued chunk end on a nasal hum, never \"ng-guh\"."
+ ]
+}

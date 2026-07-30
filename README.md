@@ -75,18 +75,20 @@ spelling. Letter **sounds** only ever come from `ph` clips; letter **names**
 `tools/gen_audio.py` renders everything through a pluggable engine
 (`tools/tts_engines.py`):
 
-- **google** (default) — Cloud TTS neural voice. Prose sounds natural, and
-  letter sounds use SSML `<phoneme alphabet="ipa">` from the *same* voice, so
-  narration and phonemes match. Needs an API key, see `SETUP.md`.
-- **apple** — offline macOS fallback, noticeably more robotic. Note the legacy
-  `say "[[inpt PHON]]…"` escape is **broken** on current macOS (it speaks the
-  marker aloud), so phonemes go through `AVSpeechSynthesizer`'s IPA attribute
-  via `tools/phoneme_render.swift`.
+- **piper** (default, and the one that ships) — a neural voice that runs
+  locally. No API key, no billing, no network at build time. Voice
+  `en_US-lessac-high`, overridable with the `PIPER_VOICE` env var.
+- **google** — Cloud TTS. Legacy; needs an API key and a card on file, see
+  `SETUP.md`.
+- **apple** — offline macOS fallback, noticeably more robotic.
+
+Every command must use the venv interpreter. System `python3` has no `piper`
+module and `gen_audio.py` will stop with a setup message.
 
 ```bash
-python3 tools/gen_audio.py                 # google (default)
-python3 tools/gen_audio.py --engine apple  # offline
-python3 tools/gen_audio.py --clean         # full rebuild
+.venv-tts/bin/python tools/gen_audio.py               # piper (default)
+.venv-tts/bin/python tools/gen_audio.py --workers 6
+.venv-tts/bin/python tools/gen_audio.py --clean       # full rebuild
 ```
 
 Unchanged clips are skipped, so re-runs are cheap.

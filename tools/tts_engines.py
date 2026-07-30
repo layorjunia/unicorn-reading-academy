@@ -271,7 +271,7 @@ class PiperEngine:
                 '  uv venv --python 3.12 .venv-tts\n'
                 '  uv pip install --python .venv-tts/bin/python piper-tts\n'
                 '  .venv-tts/bin/python -m piper.download_voices '
-                '--download-dir tools/voices en_US-hfc_female-medium\n'
+                '--download-dir tools/voices ' + PiperEngine.VOICE_NAME + '\n'
                 'then run gen_audio.py with .venv-tts/bin/python') from e
         path = model or self.DEFAULT_MODEL
         if not os.path.exists(path):

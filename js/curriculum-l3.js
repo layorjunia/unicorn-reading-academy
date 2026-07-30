@@ -487,8 +487,8 @@ const LEVEL3 = {
           { say: 'Now it is your turn!' }
         ],
         patterns: [
-          { g: 'ce/ci', say: 'sss', ex: 'city' },
-          { g: 'ge/gi', say: 'j', ex: 'giant' },
+          { g: 'ce/ci', sk: 'ce', say: 'sss', ex: 'city' },
+          { g: 'ge/gi', sk: 'ge', say: 'j', ex: 'giant' },
           { g: 'kn', say: 'n', ex: 'knee' },
           { g: 'wr', say: 'r', ex: 'write' }
         ],
@@ -498,7 +498,7 @@ const LEVEL3 = {
         { word: 'ice', sounds: ['eye', 's'], choices: ['ice', 'eyes', 'ace'] },
         { word: 'knee', sounds: ['n', 'ee'], choices: ['need', 'knee', 'key'] },
         { word: 'wrap', sounds: ['r', 'a', 'p'], choices: ['warp', 'rap', 'wrap'] },
-        { word: 'giant', sounds: ['gi', 'ant'], choices: ['grant', 'giant', 'gently'] }
+        { word: 'giant', choices: ['grant', 'giant', 'gently'] }
       ],
       buildIt: [
         { word: 'mice', tiles: ['m', 'i', 'ce'], extra: ['ke', 'a'] },

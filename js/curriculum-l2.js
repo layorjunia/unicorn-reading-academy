@@ -477,9 +477,9 @@ const LEVEL2 = {
         ],
         patterns: [
           { g: 'oa', say: 'oh', ex: 'boat' },
-          { g: 'ow', say: 'oh', ex: 'snow' },
+          { g: 'ow', sk: 'ow_o', say: 'oh', ex: 'snow' },
           { g: 'igh', say: 'eye', ex: 'night' },
-          { g: 'y', say: 'eye', ex: 'fly' }
+          { g: 'y', sk: 'y_i', say: 'eye', ex: 'fly' }
         ],
         examples: ['boat', 'coat', 'snow', 'glow', 'night', 'fly']
       },
@@ -554,7 +554,7 @@ const LEVEL2 = {
         ],
         patterns: [
           { g: 'ou', say: 'ow', ex: 'cloud' },
-          { g: 'ow', say: 'ow', ex: 'cow' },
+          { g: 'ow', sk: 'ow_ou', say: 'ow', ex: 'cow' },
           { g: 'oi', say: 'oy', ex: 'coin' },
           { g: 'oy', say: 'oy', ex: 'toy' },
           { g: 'oo', say: 'oo', ex: 'moon' }

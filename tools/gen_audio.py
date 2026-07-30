@@ -1,15 +1,24 @@
 #!/usr/bin/env python3
 """Generate every voice clip for Unicorn Reading Academy.
 
-  python3 tools/gen_audio.py                # google engine (default)
-  python3 tools/gen_audio.py --engine apple # offline macOS fallback
-  python3 tools/gen_audio.py --clean        # rebuild everything
+MUST be run with the Piper venv, not system python:
 
-Three kinds of audio, each produced the way that is actually correct:
+  .venv-tts/bin/python tools/gen_audio.py              # piper (default)
+  .venv-tts/bin/python tools/gen_audio.py --workers 6
+  .venv-tts/bin/python tools/gen_audio.py --clean      # rebuild everything
+
+Engines: piper (default, local neural, the one that ships), google, apple.
+Voice: en_US-lessac-high, overridable with the PIPER_VOICE env var.
+
+Two kinds of audio are actually played by the app:
 
   prose         whole sentences and words, spoken naturally by a neural voice
-  letter SOUND  SSML <phoneme alphabet="ipa"> — /b/ is the sound, never "bee"
-  letter NAME   SSML <say-as interpret-as="characters"> — for spelling words
+  letter NAME   for spelling a heart word out loud (AudioLib.spellOut)
+
+Letter SOUNDS (audio/ph/) are still generated but NOTHING PLAYS THEM. Isolated
+synthesised phonemes were inaccurate enough to teach the wrong thing — short a
+and short i came out near-identical — so the app was changed to say whole words
+only. The ph/ output is dead weight kept only until it is cleaned out.
 
 Why sentences are stored whole: playing a sentence as separate word clips
 sounds chopped and robotic. Every authored narration fragment therefore gets
@@ -540,9 +549,22 @@ def main():
                 val = val.replace(a, b)
             ipa_map[tok] = val
 
+    # The 'snd' section is HUMAN recordings imported by tools/import_sounds.py.
+    # This tool doesn't generate them and must never destroy them: rebuilding
+    # the manifest from scratch silently un-registered every recorded sound,
+    # and --clean deleted the audio/s/ clips themselves. Carry them across.
+    old_manifest = {}
+    man_path = os.path.join(AUDIO, 'manifest.json')
+    if os.path.exists(man_path):
+        try:
+            old_manifest = json.load(open(man_path))
+        except (json.JSONDecodeError, OSError):
+            old_manifest = {}
+
     if args.clean:
         import shutil
-        shutil.rmtree(AUDIO, ignore_errors=True)
+        for d in ['w', 'p', 'ph', 'l', 'n']:      # never audio/s/ or audio/sfx/
+            shutil.rmtree(os.path.join(AUDIO, d), ignore_errors=True)
 
     words, phrases = extract()
     for d in ['w', 'p', 'ph', 'l']:
@@ -550,6 +572,10 @@ def main():
 
     ext = engine.ext
     manifest = {'words': {}, 'ph': {}, 'ltr': {}, 'engine': engine.name}
+    snd = {sid: rec for sid, rec in (old_manifest.get('snd') or {}).items()
+           if os.path.exists(os.path.join(AUDIO, rec.get('f', '')))}
+    if snd:
+        manifest['snd'] = snd
     if getattr(engine, 'VOICE_NAME', None):
         manifest['voice'] = engine.VOICE_NAME
     jobs = []   # (callable, out_path)
@@ -647,8 +673,12 @@ def main():
         if not os.path.exists(os.path.join(AUDIO, manifest['narr'][island])):
             del manifest['narr'][island]
 
-    with open(os.path.join(AUDIO, 'manifest.json'), 'w') as f:
+    # Atomic write: dumping straight onto the live manifest truncates it first,
+    # so a crash mid-dump leaves the app with no audio index at all.
+    tmp = man_path + '.tmp'
+    with open(tmp, 'w') as f:
         json.dump(manifest, f, separators=(',', ':'))
+    os.replace(tmp, man_path)
 
     print('validating...')
     problems = validate(manifest, phrases)

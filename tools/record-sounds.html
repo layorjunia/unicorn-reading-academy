@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Sound Recording Booth</title>
+<style>
+  :root { --pink:#ff6fa5; --purple:#7c5cd6; --green:#3f9e5f; --red:#e0446a; }
+  * { box-sizing: border-box; }
+  body { font: 15px/1.45 -apple-system, sans-serif; margin: 0; background: #faf7fc; color:#31294a; }
+  .wrap { display: grid; grid-template-columns: 270px 1fr; min-height: 100vh; }
+  aside { background: #fff; border-right: 1px solid #e8e0f0; padding: 14px; overflow-y: auto; max-height: 100vh; }
+  aside h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: #8b7fae; margin: 16px 0 6px; }
+  .item { display: flex; align-items: center; gap: 8px; padding: 5px 8px; border-radius: 8px; cursor: pointer; }
+  .item:hover { background: #f4eefc; }
+  .item.cur { background: #ede4fb; font-weight: 700; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; background: #ddd; flex: none; }
+  .dot.rec { background: var(--green); }
+  .dot.imp { background: var(--purple); }
+  main { padding: 28px 40px; max-width: 760px; }
+  .label { font-size: 64px; font-weight: 800; color: var(--purple); margin: 4px 0; }
+  .graphemes { color: #8b7fae; font-size: 18px; margin-bottom: 14px; }
+  .how { background: #fff; border: 1px solid #e8e0f0; border-radius: 12px; padding: 14px 16px; margin: 10px 0; }
+  .how b { color: var(--pink); }
+  .trap { border-left: 4px solid var(--red); padding-left: 12px; color: #7a3550; margin: 10px 0; }
+  .ex { display: flex; gap: 8px; margin: 12px 0 20px; flex-wrap: wrap; }
+  .ex button { font-size: 15px; padding: 8px 14px; border-radius: 10px; border: 1px solid #d8cdec; background: #fff; cursor: pointer; }
+  .ex button:hover { background: #f4eefc; }
+  .controls { display: flex; align-items: center; gap: 14px; margin: 18px 0; }
+  .big { font-size: 17px; font-weight: 700; padding: 12px 22px; border-radius: 12px; border: none; cursor: pointer; color: #fff; }
+  #recBtn { background: var(--red); }
+  #recBtn.armed { animation: pulse 1s infinite; }
+  @keyframes pulse { 50% { opacity: .55; } }
+  #playBtn { background: var(--purple); }
+  #keepBtn { background: var(--green); }
+  button:disabled { opacity: .35; cursor: default; }
+  #meter { width: 220px; height: 26px; background: #eee; border-radius: 6px; overflow: hidden; }
+  #meterFill { height: 100%; width: 0; background: linear-gradient(90deg, #7fd48f, #ffd93d, #e0446a); }
+  .nav { display: flex; gap: 10px; margin-top: 26px; }
+  .nav button { padding: 9px 18px; border-radius: 10px; border: 1px solid #d8cdec; background: #fff; cursor: pointer; font-size: 15px; }
+  #status { color: #8b7fae; min-height: 1.4em; }
+  .banner { background: #fff4d6; border: 1px solid #ecd9a0; border-radius: 10px; padding: 10px 14px; margin-bottom: 16px; }
+  kbd { background: #ece5f6; border-radius: 4px; padding: 1px 6px; font-family: inherit; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <aside id="side"></aside>
+  <main>
+    <div class="banner">
+      <b>How this works:</b> for each sound — listen to the example words, press
+      <kbd>space</kbd> (or Record), say the sound <b>three times</b> with a short pause
+      between (“mmm&nbsp;…&nbsp;mmm&nbsp;…&nbsp;mmm”), press <kbd>space</kbd> to stop, listen back, and
+      <b>Keep</b> the take. The import step picks the cleanest one. Quiet room, mouth
+      about a hand-span from the mic, same distance every time.
+    </div>
+    <div id="pane">Loading script…</div>
+  </main>
+</div>
+<script>
+let SCRIPT = null, GUIDE = {}, order = [], idx = 0;
+let ctx = null, stream = null, proc = null, src = null, analyser = null;
+let recording = false, chunks = [], sampleRate = 48000, lastWav = null;
+const $ = id => document.getElementById(id);
+
+async function boot() {
+  SCRIPT = await (await fetch('/tools/recording-script.json')).json();
+  try { GUIDE = await (await fetch('/tools/recording-guide.json')).json(); } catch (e) { GUIDE = {}; }
+  order = SCRIPT.groups.flatMap(g => g.items);
+  await refreshStatus();
+  render();
+}
+
+let status = { raw: [], imported: [] };
+async function refreshStatus() {
+  try { status = await (await fetch('/rig-status')).json(); } catch (e) {}
+}
+
+function sideHtml() {
+  return SCRIPT.groups.map(g => {
+    const rows = g.items.map(id => {
+      const s = SCRIPT.sounds[id];
+      const cls = status.imported.includes(id) ? 'imp' : (status.raw.includes(id) ? 'rec' : '');
+      return `<div class="item ${order[idx] === id ? 'cur' : ''}" onclick="jump('${id}')">
+        <span class="dot ${cls}"></span> ${s.label}</div>`;
+    }).join('');
+    const done = g.items.filter(id => status.raw.includes(id) || status.imported.includes(id)).length;
+    return `<h2>${g.title} (${done}/${g.items.length})</h2>${rows}`;
+  }).join('');
+}
+
+function jump(id) { idx = order.indexOf(id); stopMonitor(); lastWav = null; render(); }
+
+function posLabel() {
+  const coreLen = SCRIPT.groups.slice(0, 3).reduce((a, g) => a + g.items.length, 0);
+  if (idx < coreLen) return `${idx + 1} of ${coreLen} core sounds`;
+  return `optional Level 3 chunk ${idx - coreLen + 1} of ${order.length - coreLen}`;
+}
+
+function render() {
+  $('side') && ($('side').innerHTML = sideHtml());
+  const id = order[idx], s = SCRIPT.sounds[id];
+  const g = (GUIDE.sounds || []).find(x => x.id === id) || {};
+  const exs = (s.examples || []).map(e =>
+    `<button onclick="playClip('${e.clip || ''}', '${e.w}')">🔊 ${e.w}</button>`).join('');
+  $('pane').innerHTML = `
+    <div class="label">${s.label}</div>
+    <div class="graphemes">spellings: ${s.graphemes.join(', ')} · ${posLabel()}</div>
+    ${g.how ? `<div class="how"><b>How:</b> ${g.how}</div>` : ''}
+    ${g.trap ? `<div class="trap"><b>Watch out:</b> ${g.trap}</div>` : ''}
+    ${exs ? `<div class="ex">${exs}</div>` : ''}
+    <div class="controls">
+      <button class="big" id="recBtn" onclick="toggleRec()">● Record</button>
+      <div id="meter"><div id="meterFill"></div></div>
+    </div>
+    <div class="controls">
+      <button class="big" id="playBtn" onclick="playBack()" disabled>▶ Listen</button>
+      <button class="big" id="keepBtn" onclick="keep()" disabled>✓ Keep</button>
+    </div>
+    <div id="status">${status.raw.includes(id) ? 'A take is saved for this sound — record again to replace it.' : ''}</div>
+    <div class="nav">
+      <button onclick="step(-1)">⬅ Previous</button>
+      <button onclick="step(1)">Next ➡</button>
+    </div>`;
+}
+
+function step(d) { idx = Math.min(order.length - 1, Math.max(0, idx + d)); lastWav = null; render(); }
+
+function playClip(clip, w) {
+  if (!clip) return;
+  new Audio('/' + clip).play();
+}
+
+async function ensureMic() {
+  if (ctx) return;
+  stream = await navigator.mediaDevices.getUserMedia({ audio: {
+    echoCancellation: false, noiseSuppression: false, autoGainControl: false } });
+  ctx = new (window.AudioContext || window.webkitAudioContext)();
+  sampleRate = ctx.sampleRate;
+  src = ctx.createMediaStreamSource(stream);
+  analyser = ctx.createAnalyser();
+  analyser.fftSize = 512;
+  src.connect(analyser);
+  meterLoop();
+}
+
+let meterOn = true;
+function meterLoop() {
+  if (!analyser) return;
+  const buf = new Uint8Array(analyser.fftSize);
+  analyser.getByteTimeDomainData(buf);
+  let peak = 0;
+  for (const v of buf) peak = Math.max(peak, Math.abs(v - 128));
+  const el = $('meterFill');
+  if (el) el.style.width = Math.min(100, peak * 1.6) + '%';
+  requestAnimationFrame(meterLoop);
+}
+function stopMonitor() { recording = false; }
+
+async function toggleRec() {
+  await ensureMic();
+  if (!recording) {
+    chunks = [];
+    proc = ctx.createScriptProcessor(4096, 1, 1);
+    proc.onaudioprocess = e => { if (recording) chunks.push(new Float32Array(e.inputBuffer.getChannelData(0))); };
+    src.connect(proc); proc.connect(ctx.destination);
+    recording = true;
+    $('recBtn').textContent = '■ Stop';
+    $('recBtn').classList.add('armed');
+    $('status').textContent = 'Recording… say the sound three times, then stop.';
+  } else {
+    recording = false;
+    try { src.disconnect(proc); proc.disconnect(); } catch (e) {}
+    const n = chunks.reduce((a, c) => a + c.length, 0);
+    const pcm = new Float32Array(n);
+    let o = 0; for (const c of chunks) { pcm.set(c, o); o += c.length; }
+    lastWav = encodeWav(pcm, sampleRate);
+    $('recBtn').textContent = '● Record';
+    $('recBtn').classList.remove('armed');
+    $('playBtn').disabled = false;
+    $('keepBtn').disabled = false;
+    $('status').textContent = `Got ${(n / sampleRate).toFixed(1)}s — listen, then Keep or re-record.`;
+  }
+}
+
+function encodeWav(f32, rate) {
+  const len = f32.length;
+  const buf = new ArrayBuffer(44 + len * 2);
+  const dv = new DataView(buf);
+  const ws = (off, s) => { for (let i = 0; i < s.length; i++) dv.setUint8(off + i, s.charCodeAt(i)); };
+  ws(0, 'RIFF'); dv.setUint32(4, 36 + len * 2, true); ws(8, 'WAVE');
+  ws(12, 'fmt '); dv.setUint32(16, 16, true); dv.setUint16(20, 1, true);
+  dv.setUint16(22, 1, true); dv.setUint32(24, rate, true);
+  dv.setUint32(28, rate * 2, true); dv.setUint16(32, 2, true); dv.setUint16(34, 16, true);
+  ws(36, 'data'); dv.setUint32(40, len * 2, true);
+  for (let i = 0; i < len; i++) {
+    const s = Math.max(-1, Math.min(1, f32[i]));
+    dv.setInt16(44 + i * 2, s < 0 ? s * 0x8000 : s * 0x7FFF, true);
+  }
+  return buf;
+}
+
+function playBack() {
+  if (!lastWav) return;
+  const blob = new Blob([lastWav], { type: 'audio/wav' });
+  new Audio(URL.createObjectURL(blob)).play();
+}
+
+async function keep() {
+  if (!lastWav) return;
+  const id = order[idx];
+  const r = await fetch('/save?item=' + id, { method: 'POST', body: lastWav });
+  const j = await r.json();
+  if (j.saved) {
+    await refreshStatus();
+    $('status').textContent = 'Saved! Moving to the next sound…';
+    setTimeout(() => step(1), 500);
+  } else {
+    $('status').textContent = 'Save failed: ' + (j.error || 'unknown');
+  }
+}
+
+document.addEventListener('keydown', e => {
+  if (e.code === 'Space' && !e.repeat) { e.preventDefault(); toggleRec(); }
+  if (e.code === 'Enter') { e.preventDefault(); keep(); }
+  if (e.code === 'ArrowRight') step(1);
+  if (e.code === 'ArrowLeft') step(-1);
+});
+
+boot();
+</script>
+</body>
+</html>

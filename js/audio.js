@@ -127,6 +127,7 @@ const AudioLib = {
       for (const it of items) {
         if (token !== this._queueToken) return;
         if (it.gap) { await new Promise(r => setTimeout(r, it.gap)); continue; }
+        if (it.cb) { try { it.cb(); } catch (e) {} }
         if (it.file) { await this._playFile(it.file); continue; }
         if (it.tts != null) { await this._tts(it.tts, it.rate); }
       }
@@ -198,12 +199,57 @@ const AudioLib = {
     });
   },
 
-  // NOTE: the app deliberately does NOT play isolated letter sounds any more.
-  // Synthesised phonemes were inaccurate and unpleasant — /a/ and /i/ came out
-  // near-identical, so the lesson actively taught the wrong thing. A child
-  // hears whole words in a human voice and matches them; that is the exercise.
-  speakSounds(tokens, word) {
-    if (word) this.speak(word);
+  // ── Letter sounds: HUMAN recordings only, never synthesised ──
+  //
+  // Four attempts at synthesising isolated sounds all failed (browser TTS,
+  // eSpeak, Piper phonemes, Apple IPA): stops like /b/ physically need a vowel
+  // release, so TTS either invents one ("buh") or emits silence, and /a/ vs
+  // /i/ came out near-identical — the lesson taught the wrong thing. Every
+  // real reading app records the ~44 sounds with a human. So does this one:
+  // tools/record-sounds.html -> tools/import_sounds.py -> audio/s/ + manifest
+  // 'snd'. If any needed sound has no recording yet, the activity falls back
+  // to saying the whole word — never to a synthesiser.
+  sndInfo(id) {
+    return (this.manifest && this.manifest.snd && this.manifest.snd[id]) || null;
+  },
+  soundIdsFor(tok) {
+    if (typeof SOUND_MAP === 'undefined') return null;
+    return SOUND_MAP[String(tok).toLowerCase()] || null;
+  },
+  canSoundOut(tokens) {
+    if (!tokens || !tokens.length) return false;
+    return tokens.every(t => {
+      const ids = this.soundIdsFor(t);
+      return ids && ids.every(id => this.sndInfo(id));
+    });
+  },
+  // Play each token's human sound with air between, then (optionally) the
+  // whole word. opts.onSound(i) fires as token i starts — the UI uses it to
+  // light the matching tile; opts.onWord() fires as the word starts.
+  speakSounds(tokens, word, opts) {
+    opts = opts || {};
+    if (this.canSoundOut(tokens)) {
+      const items = [];
+      tokens.forEach((t, i) => {
+        if (i) items.push({ gap: 420 });
+        const ids = this.soundIdsFor(t);
+        ids.forEach((id, k) => {
+          if (k) items.push({ gap: 200 });
+          const item = { file: this.sndInfo(id).f };
+          if (k === 0 && opts.onSound) item.cb = () => opts.onSound(i);
+          items.push(item);
+        });
+      });
+      if (word) {
+        items.push({ gap: 650 });
+        const wordItems = this._itemsFor(word);
+        if (opts.onWord && wordItems.length) wordItems[0].cb = () => opts.onWord();
+        items.push(...wordItems);
+      }
+      this._playSeq(items);
+    } else if (word) {
+      this.speak(word);
+    }
   },
 
   // Letter NAMES, for spelling a heart word out loud.

@@ -1,9 +1,14 @@
-tools/.tts-key
-tools/voices/
+# Patterns are deliberately UNANCHORED (no leading slash) so they keep
+# working wherever the app lives in the tree. They were anchored to the repo
+# root once; moving the app into classic/ silently un-ignored 229 MB of Piper
+# voice models, one of which is over GitHub's 100 MB per-file limit — the
+# push would have been rejected outright.
+**/tools/.tts-key
+**/tools/voices/
+**/tools/verify-report.json
+**/tools/audio-repair-report.json
+**/tools/verify-phrases-report.json
+**/recordings/
 .venv-tts/
-*.aiff
 .work/
-tools/verify-report.json
-tools/audio-repair-report.json
-tools/verify-phrases-report.json
-recordings/
+*.aiff

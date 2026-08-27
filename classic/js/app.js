@@ -28,9 +28,18 @@ const App = {
       if (!build || !running || build === running) return;
       if (sessionStorage.getItem('ura-updating') === build) return;  // never loop
       sessionStorage.setItem('ura-updating', build);
-      for (const k of await caches.keys()) await caches.delete(k);
+      // Caches and service-worker registrations are ORIGIN-wide, not
+      // path-scoped. This app now shares its origin with Reading Star at the
+      // site root, so a blanket wipe here would delete that app's cache and
+      // unregister its service worker — leaving its home-screen icon showing
+      // the browser's offline error page. Only touch what belongs to us.
+      for (const k of await caches.keys()) {
+        if (!k.startsWith('rs-')) await caches.delete(k);
+      }
       const regs = await navigator.serviceWorker.getRegistrations();
-      for (const r of regs) await r.unregister();
+      for (const r of regs) {
+        if (r.scope.replace(/\/$/, '').endsWith('/classic')) await r.unregister();
+      }
       location.replace(location.pathname + '?b=' + build);
     } catch (e) { /* offline: keep running what we have */ }
   },

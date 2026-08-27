@@ -40,7 +40,7 @@ def main():
 
     sw = os.path.join(ROOT, 'sw.js')
     s = open(sw).read()
-    s = re.sub(r"const CACHE = '[^']*';", f"const CACHE = 'ura-{build}';", s)
+    s = re.sub(r"const CACHE = '[^']*';", f"const CACHE = 'classic-{build}';", s)
     open(sw, 'w').write(s)
 
     print('build', build)

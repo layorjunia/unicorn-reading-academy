@@ -476,3 +476,21 @@ input[type=text]:focus { border-color: var(--pink); }
   padding: 6px 16px; font-size: .84rem; color: var(--purple-dark);
   max-width: 320px; box-shadow: 0 3px 0 rgba(90,61,92,.08);
 }
+
+/* ── Read It Out Loud ── */
+.read-word {
+  font-size: 4rem; font-weight: 800; letter-spacing: .06em;
+  color: var(--purple-dark); margin: 14px 0 20px;
+  transition: color .25s, transform .25s;
+}
+.read-word.read-right { color: #3fae64; transform: scale(1.12); }
+.btn.mic { background: #ff6fa5; box-shadow: 0 5px 0 #e0578e; }
+.btn.mic:active { box-shadow: 0 1px 0 #e0578e; }
+.btn.mic.listening {
+  background: #3fae64; box-shadow: 0 5px 0 #2f8a4d;
+  animation: mic-pulse 1.1s ease-in-out infinite;
+}
+@keyframes mic-pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.06); }
+}

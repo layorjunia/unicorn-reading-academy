@@ -13,8 +13,17 @@ words with spaced repetition → repeated-reading fluency.
   - 🌸 *Sparkle Meadow* — short vowels, digraphs, blends, glued sounds
   - 🦄 *Rainbow Forest* — magic e, bossy r, vowel teams, diphthongs
   - 👑 *Crystal Castle* — multisyllabic words, prefixes/suffixes, soft c/g, silent letters
-- Each island: **Learn it → Sound it → Build it → Sort it → Read it (decodable
-  story) → Sparkle Quiz** (mastery check gates the next island)
+- Each island: **Learn it → Read it out loud → Build it → Sort it → Read it
+  (decodable story) → Sparkle Quiz** (mastery check gates the next island)
+- 🎤 **Read it out loud** shows the word big; she taps the microphone and reads
+  it, and the browser's built-in speech recognition (Apple's dictation on
+  iPhone/iPad, Google's on Android) checks her. The judge is deliberately
+  generous — homophones, digit transcriptions, and every recognizer
+  alternative count — and the app **never punishes a miss**: first miss is a
+  gentle try-again, second miss models the word in the app's voice and moves
+  on. Needs internet + mic permission; without either it falls back to
+  listen-and-tap automatically. Short words get zero fuzzy matching, because
+  minimal pairs (cat/cot, cut/cute) are the lesson.
 - 🌈 **Rainbow Practice** — after an island is finished, tap it again for
   endlessly re-generated practice drawn from an **865-word bank** (blend /
   build / listen-and-pick rounds). This is the daily-review engine.

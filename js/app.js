@@ -58,6 +58,12 @@ const App = {
   },
 
   render(html) {
+    // Every screen change kills any pending mic attempt: navigating away
+    // mid-listen must never leave the microphone hot or let a stale result
+    // land on a screen that no longer exists. NOTE: Listener is a top-level
+    // `const`, which does NOT become a window property — `window.Listener`
+    // is always undefined, so that guard silently never ran.
+    if (typeof Listener !== 'undefined') Listener.stop();
     document.getElementById('app').innerHTML = `<div class="screen">${html}</div>`;
     window.scrollTo(0, 0);
   },
@@ -936,22 +942,23 @@ const App = {
   // play one by one while their tiles light up, then the whole word. Without
   // recordings it falls back to hear-the-word / tap-the-word, which still
   // works — the scaffold lights up as soon as the sounds are imported.
+  // The sound activity is READ IT OUT LOUD: the word is shown big, she taps
+  // the microphone and reads it, and the browser's speech recognition checks
+  // her. Where the mic is unavailable (unsupported browser, permission
+  // denied), it falls back to the listen-and-tap version.
   renderSound() {
+    // micBlocked is App-level, not island-level: a denied permission or a
+    // dead mic is a device condition, and re-showing the mic screen on every
+    // island would bounce her through a button that never works. Session-
+    // only on purpose — if permission is granted later, the next session
+    // picks the mic back up.
+    if (Listener.available && !this.micBlocked) return this.renderRead();
     const items = this.isl.island.soundIt;
     const it = items[this.isl.sub];
-    const canSO = AudioLib.canSoundOut(it.sounds);
-    const tiles = canSO ? `
-        <div class="build-slots" id="so-tiles">
-          ${it.sounds.map(s => `<div class="build-slot filled">${this.soundTileText(s)}</div>`).join('')}
-        </div>
-        <button class="btn purple big" onclick="App.soundOut()">👂 Sound it out</button>` : `
-        <button class="btn purple big" onclick="App.speak('${it.word}')">🔊 Hear the word</button>`;
     this.render(`
-      ${this.islHead(canSO
-        ? 'Listen to each sound, blend them together, then tap the word you hear!'
-        : 'Listen to the word, then tap the word you hear!')}
+      ${this.islHead('Listen to the word, then tap the word you hear!')}
       <div class="card center">
-        ${tiles}
+        <button class="btn purple big" onclick="App.speak('${it.word}')">🔊 Hear the word</button>
         <div class="small-note">listen, then tap the word you hear</div>
         <div class="choices">
           ${it.choices.map(c => `<button class="choice" onclick="App.soundPick(this,'${c}')">${c}</button>`).join('')}
@@ -959,7 +966,114 @@ const App = {
         <div class="small-note">${this.isl.sub + 1} of ${items.length}</div>
       </div>
     `);
-    setTimeout(() => canSO ? this.soundOut() : this.speak(it.word), 400);
+    setTimeout(() => this.speak(it.word), 400);
+  },
+
+  renderRead() {
+    const items = this.isl.island.soundIt;
+    const it = items[this.isl.sub];
+    this.isl.readTries = 0;
+    this.render(`
+      ${this.islHead('Read the word out loud! Tap the microphone, then say it in a big clear voice!')}
+      <div class="card center">
+        <div class="read-word" id="read-word">${it.word}</div>
+        <button class="btn mic big" id="mic-btn" onclick="App.readListen()">🎤 I'm ready to read!</button>
+        <div class="small-note" id="read-note">tap the microphone, then read the word</div>
+        <button class="btn ghost small" id="read-help" onclick="App.readHelp()">🔊 Help me hear it</button>
+        <div class="small-note">${this.isl.sub + 1} of ${items.length}</div>
+      </div>
+    `);
+    // A beginning reader can't read the written instruction — say it, once
+    // per island. Later items land with just a tap sound.
+    if (this.isl.sub === 0) {
+      this.speak('Read the word out loud! Tap the microphone, then say it in a big clear voice!');
+    } else {
+      Sfx.play('tap', 0.3);
+    }
+  },
+
+  // Hearing the word is legitimate help, but never into an open microphone:
+  // the app would say "cat" to itself and the judge would score it a match.
+  readHelp() {
+    const it = this.isl.island.soundIt[this.isl.sub];
+    Listener.stop();
+    const btn = document.getElementById('mic-btn');
+    if (btn) { btn.classList.remove('listening'); btn.textContent = '🎤 I\'m ready to read!'; }
+    const note = document.getElementById('read-note');
+    if (note) note.textContent = 'tap the microphone, then read the word';
+    this.speak(it.word);
+  },
+
+  readListen() {
+    const it = this.isl.island.soundIt[this.isl.sub];
+    const btn = document.getElementById('mic-btn');
+    const note = document.getElementById('read-note');
+    const help = document.getElementById('read-help');
+    AudioLib.stop();                     // never record over our own voice
+    if (btn) { btn.classList.add('listening'); btn.textContent = '👂 I\'m listening...'; }
+    if (note) note.textContent = 'say it now!';
+    if (help) help.disabled = true;
+    const others = it.choices.filter(c => c !== it.word);
+    Listener.start({
+      onHeard: (alts) => this.readResult(Listener.judge(it.word, alts, { reject: others }), alts),
+      onSilence: () => this.readResult('silence'),
+      onBlocked: () => {
+        // denied / offline / no mic: remember for the whole session and
+        // drop to the tap version — no dead end, no nagging
+        this.micBlocked = true;
+        this.renderSound();
+      }
+    });
+  },
+
+  readResult(verdict, alts) {
+    const it = this.isl.island.soundIt[this.isl.sub];
+    const btn = document.getElementById('mic-btn');
+    if (btn) { btn.classList.remove('listening'); btn.textContent = '🎤 I\'m ready to read!'; }
+    const help = document.getElementById('read-help');
+    if (help) help.disabled = false;
+    this.isl.readTries++;
+    const good = verdict === 'match' || (verdict === 'near' && this.isl.readTries >= 2);
+    if (good) {
+      const el = document.getElementById('read-word');
+      if (el) el.classList.add('read-right');
+      Sfx.play('correct');
+      this.burst('🌟');
+      this.speakQueue(['You read it!', it.word + '!']);
+      this.after(1100, () => this.readNext());
+      return;
+    }
+    if (this.isl.readTries >= 2) {
+      // Second miss: model the word and move on. Practice, never a wall.
+      const note = document.getElementById('read-note');
+      if (note) note.textContent = 'listen, then say it with me';
+      this.speakQueue(['This word is', it.word + '.', 'Say it with me!', it.word + '!']);
+      // after() waits for the speech AND the minimum — the minimum is set
+      // well past the ~4s of speech so she actually gets a beat to say the
+      // word back before the screen moves on.
+      this.after(6500, () => this.readNext());
+      return;
+    }
+    Sfx.play('retry', 0.5);
+    const note = document.getElementById('read-note');
+    if (note) {
+      note.textContent = verdict === 'silence'
+        ? "I didn't hear you — tap the microphone and try again!"
+        : 'so close! tap the microphone and try again';
+    }
+    this.speak(verdict === 'silence'
+      ? 'I did not hear you. Tap the microphone and try again!'
+      : 'So close! Try again!');
+  },
+
+  readNext() {
+    this.isl.sub++;
+    if (this.isl.sub >= this.isl.island.soundIt.length) {
+      this.awardActivity('sound', 2);
+      this.nextStep();
+    } else {
+      this.renderRead();
+    }
   },
 
   // Play the sounds with tile highlights, then the word with all tiles lit.

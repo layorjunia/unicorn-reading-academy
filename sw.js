@@ -1,11 +1,11 @@
 // Offline cache for Unicorn Reading Academy.
 // Bump CACHE version whenever app files change so devices pick up updates.
-const CACHE = 'ura-20260730-0725-7581071';
+const CACHE = 'ura-20260827-1210-0845793';
 const ASSETS = [
   '.', 'index.html', 'css/style.css', 'manifest.json',
   'js/characters.js', 'js/story-art.js', 'js/story-scenes.js', 'js/ui-speech.js', 'js/extras.js', 'js/banks.js', 'js/storylib.js',
   'js/curriculum-l1.js', 'js/curriculum-l2.js', 'js/curriculum-l3.js',
-  'js/sound-map.js', 'js/audio.js', 'js/firebase-config.js', 'js/sync.js', 'js/app.js',
+  'js/sound-map.js', 'js/listen.js', 'js/audio.js', 'js/firebase-config.js', 'js/sync.js', 'js/app.js',
   'audio/manifest.json', 'version.json',
   'icons/icon-192.png', 'icons/icon-512.png', 'icons/icon-180.png'
 ];
@@ -34,14 +34,58 @@ self.addEventListener('fetch', e => {
 
   // Voice clips are immutable and latency-critical (a child taps a word and
   // expects instant sound), so serve them cache-first and only fetch on a miss.
+  //
+  // Range handling is NOT optional here. iOS Safari requests media with a
+  // `Range: bytes=0-` header, and if it gets a plain 200 back (which is what
+  // a cached full response is), WebKit refuses to play it — every listen
+  // button silently does nothing on iPhone/iPad while working fine on
+  // desktop. So: cache by bare URL, and when the request carries a Range
+  // header, slice the full body ourselves and answer 206.
   if (url.pathname.includes('/audio/') && /\.(mp3|m4a)$/.test(url.pathname)) {
-    e.respondWith(
-      caches.match(e.request).then(hit => hit || fetch(e.request).then(res => {
-        const copy = res.clone();
-        caches.open(CACHE).then(c => c.put(e.request, copy));
-        return res;
-      }))
-    );
+    e.respondWith((async () => {
+      let res = await caches.match(url.pathname);
+      if (!res) {
+        res = await fetch(url.pathname);
+        if (res.ok) {
+          const copy = res.clone();
+          caches.open(CACHE).then(c => c.put(url.pathname, copy));
+        }
+      }
+      const range = e.request.headers.get('range');
+      if (!range || !res.ok) return res;
+      // Handles "bytes=0-99", open-ended "bytes=100-" AND the suffix form
+      // "bytes=-500" (last N bytes) — a suffix request falling through to a
+      // plain 200 recreates the exact iOS silent-playback bug this branch
+      // exists to fix. A multi-range request gets its first range only,
+      // which media elements accept.
+      const m = /bytes=(\d*)-(\d*)/.exec(range);
+      if (!m || (!m[1] && !m[2])) return res;
+      const buf = await res.arrayBuffer();
+      let start, end;
+      if (m[1]) {
+        start = Number(m[1]);
+        end = m[2] ? Math.min(Number(m[2]), buf.byteLength - 1) : buf.byteLength - 1;
+      } else {
+        start = Math.max(0, buf.byteLength - Number(m[2]));
+        end = buf.byteLength - 1;
+      }
+      if (start >= buf.byteLength) {
+        return new Response(null, {
+          status: 416,
+          headers: { 'Content-Range': 'bytes */' + buf.byteLength }
+        });
+      }
+      return new Response(buf.slice(start, end + 1), {
+        status: 206,
+        statusText: 'Partial Content',
+        headers: {
+          'Content-Type': res.headers.get('Content-Type') || 'audio/mp4',
+          'Content-Range': 'bytes ' + start + '-' + end + '/' + buf.byteLength,
+          'Content-Length': String(end - start + 1),
+          'Accept-Ranges': 'bytes'
+        }
+      });
+    })());
     return;
   }
 

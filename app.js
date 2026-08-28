@@ -114,7 +114,11 @@ const App = {
     const prime = () => Sfx.unlock();
     document.addEventListener('touchend', prime, { once: true });
     document.addEventListener('click', prime, { once: true });
-    this.home();
+    // An iOS home-screen launch can never hear her, so don't pretend: this
+    // becomes a one-tap launcher into Safari instead of an app that fails at
+    // the first microphone.
+    if (this.iosStandalone()) this.launcher();
+    else this.home();
     this.checkForUpdate();
   },
 
@@ -700,6 +704,20 @@ const App = {
   // arrives rather than letting her tap the mic and be told she was too quiet.
   iosStandalone() {
     return this.standalone() && /iPad|iPhone|iPod/.test(navigator.userAgent);
+  },
+
+  // The whole screen, because there is exactly one useful action here.
+  launcher() {
+    this.render(`
+      <div class="screen center">
+        <div class="hero-pet">${this.creatureHtml(this.data.buddy, 'big')}</div>
+        <h1>Let's go to Safari!</h1>
+        <p class="tag">iPads only let <b>Safari</b> hear you read.
+           Tap the blue button and we can start!</p>
+        ${this.safariEscape()}
+        <button class="btn ghost small" onclick="App.home()">Just looking around</button>
+      </div>
+    `);
   },
 
   micBanner() {

@@ -69,10 +69,12 @@ const Sfx = {
 };
 
 const App = {
-  data: { stars: 0, best: 0, mode: 'words', level: '1', read: {}, miss: {}, days: {} },
+  data: { stars: 0, best: 0, mode: 'words', level: '1', read: {}, miss: {}, days: {},
+          friends: [], buddy: null, seen: 0 },
   round: null,
   _clip: null,
   _advance: null,      // pending "next item" timer — cancelled on navigation
+  _unlock: null,       // pending creature-ceremony timer — same rule
   _listening: false,
 
   init() {
@@ -81,6 +83,26 @@ const App = {
       if (raw) this.data = Object.assign(this.data, JSON.parse(raw));
     } catch (e) { /* fresh start */ }
     for (const k of ['read', 'miss', 'days']) if (!this.data[k]) this.data[k] = {};
+    if (!Array.isArray(this.data.friends)) this.data.friends = [];
+    // Everyone starts with Pip, so the collection is never empty and there
+    // is always a buddy on screen cheering her on.
+    if (!this.data.friends.length) this.data.friends = [CREATURES[0].k];
+    // Drop anything we no longer have art for, so a stale save cannot leave
+    // a blank space where a creature should be.
+    this.data.friends = this.data.friends.filter(k => this.creature(k));
+    if (!this.data.friends.length) this.data.friends = [CREATURES[0].k];
+    // Honour stars earned before this feature existed (or before a creature
+    // was added): her stars already paid for these, so grant the backlog
+    // quietly at load rather than firing five ceremonies in a row.
+    while (this.data.friends.length < this.earned()) {
+      const nxt = CREATURES[this.data.friends.length];
+      if (!nxt) break;
+      this.data.friends.push(nxt.k);
+    }
+    if (!this.data.buddy || !this.has(this.data.buddy)) {
+      this.data.buddy = this.data.friends[this.data.friends.length - 1];
+    }
+    this.save();
     if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
     // Teach the judge the whole vocabulary so a real-but-wrong word is never
     // forgiven as a near miss ("mitten" for "kitten" is a reading error).
@@ -110,6 +132,7 @@ const App = {
     Listener.stop();
     this._listening = false;
     if (this._advance) { clearTimeout(this._advance); this._advance = null; }
+    if (this._unlock) { clearTimeout(this._unlock); this._unlock = null; }
     if (this._clip) { this._clip.pause(); this._clip = null; }
     document.getElementById('app').innerHTML = html;
     window.scrollTo(0, 0);
@@ -135,9 +158,11 @@ const App = {
     const tricky = this.trickyCount();
     this.render(`
       <div class="screen center">
-        <div class="hero">🦄</div>
+        <div class="hero-pet">${this.creatureHtml(d.buddy, 'big')}</div>
         <h1>Reading Star</h1>
-        <p class="tag">Read it out loud — I'm listening!</p>
+        <p class="tag">${this.nextFriend()
+          ? `Read ${this.starsToNext()} more to meet a new friend!`
+          : 'You found every friend!'}</p>
         <div class="statrow">
           <span class="stat">⭐ ${d.stars}</span>
           <span class="stat">🔥 best ${d.best}</span>
@@ -152,6 +177,7 @@ const App = {
         <button class="btn big go" onclick="App.start('sentences')">📖 Sentences</button>
         <button class="btn big go" onclick="App.start('stories')">📚 Stories</button>
         ${tricky ? `<button class="btn big tricky" onclick="App.start('tricky')">💪 Tricky Words (${tricky})</button>` : ''}
+        <button class="btn big friends" onclick="App.friends()">🐾 My Friends (${d.friends.length}/${CREATURES.length})</button>
         <button class="btn ghost" onclick="App.progress()">📊 My Reading</button>
         <a class="classic-link" href="classic/">🌈 Unicorn Island adventure</a>
       </div>
@@ -258,6 +284,14 @@ const App = {
         <button class="btn mic big" id="mic-btn" onclick="App.listen()">🎤 Tap, then read it!</button>
         ${isWord && it.a ? `<button class="btn ghost small" id="hear" onclick="App.hear()">🔊 Hear it first</button>` : ''}
         ${r.story ? `<div class="small-note">line ${r.i + 1} of ${r.items.length}</div>` : ''}
+        <div id="skip-holder"></div>
+        <div class="buddyrow">
+          <div id="buddy" class="buddy-pet">${this.creatureHtml(this.data.buddy)}</div>
+          <div class="meter" title="stars until a new friend">
+            <div class="meterfill" style="width:${this.meterPct()}%"></div>
+          </div>
+          <span class="meterlabel">${this.starsToNext() || '★'}</span>
+        </div>
       </div>
     `);
   },
@@ -319,7 +353,10 @@ const App = {
 
     const k = it.key || this.key(r.mode, this.data.level, it.t);
 
-    if (verdict === 'match' || (verdict === 'near' && r.tries >= 2)) {
+    // ONLY a real match passes. A "near" used to count on the second try,
+    // which meant a wrong answer could slip through — the item has to be
+    // read correctly, full stop.
+    if (verdict === 'match') {
       r.settled = true;
       r.got++;
       r.streak++;
@@ -337,31 +374,89 @@ const App = {
       if (fb) { fb.className = 'feedback good'; fb.innerHTML = '⭐ You read it!'; }
       Sfx.play('correct');
       this.confetti();
+      // the buddy bounces for her, and the meter creeps toward the next friend
+      const pet = document.getElementById('buddy');
+      if (pet) { pet.classList.remove('cheer'); void pet.offsetWidth; pet.classList.add('cheer'); }
+      const fill = document.querySelector('.meterfill');
+      if (fill) fill.style.width = this.meterPct() + '%';
+      const label = document.querySelector('.meterlabel');
+      if (label) label.textContent = this.starsToNext() || '★';
+      // A new friend interrupts everything — it is the best moment in the app.
+      const got = this.claimFriend();
+      if (got) {
+        // No scheduled advance here — afterUnlock() moves her on when she
+        // leaves the ceremony. Scheduling one as well advanced the round
+        // twice and silently skipped a word.
+        if (this._advance) { clearTimeout(this._advance); this._advance = null; }
+        // Owned by this round, like every other timer here. Without the guard
+        // the ceremony painted itself over whatever screen she had navigated
+        // to in the 900ms gap — including a brand-new round, which its
+        // "Keep reading!" button would then end on her behalf.
+        const mine = r;
+        this._unlock = setTimeout(() => {
+          this._unlock = null;
+          if (this.round !== mine) return;
+          this.showUnlock(got);
+        }, 900);
+        return;
+      }
       this.scheduleNext(1200);
       return;
     }
 
-    if (r.tries >= 2) {
-      // Done trying — no wall, no lecture. It comes back later instead.
-      r.settled = true;
-      r.streak = 0;
-      this.data.miss[k] = (this.data.miss[k] || 0) + 1;
-      this.save();
-      if (!r.redone) r.redo.push(it);
-      if (fb) { fb.className = 'feedback soft'; fb.innerHTML = 'Good try! Let\'s do the next one 💪'; }
-      Sfx.play('retry', 0.4);
-      this.scheduleNext(1400);
-      return;
-    }
-
+    // A wrong answer NEVER moves her on. The word stays until she reads it.
+    // After SKIP_AFTER tries she gets a skip button — but she has to choose
+    // it; the app will not give up on her behalf.
+    r.streak = 0;
     if (card) { card.classList.add('shake'); setTimeout(() => card.classList.remove('shake'), 500); }
     if (fb) {
       fb.className = 'feedback soft';
       fb.innerHTML = verdict === 'silence'
         ? 'I didn\'t hear you — tap and try again!'
-        : (verdict === 'near' ? 'SO close — once more!' : 'Try again — nice and clear!');
+        : (verdict === 'near' ? 'So close! Say it once more.'
+           : r.tries === 1 ? 'Not quite — try again, nice and clear!'
+           : 'Keep going! Take your time and say it big.');
     }
     Sfx.play('retry', 0.4);
+    if (r.tries >= this.SKIP_AFTER) this.offerSkip();
+  },
+
+  // Coming back from an unlock: the item she just read is done, so move on
+  // through next() — which is what runs the second pass over anything she
+  // skipped. Jumping straight to finish() here silently threw that away.
+  afterUnlock() {
+    if (!this.round) return this.home();
+    this.next();
+  },
+
+  // Shown only after several honest attempts, and only ever tapped by her.
+  SKIP_AFTER: 3,
+
+  offerSkip() {
+    if (document.getElementById('skip-btn')) return;
+    const holder = document.getElementById('skip-holder');
+    if (!holder) return;
+    holder.innerHTML = '<button class="btn ghost small" id="skip-btn" ' +
+      'onclick="App.skip()">Skip this one for now →</button>';
+  },
+
+  skip() {
+    const r = this.round;
+    if (!r || r.settled) return;
+    const it = this.item();
+    const k = it.key || this.key(r.mode, this.data.level, it.t);
+    r.settled = true;
+    r.streak = 0;
+    // Skipped is not failed — it just comes back in Tricky Words later.
+    this.data.miss[k] = (this.data.miss[k] || 0) + 1;
+    this.save();
+    if (!r.redone) r.redo.push(it);
+    const fb = document.getElementById('feedback');
+    if (fb) { fb.className = 'feedback soft'; fb.innerHTML = 'No problem — we will come back to it 💪'; }
+    Listener.stop();
+    this._listening = false;
+    this.micIdle();
+    this.scheduleNext(1000);
   },
 
   next() {
@@ -392,11 +487,128 @@ const App = {
         <h1>${total} star${total === 1 ? '' : 's'}!</h1>
         <p class="tag">${r.story ? 'You read the whole story!' :
           total >= 8 ? 'Amazing reading!' : total >= 5 ? 'Great reading!' : 'Good practice — keep going!'}</p>
-        <div class="statrow"><span class="stat">⭐ ${this.data.stars} total</span></div>
+        <div class="statrow">
+          <span class="stat">⭐ ${this.data.stars} total</span>
+          <span class="stat">🐾 ${this.data.friends.length}/${CREATURES.length}</span>
+        </div>
+        ${this.nextFriend() ? `<p class="tag">${this.starsToNext()} more to meet ${this.nextFriend().n}!</p>` : ''}
         <button class="btn big go" onclick="App.start('${again}')">Read more!</button>
         <button class="btn ghost" onclick="App.home()">🏠 Home</button>
       </div>
     `);
+  },
+
+
+  // ── The star economy ──────────────────────────────────────────────────
+  // One star per item read correctly. Every STARS_PER_FRIEND stars, the next
+  // creature joins her — that is the whole loop, and it is deliberately
+  // simple enough for a 7-year-old to hold in her head.
+  STARS_PER_FRIEND: 10,
+
+  earned() {
+    // +1 because Pip is a gift, not something she had to earn.
+    return Math.min(CREATURES.length,
+      1 + Math.floor(this.data.stars / this.STARS_PER_FRIEND));
+  },
+
+  creature(k) { return CREATURES.find(c => c.k === k); },
+  has(k) { return this.data.friends.indexOf(k) >= 0; },
+
+  nextFriend() {
+    const i = this.data.friends.length;
+    return i < CREATURES.length ? CREATURES[i] : null;
+  },
+
+  starsToNext() {
+    if (!this.nextFriend()) return 0;
+    const need = this.data.friends.length * this.STARS_PER_FRIEND;
+    return Math.max(0, need - this.data.stars);
+  },
+
+  // Returns the newly earned creature, if this star crossed a threshold.
+  claimFriend() {
+    const want = this.earned();
+    if (this.data.friends.length >= want) return null;
+    const next = CREATURES[this.data.friends.length];
+    if (!next) return null;
+    this.data.friends.push(next.k);
+    this.data.buddy = next.k;      // the newest friend comes along to play
+    this.save();
+    return next;
+  },
+
+  // How full the bar to the next friend is.
+  meterPct() {
+    if (!this.nextFriend()) return 100;
+    const done = this.STARS_PER_FRIEND - this.starsToNext();
+    return Math.round(done / this.STARS_PER_FRIEND * 100);
+  },
+
+  creatureHtml(k, cls) {
+    const c = this.creature(k);
+    return c ? `<div class="creature ${cls || ''}">${c.svg}</div>` : '';
+  },
+
+  // ── The unlock moment ──
+  // This is the payoff for ten pieces of reading, so it gets the whole
+  // screen, its own animation, and a line from the creature itself.
+  showUnlock(c) {
+    Sfx.play('fanfare', 0.8);
+    this.confetti(30);
+    this.render(`
+      <div class="screen center unlock">
+        <div class="pop-in">${this.creatureHtml(c.k, 'huge')}</div>
+        <h1>${c.n} joined you!</h1>
+        <p class="cheer">${c.c}</p>
+        <div class="statrow"><span class="stat">🐾 ${this.data.friends.length} of ${CREATURES.length} friends</span></div>
+        <button class="btn big go" onclick="App.afterUnlock()">Keep reading!</button>
+        <button class="btn ghost" onclick="App.friends()">See all my friends</button>
+      </div>
+    `);
+  },
+
+  // ── The collection ──
+  friends() {
+    const total = CREATURES.length;
+    const have = this.data.friends.length;
+    const next = this.nextFriend();
+    const toNext = this.starsToNext();
+    const cells = CREATURES.map((c, i) => {
+      if (this.has(c.k)) {
+        const isBuddy = this.data.buddy === c.k;
+        return `<button class="cell ${isBuddy ? 'buddy' : ''}" onclick="App.pickBuddy('${c.k}')">
+          ${this.creatureHtml(c.k)}
+          <div class="cname">${c.n}</div>
+          ${isBuddy ? '<div class="badge">with you</div>' : ''}
+        </button>`;
+      }
+      const locked = i === have;   // the very next one gets a teaser
+      return `<div class="cell locked">
+        <div class="mystery">${locked ? '❔' : '🔒'}</div>
+        <div class="cname">${locked ? `${toNext} more star${toNext === 1 ? '' : 's'}` : '???'}</div>
+      </div>`;
+    }).join('');
+    this.render(`
+      <div class="screen">
+        <div class="topbar">
+          <button class="btn ghost small" onclick="App.home()">🏠</button>
+          <span class="count">My Friends</span>
+          <span class="stat">🐾 ${have}/${total}</span>
+        </div>
+        ${next ? `<p class="tag center-text">Read ${toNext} more word${toNext === 1 ? '' : 's'} to meet a new friend!</p>`
+               : '<p class="tag center-text">You found every friend! 🏆</p>'}
+        <div class="grid">${cells}</div>
+        <p class="small-note">Tap a friend to bring them along while you read.</p>
+      </div>
+    `);
+  },
+
+  pickBuddy(k) {
+    if (!this.has(k)) return;
+    this.data.buddy = k;
+    this.save();
+    Sfx.play('correct', 0.5);
+    this.friends();
   },
 
   // ── Progress ──
@@ -456,7 +668,9 @@ const App = {
   },
 
   doReset() {
-    this.data = { stars: 0, best: 0, mode: 'words', level: this.data.level, read: {}, miss: {}, days: {} };
+    this.data = { stars: 0, best: 0, mode: 'words', level: this.data.level,
+                  read: {}, miss: {}, days: {},
+                  friends: [CREATURES[0].k], buddy: CREATURES[0].k, seen: 0 };
     this.save();
     this.home();
   },
@@ -499,10 +713,10 @@ const App = {
     this.showItem();
   },
 
-  confetti() {
+  confetti(n) {
     const holder = document.createElement('div');
     holder.className = 'confetti';
-    for (let i = 0; i < 18; i++) {
+    for (let i = 0; i < (n || 18); i++) {
       const s = document.createElement('span');
       s.textContent = ['⭐', '💖', '✨', '🌸'][i % 4];
       s.style.left = Math.random() * 100 + 'vw';

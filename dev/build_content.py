@@ -127,6 +127,15 @@ def main():
     if len(sys.argv) > 1 and os.path.exists(sys.argv[1]):
         authored = json.load(open(sys.argv[1]))
 
+    # An allowlist from the word audit, if present. Every word was checked on
+    # two axes: is it the right phonics level, AND is it a word a 7-year-old
+    # actually knows? "clink" is phonetically perfect Level 1 and still has no
+    # business on a card — she has never said it in her life.
+    allow = None
+    audit = os.path.join(ROOT, '.work', 'wordaudit.json')
+    if os.path.exists(audit):
+        allow = json.load(open(audit))['keep']
+
     man = json.load(open(os.path.join(ROOT, 'classic/audio/manifest.json')))
 
     def clip(w):
@@ -141,6 +150,12 @@ def main():
         pool |= {w.lower().strip() for w in (authored.get('words', {}).get(str(lvl)) or [])}
         keep = sorted(w for w in pool
                       if re.fullmatch(r"[a-z]{3,12}", w) and w not in EXCLUDE)
+        if allow is not None:
+            ok = set(allow.get(str(lvl), []))
+            keep = [w for w in keep if w in ok]
+            # a word the audit MOVED to this level may not be in the raw pool
+            keep = sorted(set(keep) | (ok - set().union(*(
+                set(allow.get(o, [])) for o in ('1', '2', '3') if o != str(lvl)))))
         words[str(lvl)] = keep
 
     # A singular and its plural are the same word to the judge, so shipping

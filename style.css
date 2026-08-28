@@ -108,3 +108,60 @@ h1 { font-size: 2.2rem; color: #a0206a; letter-spacing: .01em; }
 .pnum { font-size: .8rem; color: #8a6b8d; margin-top: 3px; }
 .small-note { font-size: .85rem; color: #8a6b8d; text-align: center; }
 .levelhint { font-size: .82rem; color: #8a6b8d; margin: -6px 0 4px; }
+
+/* ── Creature friends ─────────────────────────────────────────────────── */
+.creature svg { width: 100%; height: auto; display: block; }
+.hero-pet { width: 130px; margin: 0 auto; }
+.hero-pet .creature { animation: bob 3s ease-in-out infinite; }
+@keyframes bob { 0%,100% { transform: translateY(0) } 50% { transform: translateY(-8px) } }
+.creature.huge { width: 190px; margin: 0 auto; }
+.creature.big { width: 130px; }
+
+.btn.friends { background: #7fc8a9; box-shadow: 0 5px 0 #5fa888; }
+.btn.friends:active { transform: translateY(3px); box-shadow: 0 2px 0 #5fa888; }
+
+/* the buddy sits under the card and bounces when she gets one right */
+.buddyrow { display: flex; align-items: center; gap: 10px; margin-top: 4px; }
+.buddy-pet { width: 52px; flex: none; }
+.buddy-pet.cheer { animation: cheer .7s ease; }
+@keyframes cheer {
+  0% { transform: scale(1) rotate(0) }
+  30% { transform: scale(1.25) rotate(-8deg) }
+  60% { transform: scale(1.15) rotate(8deg) }
+  100% { transform: scale(1) rotate(0) }
+}
+.meter { flex: 1; height: 14px; border-radius: 999px; background: rgba(255,255,255,.75); overflow: hidden; }
+.meterfill {
+  height: 100%; border-radius: 999px; transition: width .5s ease;
+  background: linear-gradient(90deg, #ffd93d, #ff8fc7);
+}
+.meterlabel { font-weight: 800; color: #a0206a; min-width: 1.4em; text-align: center; }
+
+/* the unlock moment */
+.unlock h1 { font-size: 2rem; }
+.cheer { font-size: 1.15rem; font-weight: 700; color: #7c5cd6; max-width: 300px; }
+.pop-in { animation: pop-in .75s cubic-bezier(.2,1.4,.4,1) both; }
+@keyframes pop-in {
+  0% { transform: scale(.2) rotate(-25deg); opacity: 0 }
+  70% { transform: scale(1.12) rotate(6deg); opacity: 1 }
+  100% { transform: scale(1) rotate(0) }
+}
+
+/* the collection */
+.grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+@media (min-width: 480px) { .grid { grid-template-columns: repeat(4, 1fr); } }
+.cell {
+  background: rgba(255,255,255,.9); border: 0; border-radius: 18px; padding: 10px 6px;
+  box-shadow: 0 4px 0 rgba(90,61,92,.08); font-family: inherit; cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+}
+.cell.buddy { background: #fff2f8; box-shadow: 0 4px 0 #ff8fc7; }
+.cell.locked { background: rgba(255,255,255,.5); box-shadow: none; }
+.cname { font-size: .78rem; font-weight: 700; color: #8a6b8d; }
+.cell.buddy .cname { color: #a0206a; }
+.badge {
+  font-size: .62rem; font-weight: 800; color: #fff; background: #ff6fa5;
+  border-radius: 999px; padding: 2px 8px;
+}
+.mystery { font-size: 2.4rem; opacity: .45; line-height: 1.6; }
+.center-text { text-align: center; margin: 0 auto; }

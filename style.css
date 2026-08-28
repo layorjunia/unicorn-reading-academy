@@ -175,3 +175,18 @@ h1 { font-size: 2.2rem; color: #a0206a; letter-spacing: .01em; }
 }
 .fixbox ol { margin: 8px 0 8px 18px; }
 .fixbox li { margin-bottom: 5px; }
+
+/* Escape to Safari — the only place an iPad lets a web app hear anything. */
+.btn.safari {
+  display: block; text-decoration: none; text-align: center;
+  background: #4a8fd6; box-shadow: 0 5px 0 #3a72ad; margin: 8px auto 4px;
+}
+.btn.safari:active { transform: translateY(3px); box-shadow: 0 2px 0 #3a72ad; }
+.urlnote { font-size: .78rem; color: #8a6b8d; text-align: center; line-height: 1.5; }
+.urlnote b { color: #5a3d5c; word-break: break-all; }
+.micwarn {
+  background: #fff4d6; border-radius: 16px; padding: 14px 16px; margin: 4px 0 6px;
+  font-size: .92rem; color: #7a5c1e; line-height: 1.5; text-align: center;
+  box-shadow: 0 4px 0 rgba(122,92,30,.12);
+}
+.micwarn b { display: block; margin-bottom: 2px; color: #5a4210; }

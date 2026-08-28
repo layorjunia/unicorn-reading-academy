@@ -172,6 +172,7 @@ const App = {
             <button class="pill ${d.level === l ? 'on' : ''}" onclick="App.setLevel('${l}')">Level ${l}</button>`).join('')}
         </div>
         <div class="levelhint">${LEVEL_HINT[d.level]}</div>
+        ${this.micBanner()}
         <button class="btn big go" onclick="App.start('words')">🔤 Words</button>
         <button class="btn big go" onclick="App.start('sight')">⭐ Star Words</button>
         <button class="btn big go" onclick="App.start('sentences')">📖 Sentences</button>
@@ -682,6 +683,35 @@ const App = {
       (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
   },
 
+  // In an iOS standalone web app, a target="_blank" link is one of the few
+  // things that escapes to Safari — which is the only place the microphone
+  // exists. The plain URL is shown too, so there is always a way through even
+  // if the tap does nothing.
+  safariEscape() {
+    const url = location.href.split('#')[0];
+    const pretty = url.replace(/^https?:\/\//, '').replace(/\/$/, '');
+    return `<a class="btn big go safari" href="${url}" target="_blank" rel="noopener">
+        🧭 Open in Safari
+      </a>
+      <div class="urlnote">or type this in Safari:<br><b>${pretty}</b></div>`;
+  },
+
+  // iOS home-screen apps get no microphone at all, so say so the moment she
+  // arrives rather than letting her tap the mic and be told she was too quiet.
+  iosStandalone() {
+    return this.standalone() && /iPad|iPhone|iPod/.test(navigator.userAgent);
+  },
+
+  micBanner() {
+    return this.iosStandalone()
+      ? `<div class="micwarn">
+           🎤 <b>I can't hear you in this app.</b>
+           iPads only let Safari use the microphone.
+           ${this.safariEscape()}
+         </div>`
+      : '';
+  },
+
   noMic(why) {
     const canResume = !!(this.round && this.round.items && this.round.i < this.round.items.length);
     const iosApp = why === 'blocked' && this.standalone() &&
@@ -712,11 +742,12 @@ const App = {
         <div class="hero">🎤</div>
         <h1>I can't hear you yet</h1>
         <p class="tag">${msg}</p>
+        ${iosApp ? this.safariEscape() : ''}
         ${fix}
         ${canResume
-          ? `<button class="btn big go" onclick="App.resume()">🔁 Try again</button>
+          ? `<button class="btn ${iosApp ? 'ghost' : 'big go'}" onclick="App.resume()">🔁 Try again</button>
              <button class="btn ghost" onclick="App.home()">🏠 Home</button>`
-          : `<button class="btn big go" onclick="App.home()">🏠 Home</button>`}
+          : `<button class="btn ${iosApp ? 'ghost' : 'big go'}" onclick="App.home()">🏠 Home</button>`}
         <a class="classic-link" href="classic/">🌈 Play Unicorn Island instead</a>
       </div>
     `);

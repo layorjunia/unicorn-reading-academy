@@ -85,3 +85,25 @@ h1 { font-size: 2.2rem; color: #a0206a; letter-spacing: .01em; }
 @keyframes fall {
   to { transform: translateY(115vh) rotate(300deg); opacity: .7; }
 }
+
+/* ── Tricky Words: the practice pile, warm not shameful ── */
+.btn.tricky { background: #f0932b; box-shadow: 0 5px 0 #d17d18; }
+.btn.tricky:active { transform: translateY(3px); box-shadow: 0 2px 0 #d17d18; }
+
+/* ── Stories: lines she has already read stay on screen, dimmed, so the
+      story visibly builds up as she goes ── */
+.story-done {
+  font-size: 1.05rem; color: #a892ab; line-height: 1.45; margin-bottom: 2px;
+}
+.card.sentence { justify-content: flex-start; padding-top: 26px; }
+
+/* ── Progress ── */
+.card.progress { min-height: auto; gap: 16px; padding: 26px 20px; }
+.bigstat { font-size: 3.4rem; font-weight: 800; color: #a0206a; line-height: 1; }
+.bigstat span { display: block; font-size: .95rem; font-weight: 700; color: #8a6b8d; margin-top: 4px; }
+.prow { text-align: left; }
+.plabel { font-size: .95rem; font-weight: 700; color: #5a3d5c; margin-bottom: 4px; }
+.pbar { height: 12px; border-radius: 999px; background: #efe4f4; overflow: hidden; }
+.pfill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, #ff8fc7, #b28fff); }
+.pnum { font-size: .8rem; color: #8a6b8d; margin-top: 3px; }
+.small-note { font-size: .85rem; color: #8a6b8d; text-align: center; }

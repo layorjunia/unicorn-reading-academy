@@ -686,11 +686,24 @@ const App = {
     const canResume = !!(this.round && this.round.items && this.round.i < this.round.items.length);
     const iosApp = why === 'blocked' && this.standalone() &&
       /iPad|iPhone|iPod/.test(navigator.userAgent);
-    let msg;
+    let msg, fix = '';
     if (why === 'unsupported') {
       msg = 'Reading Star listens using Safari (iPhone/iPad) or Chrome. Please open it there!';
     } else if (iosApp) {
-      msg = 'Listening works best in Safari. Open Reading Star in Safari — tap the ••• or share button and choose Open in Safari — then try again.';
+      // The real cause, stated plainly. iOS gives a home-screen web app no
+      // microphone at all, so no amount of tapping will make this work — the
+      // icon has to be re-made now that the app no longer asks iOS to launch
+      // it that way.
+      msg = 'This app was added to the Home Screen the old way, and iPads do not let those apps use the microphone.';
+      fix = `<div class="fixbox">
+        <b>Grown-up fix — takes 20 seconds:</b>
+        <ol>
+          <li>Press and hold the Reading Star icon → <b>Remove App</b>.</li>
+          <li>Open <b>Safari</b> and go to the Reading Star web page.</li>
+          <li>Tap <b>Share</b> → <b>Add to Home Screen</b> again.</li>
+        </ol>
+        The new icon opens in Safari, where the microphone works.
+      </div>`;
     } else {
       msg = 'Ask a grown-up to allow the microphone, and check you are online — then try again.';
     }
@@ -699,6 +712,7 @@ const App = {
         <div class="hero">🎤</div>
         <h1>I can't hear you yet</h1>
         <p class="tag">${msg}</p>
+        ${fix}
         ${canResume
           ? `<button class="btn big go" onclick="App.resume()">🔁 Try again</button>
              <button class="btn ghost" onclick="App.home()">🏠 Home</button>`

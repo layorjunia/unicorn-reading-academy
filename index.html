@@ -3,22 +3,27 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="build" content="20260828-0922-f351d70">
+  <meta name="build" content="20260828-0934-d8a6fb8">
   <title>Reading Star ⭐</title>
   <meta name="description" content="Read words and sentences out loud — Reading Star listens and cheers you on.">
   <link rel="manifest" href="manifest.json">
   <link rel="icon" href="icons/icon-192.png">
   <link rel="apple-touch-icon" href="icons/icon-180.png">
-  <meta name="apple-mobile-web-app-capable" content="yes">
+  <!-- Deliberately NOT "yes". That flag is what makes iOS launch the
+       home-screen icon as a standalone web app, and in standalone mode
+       iOS gives the page no microphone: speech recognition ends instantly
+       without ever opening it. Reading Star exists to listen to a child
+       read, so it opens in Safari, where the microphone works. -->
+  <meta name="apple-mobile-web-app-capable" content="no">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="theme-color" content="#ffe3f1">
-  <link rel="stylesheet" href="style.css?v=20260828-0922-f351d70">
+  <link rel="stylesheet" href="style.css?v=20260828-0934-d8a6fb8">
 </head>
 <body>
   <div id="app"></div>
-  <script src="creatures.js?v=20260828-0922-f351d70"></script>
-  <script src="content.js?v=20260828-0922-f351d70"></script>
-  <script src="listen.js?v=20260828-0922-f351d70"></script>
-  <script src="app.js?v=20260828-0922-f351d70"></script>
+  <script src="creatures.js?v=20260828-0934-d8a6fb8"></script>
+  <script src="content.js?v=20260828-0934-d8a6fb8"></script>
+  <script src="listen.js?v=20260828-0934-d8a6fb8"></script>
+  <script src="app.js?v=20260828-0934-d8a6fb8"></script>
 </body>
 </html>

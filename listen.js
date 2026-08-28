@@ -53,6 +53,17 @@ const Listener = {
       return done(opts.onBlocked);
     }
     this._rec = rec;
+    // Did the microphone ever actually open? This is the discriminator that
+    // separates "she said nothing" from "this device cannot listen at all".
+    // On iOS, a web app launched from the HOME SCREEN (standalone display)
+    // ends recognition instantly without ever capturing audio — no error, no
+    // permission prompt, just an immediate onend. Reporting that as silence
+    // told a child "I didn't hear you" when the mic never opened, and she had
+    // no way to succeed. Real silence still fires audiostart, because the mic
+    // did open and captured the quiet.
+    let audioOpened = false;
+    rec.onaudiostart = () => { audioOpened = true; };
+    rec.onspeechstart = () => { audioOpened = true; };
     rec.lang = 'en-US';
     rec.continuous = false;
     rec.interimResults = false;
@@ -74,11 +85,15 @@ const Listener = {
       if (ev.error === 'not-allowed' || ev.error === 'service-not-allowed' ||
           ev.error === 'network' || ev.error === 'audio-capture') {
         done(opts.onBlocked);
+      } else if (ev.error === 'no-speech' && audioOpened) {
+        done(opts.onSilence);   // the mic opened and heard quiet — genuine
+      } else if (!audioOpened) {
+        done(opts.onBlocked);   // it never opened; nothing she does can help
       } else {
-        done(opts.onSilence);   // no-speech, aborted — genuine quiet
+        done(opts.onSilence);
       }
     };
-    rec.onend = () => done(opts.onSilence);
+    rec.onend = () => done(audioOpened ? opts.onSilence : opts.onBlocked);
 
     // The speaking budget must not start until recognition actually starts:
     // on a fresh device the OS permission dialog sits between rec.start()
@@ -93,7 +108,7 @@ const Listener = {
         // service — a real transcript commonly lands 0.5–1.5s later, so
         // the grace period must comfortably exceed that round-trip or a
         // slow reader's correct answer is thrown away as silence.
-        setTimeout(() => done(opts.onSilence), 2500);
+        setTimeout(() => done(audioOpened ? opts.onSilence : opts.onBlocked), 2500);
       }, budget);
     };
     rec.onstart = armWatchdog;
@@ -108,7 +123,7 @@ const Listener = {
     // the button from being stuck.
     this._timer = setTimeout(() => {
       try { rec.stop(); } catch (e) { /* already stopped */ }
-      setTimeout(() => done(opts.onSilence), 2500);
+      setTimeout(() => done(audioOpened ? opts.onSilence : opts.onBlocked), 2500);
     }, budget + 17000);
   },
 

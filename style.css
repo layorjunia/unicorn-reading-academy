@@ -107,3 +107,4 @@ h1 { font-size: 2.2rem; color: #a0206a; letter-spacing: .01em; }
 .pfill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, #ff8fc7, #b28fff); }
 .pnum { font-size: .8rem; color: #8a6b8d; margin-top: 3px; }
 .small-note { font-size: .85rem; color: #8a6b8d; text-align: center; }
+.levelhint { font-size: .82rem; color: #8a6b8d; margin: -6px 0 4px; }

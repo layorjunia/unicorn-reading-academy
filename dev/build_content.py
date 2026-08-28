@@ -143,6 +143,17 @@ def main():
                       if re.fullmatch(r"[a-z]{3,12}", w) and w not in EXCLUDE)
         words[str(lvl)] = keep
 
+    # A singular and its plural are the same word to the judge, so shipping
+    # both is just duplicate practice. Keep whichever has a recording (so the
+    # "Hear it first" button works), tie-breaking to the singular.
+    for lvl in ('1', '2', '3'):
+        pool = set(words[lvl])
+        drop = set()
+        for w in pool:
+            if w + 's' in pool:
+                drop.add(w + 's' if clip(w) or not clip(w + 's') else w)
+        words[lvl] = [w for w in words[lvl] if w not in drop]
+
     # a word introduced at an easier level should not reappear later
     seen = set()
     for lvl in ('1', '2', '3'):

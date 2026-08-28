@@ -41,6 +41,14 @@ seed sheep shoe sister snow song squirrel stick street sun table thing time top
 toy tree watch water way wind window wood""".split()
 
 
+# Single letters are dropped from PRACTICE. "a" and "I" are real sight words,
+# but a child saying one letter aloud is the hardest thing there is for a
+# speech recognizer — it routinely hears nothing at all. Failing her on a word
+# she read perfectly is the one thing this app must never do, so she meets
+# these inside sentences instead, where context carries them.
+TOO_SHORT_TO_JUDGE = 1
+
+
 def by_level():
     """Level 1 = the first words taught; Level 3 = the last, plus the nouns."""
     l1 = PRE_PRIMER + PRIMER
@@ -51,6 +59,8 @@ def by_level():
         seen, keep = set(), []
         for w in words:
             k = w.lower()
+            if len(k) <= TOO_SHORT_TO_JUDGE:
+                continue
             if k not in seen:
                 seen.add(k)
                 keep.append(k)

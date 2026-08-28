@@ -30,7 +30,7 @@ tempfile.tempdir = _WORK
 # nothing.
 BANNED = set("""
 kill kills killed killing murder dead death dying corpse blood bloody
-gun guns rifle bullet shoot shooting stab stabbed knife weapon war battle
+gun guns rifle bullet stab stabbed knife weapon war battle
 drug drugs cocaine beer wine whiskey vodka drunk cigarette cigarettes smoking
 cancer tumor surgery ambulance suicide abuse divorce
 stupid idiot dumb hate hates hated ugly

@@ -14,6 +14,14 @@
 
 const KEY = 'readingstar:v1';
 
+// A parent has no way to guess which level fits their child, so say it plainly
+// in words they can check against a book at home.
+const LEVEL_HINT = {
+  '1': 'Level 1 · short words like cat, ship, jump',
+  '2': 'Level 2 · longer sounds like cake, rain, farm',
+  '3': 'Level 3 · big words like rainbow, gentle, unhappy',
+};
+
 const MODES = {
   words:     { label: '🔤 Words',       kind: 'word' },
   sight:     { label: '⭐ Star Words',  kind: 'word' },
@@ -138,6 +146,7 @@ const App = {
           ${['1', '2', '3'].map(l => `
             <button class="pill ${d.level === l ? 'on' : ''}" onclick="App.setLevel('${l}')">Level ${l}</button>`).join('')}
         </div>
+        <div class="levelhint">${LEVEL_HINT[d.level]}</div>
         <button class="btn big go" onclick="App.start('words')">🔤 Words</button>
         <button class="btn big go" onclick="App.start('sight')">⭐ Star Words</button>
         <button class="btn big go" onclick="App.start('sentences')">📖 Sentences</button>

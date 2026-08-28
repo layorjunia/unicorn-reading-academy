@@ -19,6 +19,11 @@ const Listener = {
 
   get available() { return !!this._SR; },
 
+  // Recorded from the last attempt, purely so a device-only failure can be
+  // read off the screen instead of guessed at from another machine.
+  lastAudioOpened: false,
+  lastEnd: '',
+
   // Start one listening attempt. Must be called from a tap handler (browsers
   // require a user gesture for the mic). Calls exactly one of:
   //   onHeard(alternatives)  — list of transcript strings, best first
@@ -62,8 +67,10 @@ const Listener = {
     // no way to succeed. Real silence still fires audiostart, because the mic
     // did open and captured the quiet.
     let audioOpened = false;
-    rec.onaudiostart = () => { audioOpened = true; };
-    rec.onspeechstart = () => { audioOpened = true; };
+    this.lastAudioOpened = false;
+    this.lastEnd = 'started';
+    rec.onaudiostart = () => { audioOpened = true; this.lastAudioOpened = true; };
+    rec.onspeechstart = () => { audioOpened = true; this.lastAudioOpened = true; };
     rec.lang = 'en-US';
     rec.continuous = false;
     rec.interimResults = false;
@@ -79,6 +86,7 @@ const Listener = {
       done(alts.length ? opts.onHeard : opts.onSilence, alts);
     };
     rec.onerror = (ev) => {
+      this.lastEnd = 'error:' + ev.error;
       // Anything that means "the mic cannot work right now" — denied,
       // offline, no microphone — must fall back to the tap version, not
       // loop "I didn't hear you" at a child whose device can't hear her.
@@ -93,7 +101,10 @@ const Listener = {
         done(opts.onSilence);
       }
     };
-    rec.onend = () => done(audioOpened ? opts.onSilence : opts.onBlocked);
+    rec.onend = () => {
+      if (this.lastEnd === 'started') this.lastEnd = 'ended';
+      done(audioOpened ? opts.onSilence : opts.onBlocked);
+    };
 
     // The speaking budget must not start until recognition actually starts:
     // on a fresh device the OS permission dialog sits between rec.start()

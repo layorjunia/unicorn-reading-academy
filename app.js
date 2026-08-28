@@ -687,6 +687,20 @@ const App = {
       (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
   },
 
+  // iPadOS 13+ reports a DESKTOP user agent — "Macintosh; Intel Mac OS X" —
+  // so sniffing the UA for "iPad" fails on every modern iPad, which is the
+  // one device this detection exists for. Detect by capability instead:
+  //   * navigator.standalone is a boolean ONLY on iOS Safari; nowhere else
+  //     defines it, so its mere presence identifies the platform.
+  //   * an iPad pretending to be a Mac still reports touch points, and a real
+  //     Mac reports none.
+  isIOS() {
+    if (typeof window.navigator.standalone === 'boolean') return true;
+    if (/iPad|iPhone|iPod/.test(navigator.userAgent)) return true;
+    return (navigator.maxTouchPoints || 0) > 1 &&
+           /Mac/.test(navigator.platform || '');
+  },
+
   // In an iOS standalone web app, a target="_blank" link is one of the few
   // things that escapes to Safari — which is the only place the microphone
   // exists. The plain URL is shown too, so there is always a way through even
@@ -703,7 +717,7 @@ const App = {
   // iOS home-screen apps get no microphone at all, so say so the moment she
   // arrives rather than letting her tap the mic and be told she was too quiet.
   iosStandalone() {
-    return this.standalone() && /iPad|iPhone|iPod/.test(navigator.userAgent);
+    return this.standalone() && this.isIOS();
   },
 
   // The whole screen, because there is exactly one useful action here.
@@ -730,10 +744,25 @@ const App = {
       : '';
   },
 
+  // Device-only failures are impossible to debug by guessing. Put the facts
+  // on the screen so they can simply be read back.
+  micFacts() {
+    const yn = (v) => v ? 'yes' : 'no';
+    return `<div class="facts">
+      app mode: ${yn(this.standalone())} &middot;
+      apple: ${yn(this.isIOS())} &middot;
+      listener: ${yn(Listener.available)} &middot;
+      mic opened: ${yn(Listener.lastAudioOpened)} &middot;
+      last: ${Listener.lastEnd || '—'}
+    </div>`;
+  },
+
   noMic(why) {
     const canResume = !!(this.round && this.round.items && this.round.i < this.round.items.length);
-    const iosApp = why === 'blocked' && this.standalone() &&
-      /iPad|iPhone|iPod/.test(navigator.userAgent);
+    // Gate on the PLATFORM, not on a standalone guess. Detection has been
+    // wrong twice on a real iPad, and offering Safari is sound advice on any
+    // iOS device whose microphone will not open.
+    const iosApp = why === 'blocked' && this.isIOS();
     let msg, fix = '';
     if (why === 'unsupported') {
       msg = 'Reading Star listens using Safari (iPhone/iPad) or Chrome. Please open it there!';
@@ -762,6 +791,7 @@ const App = {
         <p class="tag">${msg}</p>
         ${iosApp ? this.safariEscape() : ''}
         ${fix}
+        ${this.micFacts()}
         ${canResume
           ? `<button class="btn ${iosApp ? 'ghost' : 'big go'}" onclick="App.resume()">🔁 Try again</button>
              <button class="btn ghost" onclick="App.home()">🏠 Home</button>`

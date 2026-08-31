@@ -4,7 +4,7 @@
 // root pages into classic/audio/ (the hear-it clips and sound effects) are
 // ours to handle, and they need real Range support: iOS Safari requests
 // media with a Range header and refuses a plain 200 from a cache.
-const CACHE = 'rs-20260831-1031-4bd47db';
+const CACHE = 'rs-20260831-1045-44ee530';
 const ASSETS = [
   '.', 'index.html', 'style.css', 'manifest.json',
   'content.js', 'creatures.js', 'listen.js', 'store.js', 'firebase-config.js', 'app.js',

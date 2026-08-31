@@ -224,3 +224,5 @@ input.shake { animation: shake .45s; }
 }
 .pinkey:active { transform: translateY(3px); box-shadow: 0 1px 0 rgba(90,61,92,.12); }
 .pinpad .pinkey:last-child { grid-column: 2; }   /* 0 sits under the 8 */
+.btn.signin { background: #4a8fd6; box-shadow: 0 5px 0 #3a72ad; }
+.btn.signin:active { transform: translateY(3px); box-shadow: 0 2px 0 #3a72ad; }

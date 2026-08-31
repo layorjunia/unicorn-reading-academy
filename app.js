@@ -130,6 +130,14 @@ const App = {
     this.save();
   },
 
+  // Call after real progress — a star, a miss, a skip. This is what merge()
+  // compares, so simply opening the app never out-ranks a device she actually
+  // read on.
+  touch() {
+    if (this.profile) this.profile.playedAt = Date.now();
+    this.save();
+  },
+
   save() {
     if (!this.profile) return;
     this.profile.data = this.data;
@@ -238,6 +246,9 @@ const App = {
         <button class="btn ghost small" onclick="App.profiles()">
           ${this.esc(this.profile.avatar)} ${this.esc(this.profile.name)}${this.profile.cloud ? ' ☁️' : ''} — switch
         </button>
+        ${this.profile.cloud ? '' : `
+          <button class="btn big signin" onclick="App.cloudScreen('have')">🔑 Log in</button>
+          <p class="small-note">Already saved your stars? Log in to get them back.</p>`}
         <a class="classic-link" href="classic/">🌈 Unicorn Island adventure</a>
       </div>
     `);
@@ -428,7 +439,7 @@ const App = {
         if (!this.data.miss[k]) delete this.data.miss[k];
       }
       this.data.days[this.today()] = (this.data.days[this.today()] || 0) + 1;
-      this.save();
+      this.touch();
       if (card) card.classList.add('right');
       if (fb) { fb.className = 'feedback good'; fb.innerHTML = '⭐ You read it!'; }
       Sfx.play('correct');
@@ -508,7 +519,7 @@ const App = {
     r.streak = 0;
     // Skipped is not failed — it just comes back in Tricky Words later.
     this.data.miss[k] = (this.data.miss[k] || 0) + 1;
-    this.save();
+    this.touch();
     if (!r.redone) r.redo.push(it);
     const fb = document.getElementById('feedback');
     if (fb) { fb.className = 'feedback soft'; fb.innerHTML = 'No problem — we will come back to it 💪'; }
@@ -698,7 +709,10 @@ const App = {
         ${this.profile.cloud
           ? `<div class="micwarn">☁️ <b>${this.esc(this.profile.name)}'s stars are saved online.</b>
                They will follow her to any device.</div>`
-          : `<button class="btn big friends" onclick="App.cloudScreen()">☁️ Save my stars online</button>`}
+          : `<button class="btn big friends" onclick="App.cloudScreen('new')">☁️ Save my stars online</button>
+             <button class="btn big signin" onclick="App.cloudScreen('have')">🔑 I already have stars saved</button>
+             <p class="small-note">Cleared your browser or using a new device?
+                Tap <b>I already have stars saved</b> to get them back.</p>`}
       </div>
     `);
   },
@@ -772,10 +786,10 @@ const App = {
     this.render(`
       <div class="screen center">
         <div class="hero">☁️</div>
-        <h1>${this._cloudMode === 'new' ? 'Save my stars!' : 'Get my stars'}</h1>
+        <h1>${this._cloudMode === 'new' ? 'Save my stars!' : 'Welcome back!'}</h1>
         <p class="tag">${this._cloudMode === 'new'
           ? 'Pick 4 numbers you will remember. Then your stars follow you to any tablet or computer!'
-          : 'Type your name and tap the same 4 numbers you picked before.'}</p>
+          : 'Type the same name and 4 numbers you used before, and your stars come back.'}</p>
         <input type="text" id="cl-name" maxlength="14" placeholder="Your name"
                value="${this._cloudMode === 'new' ? this.esc(this.profile.name || '') : ''}">
         <div class="pwrow" id="cl-pw"></div>
@@ -785,10 +799,10 @@ const App = {
         </div>
         <div class="feedback" id="cl-msg">&nbsp;</div>
         <button class="btn big go" onclick="App.cloudGo()">
-          ${this._cloudMode === 'new' ? '☁️ Save my stars' : '☁️ Get my stars'}
+          ${this._cloudMode === 'new' ? '☁️ Save my stars' : '🔑 Get my stars back'}
         </button>
         <button class="btn ghost small" onclick="App.cloudScreen('${this._cloudMode === 'new' ? 'have' : 'new'}')">
-          ${this._cloudMode === 'new' ? 'I already saved them before' : 'Make a new one instead'}
+          ${this._cloudMode === 'new' ? '🔑 I already have stars saved — get them back' : 'Save new stars instead'}
         </button>
         <button class="btn ghost small" onclick="App.profiles()">Never mind</button>
       </div>
@@ -839,7 +853,14 @@ const App = {
           throw e;
         }
       } else {
-        uid = await Sync.signIn(name, this._pw.join(''));
+        try {
+          uid = await Sync.signIn(name, this._pw.join(''));
+        } catch (e) {
+          if (e && /user-not-found|invalid-credential|wrong-password/.test(e.code || '')) {
+            return say('No stars saved under that name and PIN. Check the spelling of the name, then try again.');
+          }
+          throw e;
+        }
       }
 
       // If this device already has a profile for that account, use it rather
@@ -852,6 +873,7 @@ const App = {
         const merged = Store.merge(bind, { data: cloud.data, updatedAt: cloud.updatedAt || 0 });
         bind.data = merged.data;
         bind.updatedAt = merged.updatedAt;
+        bind.playedAt = merged.playedAt || bind.playedAt || 0;
       }
       bind.name = name;
       bind.cloud = true;
@@ -867,9 +889,10 @@ const App = {
       this.render(`
         <div class="screen center">
           <div class="hero">☁️</div>
-          <h1>All saved!</h1>
-          <p class="tag">${this.esc(name)}'s stars are safe now. Use the same name and PIN
-             on any other tablet or computer to find them again.</p>
+          <h1>${this._cloudMode === 'new' ? 'All saved!' : 'Welcome back!'}</h1>
+          <p class="tag">${this._cloudMode === 'new'
+            ? this.esc(name) + "'s stars are safe now. Use the same name and PIN on any other tablet or computer to find them again."
+            : 'Got them! ' + this.esc(name) + "'s stars are back."}</p>
           <div class="statrow">
             <span class="stat">⭐ ${bind.data.stars}</span>
             <span class="stat">🐾 ${bind.data.friends.length}/${CREATURES.length}</span>
@@ -909,6 +932,7 @@ const App = {
         const merged = Store.merge(p, { data: cloud.data, updatedAt: cloud.updatedAt || 0 });
         p.data = merged.data;
         p.updatedAt = merged.updatedAt;
+        p.playedAt = merged.playedAt || p.playedAt || 0;
         Store.save(this.root);
         // Only touch the live view if she is still on this profile.
         if (this.profile === p) {

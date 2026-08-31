@@ -30,10 +30,10 @@ const Store = {
       cloud: false, uid: null,
       data: Object.assign(this.blank(), data || {}),
       // A profile that has not been played yet must NOT out-rank real history
-      // in the cloud. merge() lets the newer record decide the tricky-word
-      // pile and the current level, and a just-created profile stamped with
-      // Date.now() would win that and wipe them.
+      // in the cloud. merge() lets the more recently PLAYED record decide the
+      // tricky-word pile and the current level.
       updatedAt: updatedAt == null ? 0 : updatedAt,
+      playedAt: updatedAt == null ? 0 : updatedAt,
     };
   },
 
@@ -94,7 +94,16 @@ const Store = {
   merge(a, b) {
     if (!a) return b;
     if (!b) return a;
-    const newer = (b.updatedAt || 0) > (a.updatedAt || 0) ? b : a;
+    // Decide by when the child last PLAYED, not when the file was last
+    // written. Merely opening the app rewrites the profile, and a device that
+    // has only been opened must never out-rank one she has actually read on —
+    // otherwise a fresh install wins and her tricky-word list and level are
+    // replaced with the empty defaults.
+    // NOT `x.playedAt || x.updatedAt` — a playedAt of 0 is meaningful (never
+    // played) and would fall through to the write time, which is exactly the
+    // value we are trying to ignore.
+    const played = (x) => (x.playedAt != null ? x.playedAt : (x.updatedAt || 0));
+    const newer = played(b) > played(a) ? b : a;
     const out = Object.assign({}, newer.data);
 
     out.stars = Math.max(a.data.stars || 0, b.data.stars || 0);
@@ -118,7 +127,9 @@ const Store = {
     out.miss = Object.assign({}, newer.data.miss || {});
     out.buddy = newer.data.buddy || out.friends[out.friends.length - 1] || null;
     out.level = newer.data.level || a.data.level || '1';
-    return { ...newer, data: out, updatedAt: Math.max(a.updatedAt || 0, b.updatedAt || 0) };
+    return { ...newer, data: out,
+             updatedAt: Math.max(a.updatedAt || 0, b.updatedAt || 0),
+             playedAt: Math.max(played(a), played(b)) };
   },
 };
 
@@ -202,7 +213,9 @@ const Sync = {
         // JSON string, not a map. Firestore's merge:true DEEP-merges maps, so
         // a word removed from the tricky pile would never be removed in the
         // cloud and would return on the next sync. A string is replaced whole.
-        readingstar: JSON.stringify({ data: profile.data, updatedAt: profile.updatedAt }),
+        readingstar: JSON.stringify({ data: profile.data,
+                                      updatedAt: profile.updatedAt,
+                                      playedAt: profile.playedAt || 0 }),
       }, { merge: true });
     } catch (e) { /* offline — the local copy is still correct */ }
   },

@@ -78,10 +78,35 @@ const App = {
   _listening: false,
 
   init() {
-    try {
-      const raw = localStorage.getItem(KEY);
-      if (raw) this.data = Object.assign(this.data, JSON.parse(raw));
-    } catch (e) { /* fresh start */ }
+    // Everything now lives in a profile, but the upgrade is silent: the old
+    // single-player save is adopted as her first profile, so she opens the app
+    // and finds every star and creature exactly where she left them.
+    this.root = Store.load();
+    this.profile = this.root.profiles[this.root.activeId];
+    if (!this.profile) {
+      this.profile = Store.newProfile('My Stars', '🦄');
+      this.root.profiles[this.profile.id] = this.profile;
+      this.root.activeId = this.profile.id;
+    }
+    this.data = this.profile.data;
+    this.init2();
+    if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+    const vocab = [];
+    for (const sec of ['words', 'sight']) {
+      for (const lvl of Object.values(CONTENT[sec] || {})) for (const it of lvl) vocab.push(it.t);
+    }
+    Listener.setVocab(vocab);
+    const prime = () => Sfx.unlock();
+    document.addEventListener('touchend', prime, { once: true });
+    document.addEventListener('click', prime, { once: true });
+    if (this.iosStandalone()) this.launcher();
+    else this.home();
+    this.checkForUpdate();
+    this.resumeCloud();
+  },
+
+  // Everything that has to be true for whichever profile is active.
+  init2() {
     for (const k of ['read', 'miss', 'days']) if (!this.data[k]) this.data[k] = {};
     if (!Array.isArray(this.data.friends)) this.data.friends = [];
     // Everyone starts with Pip, so the collection is never empty and there
@@ -103,27 +128,53 @@ const App = {
       this.data.buddy = this.data.friends[this.data.friends.length - 1];
     }
     this.save();
-    if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
-    // Teach the judge the whole vocabulary so a real-but-wrong word is never
-    // forgiven as a near miss ("mitten" for "kitten" is a reading error).
-    const vocab = [];
-    for (const sec of ['words', 'sight']) {
-      for (const lvl of Object.values(CONTENT[sec] || {})) for (const it of lvl) vocab.push(it.t);
-    }
-    Listener.setVocab(vocab);
-    const prime = () => Sfx.unlock();
-    document.addEventListener('touchend', prime, { once: true });
-    document.addEventListener('click', prime, { once: true });
-    // An iOS home-screen launch can never hear her, so don't pretend: this
-    // becomes a one-tap launcher into Safari instead of an app that fails at
-    // the first microphone.
-    if (this.iosStandalone()) this.launcher();
-    else this.home();
-    this.checkForUpdate();
   },
 
   save() {
-    try { localStorage.setItem(KEY, JSON.stringify(this.data)); } catch (e) { /* full */ }
+    if (!this.profile) return;
+    this.profile.data = this.data;
+    this.profile.updatedAt = Date.now();
+    Store.save(this.root);
+    Sync.schedulePush(this.profile);
+  },
+
+  // ── Profiles ───────────────────────────────────────────────────────────
+  profileList() {
+    return Object.values(this.root.profiles)
+      .sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+  },
+
+  switchProfile(id) {
+    if (!this.root.profiles[id]) return;
+    this.root.activeId = id;
+    this.profile = this.root.profiles[id];
+    this.data = this.profile.data;
+    Store.save(this.root);
+    this.init2();
+    this.home();
+    // Pull before this device's snapshot gets pushed over what is already
+    // saved online — otherwise switching to a cloud profile uploads a stale
+    // local copy on top of newer progress from another device.
+    this.resumeCloud();
+  },
+
+  addProfile(name, avatar) {
+    const p = Store.newProfile(name, avatar);
+    this.root.profiles[p.id] = p;
+    this.root.activeId = p.id;
+    this.profile = p;
+    this.data = p.data;
+    Store.save(this.root);
+    this.init2();
+    this.home();
+  },
+
+  // A name is typed by a child and then interpolated into HTML in several
+  // places, one of them inside a quoted attribute. Escape it.
+  esc(t) {
+    return String(t == null ? '' : t)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
   },
 
   key(mode, lvl, text) { return mode + lvl + ':' + text; },
@@ -184,6 +235,9 @@ const App = {
         ${tricky ? `<button class="btn big tricky" onclick="App.start('tricky')">💪 Tricky Words (${tricky})</button>` : ''}
         <button class="btn big friends" onclick="App.friends()">🐾 My Friends (${d.friends.length}/${CREATURES.length})</button>
         <button class="btn ghost" onclick="App.progress()">📊 My Reading</button>
+        <button class="btn ghost small" onclick="App.profiles()">
+          ${this.esc(this.profile.avatar)} ${this.esc(this.profile.name)}${this.profile.cloud ? ' ☁️' : ''} — switch
+        </button>
         <a class="classic-link" href="classic/">🌈 Unicorn Island adventure</a>
       </div>
     `);
@@ -616,6 +670,257 @@ const App = {
     this.friends();
   },
 
+
+  // ── Who's reading ──────────────────────────────────────────────────────
+  AVATARS: ['🦄', '🐱', '🐶', '🦋', '🌸', '⭐', '🐰', '🐼', '🦊', '🐢'],
+  PIN_KEYS: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '0'],
+
+  profiles() {
+    const rows = this.profileList().map(p => `
+      <button class="cell ${p.id === this.root.activeId ? 'buddy' : ''}"
+              onclick="App.switchProfile('${p.id}')">
+        <div class="mystery">${p.avatar}</div>
+        <div class="cname">${this.esc(p.name)}</div>
+        <div class="pnum">⭐ ${p.data.stars || 0}${p.cloud ? ' ☁️' : ''}</div>
+      </button>`).join('');
+    this.render(`
+      <div class="screen">
+        <div class="topbar">
+          <button class="btn ghost small" onclick="App.home()">🏠</button>
+          <span class="count">Who's reading?</span>
+          <span></span>
+        </div>
+        <div class="grid">${rows}</div>
+        <button class="btn ghost" onclick="App.renameScreen()">✏️ Rename ${this.esc(this.profile.name)}</button>
+        <button class="btn big go" onclick="App.newProfileScreen()">➕ Add a reader</button>
+        <p class="small-note">Adding a reader starts a brand new pile of stars.
+           It does not touch anyone else's.</p>
+        ${this.profile.cloud
+          ? `<div class="micwarn">☁️ <b>${this.esc(this.profile.name)}'s stars are saved online.</b>
+               They will follow her to any device.</div>`
+          : `<button class="btn big friends" onclick="App.cloudScreen()">☁️ Save my stars online</button>`}
+      </div>
+    `);
+  },
+
+  renameScreen() {
+    this.render(`
+      <div class="screen center">
+        <div class="hero">${this.esc(this.profile.avatar)}</div>
+        <h1>What's your name?</h1>
+        <input type="text" id="rn-name" maxlength="14"
+               value="${this.esc(this.profile.name)}" placeholder="Your name">
+        <button class="btn big go" onclick="App.doRename()">Save</button>
+        <button class="btn ghost small" onclick="App.profiles()">Never mind</button>
+      </div>
+    `);
+    setTimeout(() => { const i = document.getElementById('rn-name'); if (i) { i.focus(); i.select(); } }, 60);
+  },
+
+  doRename() {
+    const v = ((document.getElementById('rn-name') || {}).value || '').trim();
+    if (!v) return;
+    this.profile.name = v;
+    this.save();
+    Sfx.play('correct', 0.5);
+    this.profiles();
+  },
+
+  newProfileScreen() {
+    this.render(`
+      <div class="screen center">
+        <div class="hero">🌸</div>
+        <h1>Who is reading?</h1>
+        <input type="text" id="np-name" maxlength="14" placeholder="Your name">
+        <p class="tag">Pick your picture!</p>
+        <div class="grid" id="np-av">
+          ${this.AVATARS.map(a => `
+            <button class="cell" onclick="App._pickAvatar(this,'${a}')">
+              <div class="mystery">${a}</div>
+            </button>`).join('')}
+        </div>
+        <button class="btn big go" onclick="App.createProfile()">Let's read!</button>
+        <button class="btn ghost small" onclick="App.profiles()">Never mind</button>
+      </div>
+    `);
+    setTimeout(() => { const i = document.getElementById('np-name'); if (i) i.focus(); }, 60);
+  },
+
+  _pickAvatar(el, a) {
+    this._newAvatar = a;
+    document.querySelectorAll('#np-av .cell').forEach(c => c.classList.remove('buddy'));
+    el.classList.add('buddy');
+  },
+
+  createProfile() {
+    const name = (document.getElementById('np-name') || {}).value || '';
+    if (!name.trim()) {
+      const i = document.getElementById('np-name');
+      if (i) { i.classList.add('shake'); setTimeout(() => i.classList.remove('shake'), 500); i.focus(); }
+      return;
+    }
+    Sfx.play('correct', 0.5);
+    this.addProfile(name.trim(), this._newAvatar || '🦄');
+  },
+
+  // ── The cloud backpack ─────────────────────────────────────────────────
+  // Her name plus four pictures. No email, no password to forget, nothing a
+  // 7-year-old cannot do herself.
+  cloudScreen(mode) {
+    this._pw = [];
+    this._cloudMode = mode || 'new';
+    this.render(`
+      <div class="screen center">
+        <div class="hero">☁️</div>
+        <h1>${this._cloudMode === 'new' ? 'Save my stars!' : 'Get my stars'}</h1>
+        <p class="tag">${this._cloudMode === 'new'
+          ? 'Pick 4 numbers you will remember. Then your stars follow you to any tablet or computer!'
+          : 'Type your name and tap the same 4 numbers you picked before.'}</p>
+        <input type="text" id="cl-name" maxlength="14" placeholder="Your name"
+               value="${this._cloudMode === 'new' ? this.esc(this.profile.name || '') : ''}">
+        <div class="pwrow" id="cl-pw"></div>
+        <div class="pinpad">
+          ${this.PIN_KEYS.map(k => `
+            <button class="pinkey" onclick="App._pwTap('${k}')">${k}</button>`).join('')}
+        </div>
+        <div class="feedback" id="cl-msg">&nbsp;</div>
+        <button class="btn big go" onclick="App.cloudGo()">
+          ${this._cloudMode === 'new' ? '☁️ Save my stars' : '☁️ Get my stars'}
+        </button>
+        <button class="btn ghost small" onclick="App.cloudScreen('${this._cloudMode === 'new' ? 'have' : 'new'}')">
+          ${this._cloudMode === 'new' ? 'I already saved them before' : 'Make a new one instead'}
+        </button>
+        <button class="btn ghost small" onclick="App.profiles()">Never mind</button>
+      </div>
+    `);
+    this._pwRender();
+  },
+
+  _pwTap(d) {
+    if (this._pw.length >= 4) this._pw = [];
+    this._pw.push(d);
+    Sfx.play('tap', 0.35);
+    this._pwRender();
+  },
+
+  _pwRender() {
+    const row = document.getElementById('cl-pw');
+    if (!row) return;
+    row.innerHTML = [0, 1, 2, 3]
+      .map(i => `<span class="pwslot">${this._pw[i] || '·'}</span>`).join('') +
+      (this._pw.length ? ' <button class="btn ghost small" onclick="App._pwClear()">clear</button>' : '');
+  },
+
+  _pwClear() { this._pw = []; this._pwRender(); },
+
+  async cloudGo() {
+    const name = ((document.getElementById('cl-name') || {}).value || '').trim();
+    const msg = document.getElementById('cl-msg');
+    const say = (t, good) => { if (msg) { msg.className = 'feedback ' + (good ? 'good' : 'soft'); msg.textContent = t; } };
+    if (!name) return say('Please type your name.');
+    if (this._pw.length !== 4) return say('Tap 4 numbers.');
+    if (!Sync.configured()) return say('Online saving is not set up yet.');
+    say('One moment…');
+    // Capture BEFORE any await. Re-reading this.profile afterwards was binding
+    // whichever child happened to be active by then to this account.
+    const target = this.profile;
+    try {
+      let uid;
+      if (this._cloudMode === 'new') {
+        try {
+          uid = await Sync.signUp(name, this._pw.join(''));
+        } catch (e) {
+          // NEVER silently sign in to an existing account here. That name may
+          // belong to another family in the shared project, and merging would
+          // fuse two children's progress with no way back.
+          if (e && /email-already-in-use/.test(e.code || '')) {
+            return say('That name is already saved. Tap "I already saved them before" and use your PIN.');
+          }
+          throw e;
+        }
+      } else {
+        uid = await Sync.signIn(name, this._pw.join(''));
+      }
+
+      // If this device already has a profile for that account, use it rather
+      // than binding a second local profile to the same cloud record.
+      const existing = this.profileList().find(x => x.uid === uid && x !== target);
+      const bind = existing || target;
+
+      const cloud = await Sync.pull(uid);
+      if (cloud && cloud.data) {
+        const merged = Store.merge(bind, { data: cloud.data, updatedAt: cloud.updatedAt || 0 });
+        bind.data = merged.data;
+        bind.updatedAt = merged.updatedAt;
+      }
+      bind.name = name;
+      bind.cloud = true;
+      bind.uid = uid;
+      // Make the bound profile the active one, so what she sees is what synced.
+      this.root.activeId = bind.id;
+      this.profile = bind;
+      this.data = bind.data;
+      this.init2();
+      await Sync.push(bind);
+      Sfx.play('fanfare', 0.7);
+      this.confetti(24);
+      this.render(`
+        <div class="screen center">
+          <div class="hero">☁️</div>
+          <h1>All saved!</h1>
+          <p class="tag">${this.esc(name)}'s stars are safe now. Use the same name and PIN
+             on any other tablet or computer to find them again.</p>
+          <div class="statrow">
+            <span class="stat">⭐ ${bind.data.stars}</span>
+            <span class="stat">🐾 ${bind.data.friends.length}/${CREATURES.length}</span>
+          </div>
+          <button class="btn big go" onclick="App.home()">Let's read!</button>
+        </div>
+      `);
+    } catch (e) {
+      const code = (e && e.code) || '';
+      const offline = !navigator.onLine || Sync.status !== 'ready' ||
+                      /network|unavailable/.test(code);
+      if (/wrong-password|user-not-found|invalid-credential/.test(code)) {
+        say('That name and PIN do not match. Try again!');
+      } else if (offline) {
+        // A failed SDK load rejects with a DOM Event that carries no .code,
+        // so this must not be detected by the code alone.
+        say('No internet right now — your stars are still safe on this device.');
+      } else {
+        say('That did not work. Your stars are still safe here.');
+      }
+    }
+  },
+
+  // Quietly reconnect a signed-in profile on load and merge anything newer.
+  // Every write here targets the profile CAPTURED before the network calls.
+  // Re-reading this.profile after an await was destroying progress: if she
+  // switched readers during the 1-4s cloud round trip, the old profile's data
+  // was written into the new one and saved over it.
+  async resumeCloud() {
+    const p = this.profile;
+    if (!p || !p.cloud || !p.uid || !Sync.configured()) return;
+    try {
+      await Sync.ensureLoaded();
+      if (!Sync.signedInAs(p.uid)) return;   // no session for this child
+      const cloud = await Sync.pull(p.uid);
+      if (cloud && cloud.data) {
+        const merged = Store.merge(p, { data: cloud.data, updatedAt: cloud.updatedAt || 0 });
+        p.data = merged.data;
+        p.updatedAt = merged.updatedAt;
+        Store.save(this.root);
+        // Only touch the live view if she is still on this profile.
+        if (this.profile === p) {
+          this.data = p.data;
+          this.init2();
+          if (document.querySelector('.pickrow')) this.home();
+        }
+      }
+      Sync.push(p);
+    } catch (e) { /* offline is fine — local is authoritative */ }
+  },
+
   // ── Progress ──
   progress() {
     const d = this.data;
@@ -661,11 +966,17 @@ const App = {
   },
 
   confirmReset() {
+    const cloud = this.profile && this.profile.cloud;
     this.render(`
       <div class="screen center">
         <div class="hero">🧹</div>
         <h1>Start over?</h1>
-        <p class="tag">This erases all stars and progress. It cannot be undone.</p>
+        <p class="tag">This erases ${this.esc(this.profile.name)}'s stars, creatures and
+           practice on this device. It cannot be undone.</p>
+        ${cloud ? `<div class="fixbox"><b>This reader is saved online.</b>
+             Starting over here will replace the saved copy too, the next time
+             it syncs. If you only wanted to hand the tablet to someone else,
+             go back and use <b>Add a reader</b> instead.</div>` : ''}
         <button class="btn big go" onclick="App.progress()">No, keep it</button>
         <button class="btn ghost" onclick="App.doReset()">Yes, erase everything</button>
       </div>

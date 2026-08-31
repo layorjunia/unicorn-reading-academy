@@ -191,3 +191,36 @@ h1 { font-size: 2.2rem; color: #a0206a; letter-spacing: .01em; }
 }
 .micwarn b { display: block; margin-bottom: 2px; color: #5a4210; }
 .facts { font-size: .7rem; color: #b9a6bb; margin-top: 10px; line-height: 1.6; }
+
+/* Who's reading / cloud backpack */
+input[type="text"] {
+  font-family: inherit; font-size: 1.15rem; font-weight: 700; text-align: center;
+  border: 0; border-radius: 16px; padding: 14px 18px; width: 100%; max-width: 320px;
+  background: rgba(255,255,255,.92); color: #5a3d5c;
+  box-shadow: 0 4px 0 rgba(90,61,92,.1);
+}
+input[type="text"]::placeholder { color: #c3b0c6; font-weight: 600; }
+input.shake { animation: shake .45s; }
+.pwrow { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 4px 0; }
+.pwslot {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 46px; height: 46px; border-radius: 14px; font-size: 1.6rem;
+  background: rgba(255,255,255,.9); box-shadow: 0 3px 0 rgba(90,61,92,.1);
+}
+
+/* PIN pad — big, plain number keys a 7-year-old can hit reliably */
+.pinpad {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;
+  /* width:100% matters — the parent centres its children, so without it the
+     grid shrinks to its content and the keys render as narrow pills. */
+  width: 100%; max-width: 280px; margin: 0 auto;
+}
+.pinkey {
+  border: 0; border-radius: 18px; font-family: inherit;
+  font-size: 1.9rem; font-weight: 800; color: #5a3d8c;
+  aspect-ratio: 1 / .78; min-height: 58px;
+  background: rgba(255,255,255,.92); box-shadow: 0 4px 0 rgba(90,61,92,.12);
+  cursor: pointer;
+}
+.pinkey:active { transform: translateY(3px); box-shadow: 0 1px 0 rgba(90,61,92,.12); }
+.pinpad .pinkey:last-child { grid-column: 2; }   /* 0 sits under the 8 */

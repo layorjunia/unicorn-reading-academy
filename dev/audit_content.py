@@ -111,6 +111,55 @@ console.log(JSON.stringify(out));
     return json.loads(r.stdout)
 
 
+def mark_report():
+    """Check the letter marking the child actually sees.
+
+    A wrong underline teaches a wrong sound, so this runs the SHIPPED mark.js
+    over the SHIPPED words and fails on the two mistakes that matter: a team
+    invented across a compound join, and magic-e claimed on a word whose vowel
+    is not long.
+    """
+    script = r"""
+const fs = require('fs');
+eval(fs.readFileSync(process.argv[2],'utf8').replace('const Mark','var Mark'));
+const src = fs.readFileSync(process.argv[3],'utf8');
+const C = JSON.parse(src.slice(src.indexOf('= ')+2, src.lastIndexOf(';')));
+const uniq = [...new Set([].concat(...['words','sight'].map(s=>['1','2','3'].map(l=>C[s][l].map(i=>i.t))).flat().flat()))];
+Mark.setVocab(new Set(uniq));
+const strip = h => h.replace(/<[^>]+>/g,'');
+const out = {lost: [], straddle: [], magic: []};
+for (const w of uniq) {
+  if (strip(Mark.html(w)) !== w) out.lost.push(w);
+  // Check what html() ACTUALLY renders. For a compound it marks each half
+  // separately, so a team cannot cross the join — verify that rather than
+  // re-deriving spans from the whole word, which is not the shipped path.
+  const comp = Mark.compound(w);
+  if (comp) {
+    const html = Mark.html(w);
+    const halves = html.split('<span class="syl2">');
+    if (halves.length !== 2) out.straddle.push(w+':structure');
+    else if (strip(halves[0]).replace(/^.*?>/,'') && strip(halves[0]).length !== comp[0].length)
+      out.straddle.push(w+':split '+strip(halves[0])+'|'+strip(halves[1]));
+  }
+  // magic-e must only ever appear on a one-syllable chunk
+  for (const chunk of (comp || [w])) {
+    const groups = (chunk.slice(0,-1).match(/[aeiouy]+/g) || []).length;
+    const hasMagic = Mark.parts(chunk).some(p => p.kind === 'magic');
+    if (hasMagic && groups > 1) out.magic.push(chunk);
+  }
+}
+console.log(JSON.stringify(out));
+"""
+    path = os.path.join(_WORK, 'mark_audit.js')
+    open(path, 'w').write(script)
+    r = subprocess.run(['node', path, os.path.join(ROOT, 'mark.js'),
+                        os.path.join(ROOT, 'content.js')],
+                       capture_output=True, text=True)
+    if r.returncode != 0:
+        return {'error': r.stderr[:300]}
+    return json.loads(r.stdout)
+
+
 def main():
     C = load_content()
     problems = []
@@ -172,6 +221,17 @@ def main():
                          ('pairs', 'confusable pair within a level')):
             for x in jr[k]:
                 problems.append(f'{label}: {x}')
+
+    mr = mark_report()
+    if 'error' in mr:
+        problems.append('mark audit failed: ' + mr['error'])
+    else:
+        for w in mr['lost']:
+            problems.append(f'marking loses letters: {w}')
+        for x in mr['straddle']:
+            problems.append(f'letter team invented across a compound join: {x}')
+        for w in mr['magic']:
+            problems.append(f'magic-e on a multi-syllable chunk: {w}')
 
     counts = {s: {l: len(C[s][l]) for l in ('1', '2', '3')} for s in C}
     for s, c in counts.items():

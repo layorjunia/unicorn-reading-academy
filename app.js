@@ -96,6 +96,7 @@ const App = {
       for (const lvl of Object.values(CONTENT[sec] || {})) for (const it of lvl) vocab.push(it.t);
     }
     Listener.setVocab(vocab);
+    Mark.setVocab(new Set(vocab));
     const prime = () => Sfx.unlock();
     document.addEventListener('touchend', prime, { once: true });
     document.addEventListener('click', prime, { once: true });
@@ -281,6 +282,60 @@ const App = {
     return this.shuffle(ordered.slice(0, n));
   },
 
+  // How many times she has to read a word correctly before it counts as known.
+  // Seeing a word once teaches nothing; seeing it four times across a few days
+  // is what makes it automatic.
+  LEARNED_AT: 4,
+
+  // Build a 10-slot round out of a FEW words, each repeated, spaced apart.
+  // Repetition is the point: 5 words twice beats 10 words once for memorising.
+  withRepeats(pool, mode, slots) {
+    const lvl = this.data.level;
+    const count = (it) => this.data.read[this.key(mode, lvl, it.t)] || 0;
+    // Words she is still learning come first; mastered ones only top up.
+    const learning = pool.filter(it => count(it) < this.LEARNED_AT);
+    const known = pool.filter(it => count(it) >= this.LEARNED_AT);
+    const source = learning.length >= 3 ? learning : pool;
+
+    const distinct = Math.max(1, Math.min(5, Math.ceil(slots / 2)));
+    const chosen = this.pick(source, mode, distinct);
+    if (!chosen.length) return [];
+
+    // Two of each, then a mastered word or two as a confidence top-up.
+    const bag = [];
+    for (const it of chosen) { bag.push(it); bag.push(it); }
+    while (bag.length < slots && known.length) {
+      bag.push(known[Math.floor(Math.random() * known.length)]);
+    }
+    while (bag.length < slots) bag.push(chosen[bag.length % chosen.length]);
+
+    // Space the repeats so the same word never lands twice in a row. Always
+    // placing the word with the MOST copies left is what makes that work —
+    // picking greedily from the front strands the last two copies of one word
+    // side by side at the end.
+    const rest = this.shuffle(bag.slice(0, slots));
+    const left = new Map();
+    for (const it of rest) left.set(it.t, (left.get(it.t) || 0) + 1);
+    const byText = new Map(rest.map(it => [it.t, it]));
+
+    const out = [];
+    while (out.length < rest.length) {
+      const prev = out.length ? out[out.length - 1].t : null;
+      let best = null;
+      for (const [text, n] of left) {
+        if (n <= 0 || text === prev) continue;
+        if (!best || n > left.get(best)) best = text;
+      }
+      if (!best) {                      // only copies of `prev` remain
+        best = [...left.keys()].find(k => left.get(k) > 0);
+        if (!best) break;
+      }
+      left.set(best, left.get(best) - 1);
+      out.push(byText.get(best));
+    }
+    return out;
+  },
+
   start(mode) {
     if (!Listener.available) return this.noMic('unsupported');
     this.data.mode = mode;
@@ -309,7 +364,11 @@ const App = {
 
     const pool = (CONTENT[mode] && CONTENT[mode][lvl]) || [];
     if (!pool.length) return this.empty(mode);
-    const items = this.pick(pool, mode, 10);
+    // Single words are for memorising, so they repeat. Sentences and stories
+    // are for reading, where repeating the same line would just be dull.
+    const items = (mode === 'words' || mode === 'sight')
+      ? this.withRepeats(pool, mode, 10)
+      : this.pick(pool, mode, 10);
     this.round = { mode, items, i: 0, got: 0, tries: 0, streak: 0, redo: [], redone: false };
     this.showItem();
   },
@@ -348,7 +407,8 @@ const App = {
         </div>
         <div class="card ${isWord ? '' : 'sentence'}" id="card">
           ${done}
-          <div class="target ${isWord ? 'word' : 'sent'}" id="target">${it.t}</div>
+          <div class="target ${isWord ? 'word' : 'sent'}" id="target"
+               data-word="${this.esc(it.t)}">${isWord ? Mark.html(it.t) : this.esc(it.t)}</div>
           <div class="feedback" id="feedback">&nbsp;</div>
         </div>
         <button class="btn mic big" id="mic-btn" onclick="App.listen()">🎤 Tap, then read it!</button>

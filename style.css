@@ -226,3 +226,24 @@ input.shake { animation: shake .45s; }
 .pinpad .pinkey:last-child { grid-column: 2; }   /* 0 sits under the 8 */
 .btn.signin { background: #4a8fd6; box-shadow: 0 5px 0 #3a72ad; }
 .btn.signin:active { transform: translateY(3px); box-shadow: 0 2px 0 #3a72ad; }
+
+/* Letter teams — two letters that make ONE sound, shown as one unit.
+   Deliberately quiet: a hint under the word, never a decoration competing
+   with it. */
+.target u.team {
+  text-decoration: none;
+  border-bottom: 5px solid #7fc8a9;
+  border-radius: 2px;
+  padding-bottom: 1px;
+}
+.target u.magic {
+  text-decoration: none;
+  border-bottom: 5px solid #ffb03d;
+  border-radius: 2px;
+  padding-bottom: 1px;
+}
+/* the silent e fades — it is there, it just says nothing */
+.target .silent { color: #c9b8cc; }
+/* the two halves of a compound word, so a long word reads as two short ones */
+.target .syl1 { color: #5a3d8c; }
+.target .syl2 { color: #c0559b; }

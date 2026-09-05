@@ -312,6 +312,8 @@ const Mark = {
     // go-ing, do-ing: the o and i are in different syllables. "point" and
     // "pointing" keep their oi, because there the next letters are not "ng".
     if (t === 'oi' && w.startsWith('ng', i + t.length)) return false;
+    // to-ward(s): the w begins the second syllable, so "ow" is not a team.
+    if (t === 'ow' && w.startsWith('ar', i + 2)) return false;
     // fam-ous, nerv-ous, curi-ous: the -ous ending is a schwa, not the /ow/
     // of "cloud". Guarded on a preceding vowel so "ours" is untouched.
     if (t === 'ou' && w.slice(i + 2) === 's' && /[aeiou]/.test(w.slice(0, i))) return false;
@@ -372,6 +374,10 @@ const Mark = {
     'usage', 'chestnut', 'toward', 'towards', 'because', 'behave',
     'necklace', 'package', 'puppet', 'rectangle', 'cabbage', 'village',
     'cottage', 'carriage', 'sausage', 'bandage', 'manage', 'passage',
+    'sandwich', 'sandwiches',
+    // for- is a PREFIX here, not the word "for"
+    'forgot', 'forget', 'forgotten', 'forgive', 'forgave', 'forever',
+    'forward', 'forwards', 'format',
   ]),
 
   // "winking" is wink+ing, not win+king; "washer" is wash+er, not was+her;
@@ -400,7 +406,18 @@ const Mark = {
     uphill: 2, upstairs: 2, upset: 2, uptown: 2, upstream: 2, upside: 2,
     myself: 2, itself: 2, ourselves: 3, oneself: 3,
     fireworks: 4, homework: 4, housework: 5, network: 3, teamwork: 4,
+    // real compounds whose second half the suffix guard would otherwise eat,
+    // or whose halves the vocabulary happens not to teach
+    spaceship: 5, spaceships: 5, starship: 4, sideways: 4,
   },
+
+  // Endings that are SUFFIXES, not the second half of a compound. friend+ship
+  // is not a ship, child+hood is not a hood, wonder+ful is not full. Some of
+  // these are also real words, which is exactly why the vocabulary test alone
+  // waves them through.
+  SUFFIXES: new Set(['ship', 'hood', 'ness', 'ment', 'less', 'ful', 'able',
+                     'ible', 'ward', 'wards', 'like', 'ish', 'dom', 'age',
+                     'ist', 'ing', 'est']),
 
   compound(word) {
     const w = String(word || '').toLowerCase();
@@ -410,6 +427,7 @@ const Mark = {
     if (short) return [w.slice(0, short), w.slice(short)];
     for (let i = 3; i <= w.length - 3; i++) {
       const a = w.slice(0, i), b = w.slice(i);
+      if (this.SUFFIXES.has(b)) continue;
       if (this.VOCAB.has(a) && this.VOCAB.has(b)) return [a, b];
     }
     return null;

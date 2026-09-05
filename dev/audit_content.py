@@ -111,13 +111,103 @@ console.log(JSON.stringify(out));
     return json.loads(r.stdout)
 
 
+GOLD = {
+    # Every entry is "letters:kind" per marked span, spaces between spans,
+    # kind one of t(eam) m(agic) s(ilent) or absent for a plain letter. These
+    # are the cases a rule change is most likely to break, and each one is
+    # here because it was wrong at some point.
+    #
+    # teams
+    'ship': 'sh:t i p', 'boat': 'b oa:t t', 'night': 'n igh:t t',
+    'farm': 'f ar:t m', 'queen': 'qu:t ee:t n', 'tree': 't r ee:t',
+    'cloud': 'c l ou:t d',
+    # magic e, and the exceptions that keep the silent e without the arc
+    'cake': 'c a:m k e:s', 'ate': 'a:m t e:s', 'smile': 's m i:m l e:s',
+    'nice': 'n i:m c e:s', 'have': 'h a v e:s', 'come': 'c o m e:s',
+    'give': 'g i v e:s', 'love': 'l o v e:s', 'done': 'd o n e:s',
+    # silent letters
+    'knee': 'k:s n ee:t', 'write': 'w:s r i:m t e:s', 'lamb': 'l a m b:s',
+    'thumb': 'th:t u m b:s', 'castle': 'c a s t:s le:t',
+    'listen': 'l i s t:s e n', 'walk': 'w a l:s k', 'half': 'h a l:s f',
+    'could': 'c ou:t l:s d', 'sign': 's i g:s n', 'answer': 'a n s w:s er:t',
+    'often': 'o f t:s e n', 'two': 't w:s o', 'island': 'i s:s l a n d',
+    # r-controlled families, which are NOT magic e
+    'more': 'm ore:t', 'care': 'c are:t', 'fire': 'f ire:t',
+    'store': 's t ore:t', 'here': 'h ere:t', 'there': 'th:t ere:t',
+    'shared': 'sh:t are:t d', 'stores': 's t ore:t s',
+    'scared': 's c are:t d',
+    # consonant-le against magic e
+    'little': 'l i t t le:t', 'table': 't a b le:t', 'purple': 'p ur:t p le:t',
+    'whale': 'wh:t a:m l e:s', 'mile': 'm i:m l e:s', 'mule': 'm u:m l e:s',
+    # the floss rule: a doubled consonant is one sound only at the end
+    'bell': 'b e ll:t', 'miss': 'm i ss:t', 'off': 'o ff:t', 'buzz': 'b u zz:t',
+    # the traps that must stay plain, or nearly so
+    'story': 's t o r y', 'carry': 'c a r r y', 'parent': 'p a r e n t',
+    'village': 'v i l l a g e:s', 'machine': 'm a ch:t i n e:s',
+    'house': 'h ou:t s e:s', 'goose': 'g oo:t s e:s',
+    'orange': 'o r a n g e:s', 'dance': 'd a n c e:s',
+    'the': 'th:t e', 'he': 'h e', 'we': 'w e',
+    'colored': 'c o l o r e d', 'discovered': 'd i s c o v e r e d',
+    'number': 'n u m b er:t', 'bamboo': 'b a m b oo:t',
+
+    # Every marking that a full-corpus verification pass found wrong and this
+    # build fixed. They are here so the next rule change cannot quietly undo
+    # one of them. Compound words are noted rather than listed, because GOLD
+    # compares Mark.parts on the whole word and the split is checked already.
+    'away': 'a w ay:t',
+    'awesome': 'a w e s o m e:s',
+    'beautiful': 'b eau:t t i f u l',
+    'dangle': 'd a n g le:t',
+    # fireworks splits fire|works
+    'fluffiest': 'f l u f f i e s t',
+    'funnier': 'f u n n i er:t',
+    'funniest': 'f u n n i e s t',
+    'happier': 'h a p p i er:t',
+    'happiest': 'h a p p i e s t',
+    'jingle': 'j i n g le:t',
+    'jungle': 'j u n g le:t',
+    'koala': 'k o a l a',
+    'laugh': 'l au:t gh:t',
+    'laughed': 'l au:t gh:t e d',
+    'laughing': 'l au:t gh:t i ng:t',
+    'luckiest': 'l u ck:t i e s t',
+    'maybe': 'm ay:t b e',
+    # myself splits my|self
+    'necklace': 'n e ck:t l a c e:s',
+    'package': 'p a ck:t a g e:s',
+    'penguin': 'p e n g u i n',
+    'prettier': 'p r e t t i er:t',
+    'prettiest': 'p r e t t i e s t',
+    'preview': 'p r e v iew:t',
+    'puppet': 'p u p p e t',
+    'recipe': 'r e c i p e',
+    'rectangle': 'r e c t a n g le:t',
+    'reward': 'r e w ar:t d',
+    'rewind': 'r e w i n d',
+    'rewrite': 'r e w:s r i t e:s',
+    'shiniest': 'sh:t i n i e s t',
+    'sillier': 's i l l i er:t',
+    'silliest': 's i l l i e s t',
+    'single': 's i n g le:t',
+    'spaghetti': 's p a gh:t e t t i',
+    'tangle': 't a n g le:t',
+    'triangle': 't r i a n g le:t',
+    'untangle': 'u n t a n g le:t',
+    'unwrap': 'u n w:s r a p',
+    'unwrapped': 'u n w:s r a p p e d',
+    # uphill splits up|hill
+    # upstairs splits up|stairs
+}
+
+
 def mark_report():
     """Check the letter marking the child actually sees.
 
     A wrong underline teaches a wrong sound, so this runs the SHIPPED mark.js
-    over the SHIPPED words and fails on the two mistakes that matter: a team
-    invented across a compound join, and magic-e claimed on a word whose vowel
-    is not long.
+    over the SHIPPED words and fails on: a mark that loses or invents letters,
+    a team invented across a compound join, magic-e claimed where the vowel is
+    not long, any GOLD case that has drifted, and a Key screen example that no
+    longer demonstrates the mark it claims to.
     """
     script = r"""
 const fs = require('fs');
@@ -126,8 +216,10 @@ const src = fs.readFileSync(process.argv[3],'utf8');
 const C = JSON.parse(src.slice(src.indexOf('= ')+2, src.lastIndexOf(';')));
 const uniq = [...new Set([].concat(...['words','sight'].map(s=>['1','2','3'].map(l=>C[s][l].map(i=>i.t))).flat().flat()))];
 Mark.setVocab(new Set(uniq));
+const GOLD = JSON.parse(process.argv[4]);
 const strip = h => h.replace(/<[^>]+>/g,'');
-const out = {lost: [], straddle: [], magic: []};
+const sig = w => Mark.parts(w).map(p => p.kind ? p.t+':'+p.kind[0] : p.t).join(' ');
+const out = {lost: [], straddle: [], magic: [], gold: [], keyrow: [], coverage: {}};
 for (const w of uniq) {
   if (strip(Mark.html(w)) !== w) out.lost.push(w);
   // Check what html() ACTUALLY renders. For a compound it marks each half
@@ -135,8 +227,7 @@ for (const w of uniq) {
   // re-deriving spans from the whole word, which is not the shipped path.
   const comp = Mark.compound(w);
   if (comp) {
-    const html = Mark.html(w);
-    const halves = html.split('<span class="syl2">');
+    const halves = Mark.html(w).split('<span class="syl2">');
     if (halves.length !== 2) out.straddle.push(w+':structure');
     else if (strip(halves[0]).replace(/^.*?>/,'') && strip(halves[0]).length !== comp[0].length)
       out.straddle.push(w+':split '+strip(halves[0])+'|'+strip(halves[1]));
@@ -144,16 +235,32 @@ for (const w of uniq) {
   // magic-e must only ever appear on a one-syllable chunk
   for (const chunk of (comp || [w])) {
     const groups = (chunk.slice(0,-1).match(/[aeiouy]+/g) || []).length;
-    const hasMagic = Mark.parts(chunk).some(p => p.kind === 'magic');
-    if (hasMagic && groups > 1) out.magic.push(chunk);
+    if (Mark.parts(chunk).some(p => p.kind === 'magic') && groups > 1) out.magic.push(chunk);
   }
+}
+for (const [w, want] of Object.entries(GOLD)) {
+  const got = sig(w);
+  if (got !== want) out.gold.push(w+' :: want ['+want+'] got ['+got+']');
+}
+// Every row of the in-app key must really show the mark it names, or the
+// screen that teaches her the code is itself lying.
+const NEED = {team:'team', magic:'magic', silent:'silent', parts:'syl2'};
+for (const [word, kind] of [['ship','team'],['cake','magic'],['knee','silent'],['sunset','parts']]) {
+  if (!Mark.html(word).includes('class="'+NEED[kind]+'"')) out.keyrow.push(word+' no longer shows '+kind);
+}
+// magic-e is drawn as an arc under one wrapper spanning the vowel to the e
+if (!/<span class="mgroup">/.test(Mark.html('cake'))) out.keyrow.push('cake has no magic-e arc wrapper');
+for (const lvl of ['1','2','3']) {
+  const ws = [...new Set([].concat(C.words[lvl].map(i=>i.t), C.sight[lvl].map(i=>i.t)))];
+  const m = ws.filter(w => /class="(team|magic|silent|syl2)"/.test(Mark.html(w))).length;
+  out.coverage[lvl] = [m, ws.length];
 }
 console.log(JSON.stringify(out));
 """
     path = os.path.join(_WORK, 'mark_audit.js')
     open(path, 'w').write(script)
     r = subprocess.run(['node', path, os.path.join(ROOT, 'mark.js'),
-                        os.path.join(ROOT, 'content.js')],
+                        os.path.join(ROOT, 'content.js'), json.dumps(GOLD)],
                        capture_output=True, text=True)
     if r.returncode != 0:
         return {'error': r.stderr[:300]}
@@ -232,6 +339,16 @@ def main():
             problems.append(f'letter team invented across a compound join: {x}')
         for w in mr['magic']:
             problems.append(f'magic-e on a multi-syllable chunk: {w}')
+        for x in mr['gold']:
+            problems.append(f'marking drifted from the agreed answer: {x}')
+        for x in mr['keyrow']:
+            problems.append(f'the in-app key no longer matches the marker: {x}')
+        cov = mr.get('coverage') or {}
+        if cov:
+            bits = ' '.join(f'L{l}={cov[l][0]}/{cov[l][1]}' for l in ('1', '2', '3'))
+            tot_m = sum(cov[l][0] for l in cov)
+            tot_n = sum(cov[l][1] for l in cov)
+            print(f'marks shown  {bits}  ({tot_m}/{tot_n} = {tot_m/max(1,tot_n)*100:.0f}% of words)')
 
     counts = {s: {l: len(C[s][l]) for l in ('1', '2', '3')} for s in C}
     for s, c in counts.items():

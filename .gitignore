@@ -12,3 +12,7 @@
 .venv-tts/
 .work/
 *.aiff
+
+# Python bytecode from the dev/ build scripts.
+__pycache__/
+*.pyc

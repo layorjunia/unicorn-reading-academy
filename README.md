@@ -33,8 +33,57 @@ Three levels: **L1** short vowels/digraphs/blends, **L2** silent-e, vowel teams
 and r-controlled, **L3** multisyllable, prefixes/suffixes, soft c/g, silent
 letters.
 
+Single words **repeat**: a round is five words shown twice, never back to back,
+because five words twice beats ten words once for memorising. A word counts as
+known only after four correct reads.
+
 **📊 My Reading** shows stars, best streak, days practised, and how much of
 each pool she has read.
+
+## The marks on a word
+
+`mark.js` marks the letters so she can see the sounds before she says them.
+Four marks, and only four, because she has to hold them all in her head:
+
+| Mark | Means | Example |
+|---|---|---|
+| **green underline** | two or three letters making **one sound** | *sh*ip, b*oa*t, n*igh*t, f*ar*m, litt*le* |
+| **orange arc** | a vowel saying its **name**, pulled by a final silent e | c**a**ke, sm**i**le |
+| **faded letter** | says **nothing** | (k)nee, lam(b), wa(l)k, cak(e) |
+| **two colours** | a compound word: two little words | sun·set, sail·boat |
+
+A word with no marks is the easy kind: every letter says its usual sound.
+**🎨 What the colours mean** on the home screen explains all four, and each
+card repeats just the marks that word actually carries.
+
+The bar is **correctness, not coverage** — a wrong underline teaches a wrong
+sound, which is worse than no underline. Every rule carries a positional guard
+(no "ar" in ca-rry, no "ng" in dan-ger, no "th" across fat-her, no magic e on
+vil-lage), and `dev/audit_content.py` runs the shipped marker over the shipped
+words on every build, failing on any drift from a table of agreed answers.
+Around three quarters of words carry at least one mark.
+
+## The reward
+
+One star per item read correctly; every ten stars the next friend arrives with
+a full-screen ceremony and a line of their own. **66 collectible creatures** —
+the 28 hand-drawn originals from the classic app plus 38 more in `dev/extra_creatures.py`, drawn to match. Tap any friend to see them big and bring
+them along; the one she picks bounces on every correct read.
+
+The unlock order interleaves old and new, so a save made under the old order is
+no longer a plain prefix of the list. `App.claimFriend` therefore grants **the
+first creature she does not own**, never `CREATURES[friends.length]` — index-
+based granting would hand her a duplicate or skip one forever.
+
+```bash
+python3 dev/build_creatures.py
+```
+
+Rebuilds `creatures.js`. It refuses to write if any art is missing, listed
+twice, carries an unsized `<rect>` (which paints nothing — Sparkle shipped with
+an invisible leg that way), or reuses a gradient id across two creatures (they
+all land in one document, so the second would paint with the first one's
+colours).
 
 ## How the checking works
 

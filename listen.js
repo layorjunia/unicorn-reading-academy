@@ -209,9 +209,23 @@ const Listener = {
     wouldnt: 'would not', shouldnt: 'should not', arent: 'are not',
     werent: 'were not', hasnt: 'has not', havent: 'have not',
     its: 'it is', thats: 'that is', theres: 'there is', hes: 'he is',
-    shes: 'she is', theyre: 'they are', were2: 'we are', im: 'i am',
-    lets: 'let us', ill: 'i will', well2: 'we will', theyll: 'they will',
+    shes: 'she is', theyre: 'they are', im: 'i am',
+    lets: 'let us', ill: 'i will', theyll: 'they will',
     ive: 'i have', youre: 'you are', youll: 'you will'
+  },
+
+  // Contractions that MUST keep their apostrophe to be told apart from a
+  // different real word. Stripping punctuation first turns "we're" into
+  // "were" and "we'll" into "well", so the entries for those two sat in the
+  // table above unreachable (spelled were2/well2 to avoid clobbering the real
+  // words) and every "We are ..." sentence failed when dictation contracted
+  // it. Looked up BEFORE punctuation is stripped.
+  APOSTROPHE: {
+    "we're": 'we are', "we'll": 'we will', "we've": 'we have',
+    "we'd": 'we would', "he'll": 'he will', "she'll": 'she will',
+    "it'll": 'it will', "i'd": 'i would', "you'd": 'you would',
+    "they'd": 'they would', "he'd": 'he would', "she'd": 'she would',
+    "there'll": 'there will', "that'll": 'that will',
   },
 
   _canon(word) {
@@ -224,6 +238,10 @@ const Listener = {
   _canonList(text) {
     const out = [];
     for (const raw of String(text).split(/\s+/)) {
+      // Apostrophe-sensitive first — see APOSTROPHE above.
+      const kept = String(raw).toLowerCase().replace(/[^a-z0-9']/g, '');
+      const apos = this.APOSTROPHE[kept];
+      if (apos) { out.push(...apos.split(' ')); continue; }
       const w = this._canon(raw);
       if (!w) continue;
       const exp = this.CONTRACTIONS[w];

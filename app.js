@@ -100,10 +100,27 @@ const App = {
     const prime = () => Sfx.unlock();
     document.addEventListener('touchend', prime, { once: true });
     document.addEventListener('click', prime, { once: true });
+    this.paintSky();
     if (this.iosStandalone()) this.launcher();
     else this.home();
     this.checkForUpdate();
     this.resumeCloud();
+  },
+
+  // A fixed backdrop with a dozen slow-drifting motes. It lives OUTSIDE
+  // #app so render() never wipes it and the animation never restarts.
+  paintSky() {
+    if (document.querySelector('.sky')) return;
+    const sky = document.createElement('div');
+    sky.className = 'sky';
+    for (let i = 0; i < 12; i++) {
+      const d = 5 + (i % 4) * 4;                 // 5-17px
+      const m = document.createElement('i');
+      m.style.cssText = `left:${(i * 8.3 + 3) % 96}vw;bottom:-6vh;width:${d}px;height:${d}px;` +
+        `animation-duration:${16 + (i % 5) * 5}s;animation-delay:-${i * 2.4}s`;
+      sky.appendChild(m);
+    }
+    document.body.appendChild(sky);
   },
 
   // Everything that has to be true for whichever profile is active.
@@ -117,11 +134,16 @@ const App = {
     // a blank space where a creature should be.
     this.data.friends = this.data.friends.filter(k => this.creature(k));
     if (!this.data.friends.length) this.data.friends = [CREATURES[0].k];
+    // A creature can only appear once. Index-based granting used to guarantee
+    // that for free; now that the unlock order interleaves the original cast
+    // with the new one, a save made under the old order is no longer a prefix
+    // of CREATURES, so dedupe explicitly before anything counts them.
+    this.data.friends = [...new Set(this.data.friends)];
     // Honour stars earned before this feature existed (or before a creature
     // was added): her stars already paid for these, so grant the backlog
     // quietly at load rather than firing five ceremonies in a row.
     while (this.data.friends.length < this.earned()) {
-      const nxt = CREATURES[this.data.friends.length];
+      const nxt = this.nextFriend();
       if (!nxt) break;
       this.data.friends.push(nxt.k);
     }
@@ -220,16 +242,26 @@ const App = {
   home() {
     const d = this.data;
     const tricky = this.trickyCount();
+    const next = this.nextFriend();
     this.render(`
       <div class="screen center">
-        <div class="hero-pet">${this.creatureHtml(d.buddy, 'big')}</div>
+        <div class="stage">
+          <div class="hill"></div>
+          <div class="twirl">
+            <b style="animation-delay:0s">✨</b>
+            <b style="animation-delay:-2.3s">⭐</b>
+            <b style="animation-delay:-4.6s">💖</b>
+          </div>
+          <div class="hero-pet">${this.creatureHtml(d.buddy, 'big')}</div>
+        </div>
         <h1>Reading Star</h1>
-        <p class="tag">${this.nextFriend()
-          ? `Read ${this.starsToNext()} more to meet a new friend!`
-          : 'You found every friend!'}</p>
+        <p class="tag">${next
+          ? `Read ${this.starsToNext()} more to meet ${this.esc(next.n)}!`
+          : 'You found every single friend!'}</p>
         <div class="statrow">
           <span class="stat">⭐ ${d.stars}</span>
-          <span class="stat">🔥 best ${d.best}</span>
+          <span class="stat">🔥 ${d.best}</span>
+          <span class="stat">🐾 ${d.friends.length}/${CREATURES.length}</span>
         </div>
         <div class="pickrow">
           ${['1', '2', '3'].map(l => `
@@ -237,13 +269,23 @@ const App = {
         </div>
         <div class="levelhint">${LEVEL_HINT[d.level]}</div>
         ${this.micBanner()}
-        <button class="btn big go" onclick="App.start('words')">🔤 Words</button>
-        <button class="btn big go" onclick="App.start('sight')">⭐ Star Words</button>
-        <button class="btn big go" onclick="App.start('sentences')">📖 Sentences</button>
-        <button class="btn big go" onclick="App.start('stories')">📚 Stories</button>
-        ${tricky ? `<button class="btn big tricky" onclick="App.start('tricky')">💪 Tricky Words (${tricky})</button>` : ''}
+        <div class="modegrid">
+          <button class="modecard m-words" onclick="App.start('words')">
+            <span class="ico">🔤</span><span class="nm">Words</span><span class="sub">sound them out</span></button>
+          <button class="modecard m-sight" onclick="App.start('sight')">
+            <span class="ico">⭐</span><span class="nm">Star Words</span><span class="sub">just know them</span></button>
+          <button class="modecard m-sent" onclick="App.start('sentences')">
+            <span class="ico">📖</span><span class="nm">Sentences</span><span class="sub">read a whole line</span></button>
+          <button class="modecard m-story" onclick="App.start('stories')">
+            <span class="ico">📚</span><span class="nm">Stories</span><span class="sub">line by line</span></button>
+          ${tricky ? `<button class="modecard m-tricky" onclick="App.start('tricky')">
+            <span class="ico">💪</span><span class="nm">Tricky Words (${tricky})</span></button>` : ''}
+        </div>
         <button class="btn big friends" onclick="App.friends()">🐾 My Friends (${d.friends.length}/${CREATURES.length})</button>
-        <button class="btn ghost" onclick="App.progress()">📊 My Reading</button>
+        <div class="statrow">
+          <button class="btn ghost small" onclick="App.progress()">📊 My Reading</button>
+          <button class="btn ghost small" onclick="App.keyScreen()">🎨 What the colours mean</button>
+        </div>
         <button class="btn ghost small" onclick="App.profiles()">
           ${this.esc(this.profile.avatar)} ${this.esc(this.profile.name)}${this.profile.cloud ? ' ☁️' : ''} — switch
         </button>
@@ -251,6 +293,41 @@ const App = {
           <button class="btn big signin" onclick="App.cloudScreen('have')">🔑 Log in</button>
           <p class="small-note">Already saved your stars? Log in to get them back.</p>`}
         <a class="classic-link" href="classic/">🌈 Unicorn Island adventure</a>
+      </div>
+    `);
+  },
+
+  // ── What the marks on a word mean ──────────────────────────────────────
+  // Four marks and only four, because she has to hold them all in her head.
+  // Every example here is checked against the shipped marker at build time,
+  // so the key can never drift from what the cards actually show.
+  KEY_ROWS: [
+    ['ship',   'Letter team',  'Two letters holding hands make ONE sound. Say them together.'],
+    ['cake',   'Magic e',      'The e at the end is silent, and it makes the other vowel say its NAME.'],
+    ['knee',   'Silent letter','A faded letter says nothing at all. Skip straight past it.'],
+    ['sunset', 'Two parts',    'A long word in two colours is really two little words.'],
+  ],
+
+  keyScreen() {
+    this.render(`
+      <div class="screen">
+        <div class="topbar">
+          <button class="btn ghost small" onclick="App.home()">🏠</button>
+          <span class="count">What the colours mean</span>
+          <span></span>
+        </div>
+        <p class="tag center-text">The marks under a word are hints. They are always
+          telling the truth — if a letter is faded, it really is silent.</p>
+        <div class="keycard">
+          ${this.KEY_ROWS.map(([w, name, why]) => `
+            <div class="keyrow">
+              <div class="demo target">${Mark.html(w)}</div>
+              <div class="what"><b>${name}</b><span>${why}</span></div>
+            </div>`).join('')}
+        </div>
+        <p class="small-note">A word with no marks at all is the easy kind —
+          every letter just says its usual sound.</p>
+        <button class="btn big go" onclick="App.home()">Got it!</button>
       </div>
     `);
   },
@@ -409,6 +486,7 @@ const App = {
           ${done}
           <div class="target ${isWord ? 'word' : 'sent'}" id="target"
                data-word="${this.esc(it.t)}">${isWord ? Mark.html(it.t) : this.esc(it.t)}</div>
+          ${isWord ? this.legendHtml(it.t) : ''}
           <div class="feedback" id="feedback">&nbsp;</div>
         </div>
         <button class="btn mic big" id="mic-btn" onclick="App.listen()">🎤 Tap, then read it!</button>
@@ -424,6 +502,32 @@ const App = {
         </div>
       </div>
     `);
+  },
+
+  // Which marks does THIS word carry? Read back off the marker rather than
+  // duplicating its rules here, so the key under the card can never disagree
+  // with the marks above it.
+  marks(word) {
+    const comp = Mark.compound(word);
+    const out = { team: null, magic: null, silent: null, parts: comp };
+    for (const chunk of (comp || [word])) {
+      for (const part of Mark.parts(chunk)) {
+        if (part.kind && !out[part.kind]) out[part.kind] = part.t;
+      }
+    }
+    return out;
+  },
+
+  // Only the marks she can actually see on this card, so the hint stays short
+  // enough to read at a glance. A plain word shows nothing.
+  legendHtml(word) {
+    const m = this.marks(word);
+    const bits = [];
+    if (m.team)   bits.push(`<span class="k-team"><b>${this.esc(m.team)}</b> <span class="lbl">one sound</span></span>`);
+    if (m.magic)  bits.push(`<span class="k-magic"><b>${this.esc(m.magic)}</b> <span class="lbl">says its name</span></span>`);
+    if (m.silent) bits.push(`<span class="k-silent"><b>${this.esc(m.silent)}</b> <span class="lbl">is silent</span></span>`);
+    if (m.parts)  bits.push(`<span class="k-parts"><b>${this.esc(m.parts[0])}<span>${this.esc(m.parts[1])}</span></b> <span class="lbl">two parts</span></span>`);
+    return bits.length ? `<div class="legend">${bits.join('')}</div>` : '';
   },
 
   hear() {
@@ -504,6 +608,7 @@ const App = {
       if (fb) { fb.className = 'feedback good'; fb.innerHTML = '⭐ You read it!'; }
       Sfx.play('correct');
       this.confetti();
+      this.burst(card);
       // the buddy bounces for her, and the meter creeps toward the next friend
       const pet = document.getElementById('buddy');
       if (pet) { pet.classList.remove('cheer'); void pet.offsetWidth; pet.classList.add('cheer'); }
@@ -644,9 +749,12 @@ const App = {
   creature(k) { return CREATURES.find(c => c.k === k); },
   has(k) { return this.data.friends.indexOf(k) >= 0; },
 
+  // The next friend is the first one she does NOT already own — never
+  // CREATURES[friends.length]. The unlock order mixes the original cast with
+  // the new one, so an older save owns a scattered subset, and indexing into
+  // the list would hand her a creature she already has (or skip one forever).
   nextFriend() {
-    const i = this.data.friends.length;
-    return i < CREATURES.length ? CREATURES[i] : null;
+    return CREATURES.find(c => !this.has(c.k)) || null;
   },
 
   starsToNext() {
@@ -659,7 +767,7 @@ const App = {
   claimFriend() {
     const want = this.earned();
     if (this.data.friends.length >= want) return null;
-    const next = CREATURES[this.data.friends.length];
+    const next = this.nextFriend();
     if (!next) return null;
     this.data.friends.push(next.k);
     this.data.buddy = next.k;      // the newest friend comes along to play
@@ -687,7 +795,10 @@ const App = {
     this.confetti(30);
     this.render(`
       <div class="screen center unlock">
-        <div class="pop-in">${this.creatureHtml(c.k, 'huge')}</div>
+        <div class="raybox pop-in">
+          <div class="rays"></div>
+          ${this.creatureHtml(c.k, 'huge')}
+        </div>
         <h1>${c.n} joined you!</h1>
         <p class="cheer">${c.c}</p>
         <div class="statrow"><span class="stat">🐾 ${this.data.friends.length} of ${CREATURES.length} friends</span></div>
@@ -703,16 +814,16 @@ const App = {
     const have = this.data.friends.length;
     const next = this.nextFriend();
     const toNext = this.starsToNext();
-    const cells = CREATURES.map((c, i) => {
+    const cells = CREATURES.map((c) => {
       if (this.has(c.k)) {
         const isBuddy = this.data.buddy === c.k;
-        return `<button class="cell ${isBuddy ? 'buddy' : ''}" onclick="App.pickBuddy('${c.k}')">
+        return `<button class="cell ${isBuddy ? 'buddy' : ''}" onclick="App.showFriend('${c.k}')">
           ${this.creatureHtml(c.k)}
           <div class="cname">${c.n}</div>
           ${isBuddy ? '<div class="badge">with you</div>' : ''}
         </button>`;
       }
-      const locked = i === have;   // the very next one gets a teaser
+      const locked = c.k === (next && next.k);   // the very next one gets a teaser
       return `<div class="cell locked">
         <div class="mystery">${locked ? '❔' : '🔒'}</div>
         <div class="cname">${locked ? `${toNext} more star${toNext === 1 ? '' : 's'}` : '???'}</div>
@@ -728,7 +839,33 @@ const App = {
         ${next ? `<p class="tag center-text">Read ${toNext} more word${toNext === 1 ? '' : 's'} to meet a new friend!</p>`
                : '<p class="tag center-text">You found every friend! 🏆</p>'}
         <div class="grid">${cells}</div>
-        <p class="small-note">Tap a friend to bring them along while you read.</p>
+        <p class="small-note">Tap a friend to say hello and bring them along while you read.</p>
+      </div>
+    `);
+  },
+
+  // One friend, big, with their own line. Sixty-six creatures is a lot of art
+  // to only ever see at thumbnail size in a grid.
+  showFriend(k) {
+    const c = this.creature(k);
+    if (!c || !this.has(k)) return this.friends();
+    const n = CREATURES.findIndex(x => x.k === k) + 1;
+    const isBuddy = this.data.buddy === k;
+    this.render(`
+      <div class="screen center">
+        <div class="topbar" style="width:100%">
+          <button class="btn ghost small" onclick="App.friends()">🐾 All friends</button>
+          <span class="count">${this.esc(c.n)}</span>
+          <button class="btn ghost small" onclick="App.home()">🏠</button>
+        </div>
+        <div class="pop-in">${this.creatureHtml(k, 'huge')}</div>
+        <h1>${this.esc(c.n)}</h1>
+        <p class="cheer">${this.esc(c.c)}</p>
+        <div class="statrow"><span class="stat">friend ${n} of ${CREATURES.length}</span></div>
+        ${isBuddy
+          ? '<p class="tag">✨ Reading along with you right now!</p>'
+          : `<button class="btn big go" onclick="App.pickBuddy('${c.k}')">Come read with me!</button>`}
+        <button class="btn ghost" onclick="App.friends()">← Back to my friends</button>
       </div>
     `);
   },
@@ -738,7 +875,8 @@ const App = {
     this.data.buddy = k;
     this.save();
     Sfx.play('correct', 0.5);
-    this.friends();
+    this.confetti(10);
+    this.showFriend(k);
   },
 
 
@@ -1199,6 +1337,27 @@ const App = {
   resume() {
     if (!this.round || this.round.i >= this.round.items.length) return this.home();
     this.showItem();
+  },
+
+  // A little firework out of the card itself, so the reward happens WHERE
+  // she is looking rather than somewhere up at the top of the screen.
+  burst(card) {
+    if (!card) return;
+    const holder = document.createElement('div');
+    holder.className = 'burst';
+    const n = 9;
+    for (let i = 0; i < n; i++) {
+      const a = (i / n) * Math.PI * 2;
+      const dist = 92 + Math.random() * 52;
+      const star = document.createElement('i');
+      star.textContent = ['⭐', '✨', '💖'][i % 3];
+      star.style.setProperty('--dx', Math.round(Math.cos(a) * dist) + 'px');
+      star.style.setProperty('--dy', Math.round(Math.sin(a) * dist) + 'px');
+      star.style.animationDelay = (i * 0.022) + 's';
+      holder.appendChild(star);
+    }
+    card.appendChild(holder);
+    setTimeout(() => holder.remove(), 1100);
   },
 
   confetti(n) {

@@ -192,9 +192,11 @@ const Mark = {
       }
     }
 
-    // 2. The r-controlled-plus-e families, claimed up front. They end in an e
-    //    that the silent-e pass below would otherwise take, leaving "more" as
-    //    m-o-r-e with a faded e and no team at all.
+    // 2. Teams that END in the letter e, claimed up front. The silent-e pass
+    //    below would otherwise take that e first: "more" came out m-o-r-e with
+    //    a faded e and no team, and "badge" came out b-a-d-g with a faded e,
+    //    showing the d and g as two separate sounds instead of one /j/.
+    if (/dge$/.test(w)) claim(w.length - 3, 3, 'team');
     for (const t of this.TAIL_TEAMS) {
       const at = w.length - t.length - (/(d|s)$/.test(w) && w.length > t.length + 1 ? 1 : 0);
       if (at >= 1 && w.startsWith(t, at) && this.isRealTeam(w, at, t)) claim(at, t.length, 'team');

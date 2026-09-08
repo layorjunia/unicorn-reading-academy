@@ -185,10 +185,20 @@ h1 {
    her head: a team makes ONE sound, a magic vowel says its NAME, a faded
    letter says NOTHING, and two colours mean two word parts. */
 .target u.team, .target u.magic {
-  text-decoration: none; padding-bottom: .04em; border-radius: 3px;
+  text-decoration: none;
+  /* The underline is painted as a BACKGROUND, not a border, so it can be
+     inset a little on each side. With a border-bottom, two teams that touch
+     each other — the "wh" and "ere" of "where", the "ea" and "ch" of "each" —
+     drew one unbroken bar under the whole word, which says "this whole thing
+     is one sound" and teaches nothing. The inset leaves a clear gap between
+     them without moving the letters. */
+  background-image: linear-gradient(var(--mint), var(--mint));
+  background-repeat: no-repeat;
+  background-position: 50% 100%;
+  background-size: calc(100% - .2em) .085em;
+  padding-bottom: .14em;
 }
-.target u.team  { border-bottom: .085em solid var(--mint); }
-.target u.magic { border-bottom: .085em solid var(--sun); }
+.target u.magic { background-image: linear-gradient(var(--sun), var(--sun)); }
 .target .silent { color: #c6b6ca; }
 
 /* Magic e, drawn the way it is taught on paper: an arc swinging from the

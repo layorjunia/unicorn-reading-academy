@@ -149,6 +149,11 @@ GOLD = {
     'the': 'th:t e', 'he': 'h e', 'we': 'w e',
     'colored': 'c o l o r e d', 'discovered': 'd i s c o v e r e d',
     'number': 'n u m b er:t', 'bamboo': 'b a m b oo:t',
+    # dge is one sound /j/. The silent-e pass used to take the e first,
+    # leaving "badg" + a faded e, which shows the d and g as two sounds.
+    'badge': 'b a dge:t', 'bridge': 'b r i dge:t', 'edge': 'e dge:t',
+    'hedge': 'h e dge:t', 'judge': 'j u dge:t', 'fudge': 'f u dge:t',
+    'fridge': 'f r i dge:t', 'dodge': 'd o dge:t',
 
     # Every marking that a full-corpus verification pass found wrong and this
     # build fixed. They are here so the next rule change cannot quietly undo
@@ -240,7 +245,6 @@ GOLD = {
     'drooping': 'd r oo:t p i ng:t',
     'during': 'd u r i ng:t',
     'ears': 'ear:t s',
-    'edge': 'e d g e:s',
     'endless': 'e n d l e ss:t',
     'ever': 'e v er:t',
     # everybody splits every|body
@@ -259,7 +263,6 @@ GOLD = {
     'hear': 'h ear:t',
     'heart': 'h ear:t t',
     'heavy': 'h ea:t v y',
-    'hedge': 'h e d g e:s',
     # hedgehog splits hedge|hog
     'helpless': 'h e l p l e ss:t',
     'hung': 'h u ng:t',
@@ -414,9 +417,42 @@ console.log(JSON.stringify(out));
     return json.loads(r.stdout)
 
 
+def style_report():
+    """The letter marks are only legible if adjacent ones do not touch.
+
+    "where" is [wh]+[ere] — two correct marks. Drawn with a border-bottom they
+    met and became ONE green bar under the whole word, which says "this whole
+    thing is one sound". Jacob caught that on the live site; no amount of
+    checking the marking LOGIC would have found it, because in text notation
+    [wh][ere] looks perfectly fine.
+
+    The fix is to paint the underline as an inset background rather than a
+    border. This guards the fix, since reverting it is silent and invisible
+    to every other check here.
+    """
+    css = open(os.path.join(ROOT, 'style.css'), encoding='utf-8').read()
+    # Strip comments first — the rule's own comment explains why border-bottom
+    # was wrong, and grepping the raw text found that and reported itself.
+    css = re.sub(r'/\*.*?\*/', '', css, flags=re.S)
+    block = re.search(r'\.target u\.team[^}]*\}', css)
+    out = []
+    if not block:
+        out.append('cannot find the .target u.team rule in style.css')
+        return out
+    rule = block.group(0)
+    if 'border-bottom' in rule:
+        out.append('letter-team underline uses border-bottom again — adjacent '
+                   'marks will merge into one bar (see "where", "each")')
+    if 'background-size' not in rule or 'calc(100%' not in rule:
+        out.append('letter-team underline is no longer inset — adjacent marks '
+                   'will touch')
+    return out
+
+
 def main():
     C = load_content()
     problems = []
+    problems += style_report()
 
     # 1. shape and duplication
     seen_words = {}

@@ -220,6 +220,9 @@ const App = {
     if (this._advance) { clearTimeout(this._advance); this._advance = null; }
     if (this._unlock) { clearTimeout(this._unlock); this._unlock = null; }
     if (this._clip) { this._clip.pause(); this._clip = null; }
+    // A praise toast belongs to the screen that raised it; without this it
+    // hangs over whatever she navigated to next.
+    document.querySelectorAll('.toast').forEach(t => t.remove());
     document.getElementById('app').innerHTML = html;
     window.scrollTo(0, 0);
   },
@@ -479,7 +482,8 @@ const App = {
       <div class="screen">
         <div class="topbar">
           <button class="btn ghost small" onclick="App.home()">🏠</button>
-          <span class="count">${r.story ? r.story.title : (r.i + 1) + ' of ' + r.items.length}</span>
+          <div class="segs">${r.items.map((_, i) =>
+            `<div class="seg"><i style="width:${i < r.i ? 100 : 0}%"></i></div>`).join('')}</div>
           <span class="stat">🔥 ${r.streak}</span>
         </div>
         <div class="card ${isWord ? '' : 'sentence'}" id="card">
@@ -491,7 +495,7 @@ const App = {
         </div>
         <button class="btn mic big" id="mic-btn" onclick="App.listen()">🎤 Tap, then read it!</button>
         ${isWord && it.a ? `<button class="btn ghost small" id="hear" onclick="App.hear()">🔊 Hear it first</button>` : ''}
-        ${r.story ? `<div class="small-note">line ${r.i + 1} of ${r.items.length}</div>` : ''}
+        ${r.story ? `<div class="small-note">${this.esc(r.story.title)} · line ${r.i + 1} of ${r.items.length}</div>` : ''}
         <div id="skip-holder"></div>
         <div class="buddyrow">
           <div id="buddy" class="buddy-pet">${this.creatureHtml(this.data.buddy)}</div>
@@ -609,6 +613,10 @@ const App = {
       Sfx.play('correct');
       this.confetti();
       this.burst(card);
+      this.toast();
+      // the segment for the item she just finished fills in
+      const seg = document.querySelectorAll('.seg > i')[r.i];
+      if (seg) seg.style.width = '100%';
       // the buddy bounces for her, and the meter creeps toward the next friend
       const pet = document.getElementById('buddy');
       if (pet) { pet.classList.remove('cheer'); void pet.offsetWidth; pet.classList.add('cheer'); }
@@ -716,9 +724,14 @@ const App = {
     Sfx.play('fanfare', 0.7);
     this.confetti();
     const again = MODES[r.mode] ? r.mode : 'words';
+    // Three stars for the round, by how much of it she read. This is the
+    // score she remembers; the running total is just a number.
+    const ratio = total / Math.max(1, r.items.length);
+    const won = ratio >= 0.9 ? 3 : ratio >= 0.6 ? 2 : total > 0 ? 1 : 0;
     this.render(`
       <div class="screen center">
-        <div class="hero">${total >= 8 ? '🏆' : total >= 5 ? '🌟' : '💖'}</div>
+        <div class="big-stars">${[0, 1, 2].map(i =>
+          `<i class="${i === 1 ? 'mid' : ''}" data-i="${i}">${i < won ? '⭐' : '☆'}</i>`).join('')}</div>
         <h1>${total} star${total === 1 ? '' : 's'}!</h1>
         <p class="tag">${r.story ? 'You read the whole story!' :
           total >= 8 ? 'Amazing reading!' : total >= 5 ? 'Great reading!' : 'Good practice — keep going!'}</p>
@@ -731,6 +744,18 @@ const App = {
         <button class="btn ghost" onclick="App.home()">🏠 Home</button>
       </div>
     `);
+    this.popStars(won);
+  },
+
+  // Each star lands on its own, loudest in the middle, so the result plays
+  // out rather than simply being there.
+  popStars(won) {
+    document.querySelectorAll('.big-stars i').forEach((el, i) => {
+      setTimeout(() => {
+        el.classList.add(i < won ? 'on' : 'off');
+        if (i < won) Sfx.play('correct', 0.45);
+      }, 260 + i * 260);
+    });
   },
 
 
@@ -793,19 +818,35 @@ const App = {
   showUnlock(c) {
     Sfx.play('fanfare', 0.8);
     this.confetti(30);
+    this.flipCard();
     this.render(`
       <div class="screen center unlock">
-        <div class="raybox pop-in">
-          <div class="rays"></div>
-          ${this.creatureHtml(c.k, 'huge')}
+        <div class="card-stage">
+          <div class="friendcard" id="fcard">
+            <div class="fc-back">⭐</div>
+            <div class="fc-front foil">
+              <div class="fc-art">${this.creatureHtml(c.k)}</div>
+              <div class="fc-name"><span>New friend</span><b>${this.esc(c.n)}</b></div>
+            </div>
+          </div>
         </div>
-        <h1>${c.n} joined you!</h1>
+        <h1>${this.esc(c.n)} joined you!</h1>
         <p class="cheer">${c.c}</p>
         <div class="statrow"><span class="stat">🐾 ${this.data.friends.length} of ${CREATURES.length} friends</span></div>
         <button class="btn big go" onclick="App.afterUnlock()">Keep reading!</button>
         <button class="btn ghost" onclick="App.friends()">See all my friends</button>
       </div>
     `);
+  },
+
+  // The card starts face down and turns over a beat later. Queued before
+  // render() so the browser paints the back first — flipping in the same
+  // frame as the insert shows no turn at all.
+  flipCard() {
+    setTimeout(() => {
+      const el = document.getElementById('fcard');
+      if (el) el.classList.add('flip');
+    }, 140);
   },
 
   // ── The collection ──
@@ -824,7 +865,7 @@ const App = {
         </button>`;
       }
       const locked = c.k === (next && next.k);   // the very next one gets a teaser
-      return `<div class="cell locked">
+      return `<div class="cell locked${locked ? ' next' : ''}">
         <div class="mystery">${locked ? '❔' : '🔒'}</div>
         <div class="cname">${locked ? `${toNext} more star${toNext === 1 ? '' : 's'}` : '???'}</div>
       </div>`;
@@ -1337,6 +1378,27 @@ const App = {
   resume() {
     if (!this.round || this.round.i >= this.round.items.length) return this.home();
     this.showItem();
+  },
+
+  // One big word of praise, thrown up over the card. The quiet line inside
+  // the card says what happened; this says how it felt.
+  PRAISE: ['Yes!', 'Nice!', 'Great!', 'Lovely!', 'Perfect!', 'Brilliant!', 'Star!'],
+
+  toast(text) {
+    const el = document.createElement('div');
+    el.className = 'toast';
+    el.textContent = text || this.PRAISE[Math.floor(Math.random() * this.PRAISE.length)];
+    // Sit in the gap between the card and the microphone, measured at the
+    // moment it fires. A fixed percentage landed squarely on the word she had
+    // just read — and a story card, which grows as its lines stack up, would
+    // have moved the target anyway.
+    const mic = document.getElementById('mic-btn');
+    if (mic) {
+      const r = mic.getBoundingClientRect();
+      el.style.top = Math.max(8, r.top - 56) + 'px';
+    }
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 1600);
   },
 
   // A little firework out of the card itself, so the reward happens WHERE

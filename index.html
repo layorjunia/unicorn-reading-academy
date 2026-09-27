@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="build" content="20260908-1032-7d304f3">
+  <meta name="build" content="20260927-1009-263a3f9">
   <title>Reading Star ⭐</title>
   <meta name="description" content="Read words and sentences out loud — Reading Star listens and cheers you on.">
   <link rel="manifest" href="manifest.json">
@@ -17,16 +17,25 @@
   <meta name="apple-mobile-web-app-capable" content="no">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="theme-color" content="#ffe3f1">
-  <link rel="stylesheet" href="style.css?v=20260908-1032-7d304f3">
+  <!-- A rounded display face for the chrome only. It loads with display=swap
+       behind a full system fallback stack, so an offline launch — this is an
+       installed PWA — looks exactly as it did before. The WORD CARDS keep the
+       system rounded face: it is bolder than anything web-served here and the
+       letterforms read further across a room, which is what a word card is
+       for. Andika was tried and is lighter with no letterform gain. -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&display=swap">
+  <link rel="stylesheet" href="style.css?v=20260927-1009-263a3f9">
 </head>
 <body>
   <div id="app"></div>
-  <script src="firebase-config.js?v=20260908-1032-7d304f3"></script>
-  <script src="store.js?v=20260908-1032-7d304f3"></script>
-  <script src="creatures.js?v=20260908-1032-7d304f3"></script>
-  <script src="content.js?v=20260908-1032-7d304f3"></script>
-  <script src="mark.js?v=20260908-1032-7d304f3"></script>
-  <script src="listen.js?v=20260908-1032-7d304f3"></script>
-  <script src="app.js?v=20260908-1032-7d304f3"></script>
+  <script src="firebase-config.js?v=20260927-1009-263a3f9"></script>
+  <script src="store.js?v=20260927-1009-263a3f9"></script>
+  <script src="creatures.js?v=20260927-1009-263a3f9"></script>
+  <script src="content.js?v=20260927-1009-263a3f9"></script>
+  <script src="mark.js?v=20260927-1009-263a3f9"></script>
+  <script src="listen.js?v=20260927-1009-263a3f9"></script>
+  <script src="app.js?v=20260927-1009-263a3f9"></script>
 </body>
 </html>

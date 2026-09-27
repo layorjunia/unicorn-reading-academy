@@ -16,6 +16,12 @@
   --sky:       #47a3e8;
   --sky-deep:  #2b7fc4;
   --card:      rgba(255,255,255,.94);
+  /* Baloo 2 gives the chrome its character. The word cards deliberately stay
+     on the system rounded face — it is the boldest and clearest thing
+     available, and a word card has one job. */
+  --display: "Baloo 2", "SF Pro Rounded", ui-rounded, -apple-system, system-ui, sans-serif;
+  --reading: "SF Pro Rounded", ui-rounded, -apple-system, BlinkMacSystemFont,
+             "Segoe UI Variable", "Segoe UI", system-ui, sans-serif;
   --lift:      0 10px 0 rgba(122,74,132,.10), 0 18px 30px -14px rgba(122,74,132,.45);
 }
 
@@ -36,8 +42,7 @@ html {
     #f6eaff;
 }
 body {
-  font-family: "SF Pro Rounded", -apple-system, BlinkMacSystemFont, "Segoe UI Variable",
-               "Segoe UI", system-ui, sans-serif;
+  font-family: var(--display);
   color: var(--ink);
   min-height: 100vh;
   background: transparent;
@@ -167,10 +172,11 @@ h1 {
 .card.sentence { justify-content: flex-start; padding-top: 24px; }
 
 .target.word {
+  font-family: var(--reading);
   font-size: 4.4rem; font-weight: 800; color: #4a2f8c; letter-spacing: .04em;
   line-height: 1.28; padding-bottom: .1em;
 }
-.target.sent { font-size: 2rem; font-weight: 700; color: #4a2f8c; line-height: 1.55; }
+.target.sent { font-family: var(--reading); font-size: 2rem; font-weight: 700; color: #4a2f8c; line-height: 1.55; }
 @media (max-width: 420px) {
   .target.word { font-size: 3.4rem; }
   .target.sent { font-size: 1.6rem; }
@@ -218,7 +224,7 @@ h1 {
   display: flex; flex-wrap: wrap; gap: 6px 12px; justify-content: center;
   font-size: .86rem; font-weight: 700; color: var(--ink-soft);
 }
-.legend b { font-weight: 800; color: var(--ink); font-size: 1.12rem; }
+.legend b { font-family: var(--reading); font-weight: 800; color: var(--ink); font-size: 1.12rem; }
 .legend .k-team   b { border-bottom: 3px solid var(--mint); }
 .legend .k-magic  b { border-bottom: 3px solid var(--sun); }
 .legend .k-silent b { color: #c6b6ca; border: 0; }
@@ -229,7 +235,7 @@ h1 {
 .keycard { background: var(--card); border-radius: 24px; padding: 18px; box-shadow: var(--lift); }
 .keyrow { display: flex; gap: 14px; align-items: center; padding: 12px 4px; text-align: left; }
 .keyrow + .keyrow { border-top: 2px dashed #f0e4f6; }
-.keyrow .demo { font-size: 2.3rem; font-weight: 800; color: #4a2f8c; flex: none; min-width: 3.1em; text-align: center; }
+.keyrow .demo { font-family: var(--reading); font-size: 2.3rem; font-weight: 800; color: #4a2f8c; flex: none; min-width: 3.1em; text-align: center; }
 .keyrow .what b { display: block; font-size: 1rem; color: var(--ink); }
 .keyrow .what span { font-size: .88rem; color: var(--ink-soft); line-height: 1.4; }
 
@@ -327,6 +333,88 @@ h1 {
   100% { transform: scale(1) rotate(0) }
 }
 
+/* ── The unlock: a trading card that flips over ───────────────────────────
+   Borrowed from Lamplight. A creature simply appearing is information; a card
+   turning over is an event, and the ten pieces of reading that paid for it
+   deserve an event. */
+.card-stage { perspective: 1100px; display: grid; place-items: center; margin: 2px 0 8px; }
+.friendcard {
+  width: 212px; height: 292px; position: relative; transform-style: preserve-3d;
+  transform: rotateY(180deg);
+  transition: transform .9s cubic-bezier(.3, 1.25, .4, 1);
+}
+.friendcard.flip { transform: rotateY(0deg); }
+.friendcard > div {
+  position: absolute; inset: 0; border-radius: 24px; overflow: hidden;
+  backface-visibility: hidden; -webkit-backface-visibility: hidden;
+}
+.fc-back {
+  transform: rotateY(180deg); display: grid; place-items: center; font-size: 3.6rem;
+  background: repeating-linear-gradient(45deg, #a17bff 0 13px, #8b5cf6 13px 26px);
+  border: 4px solid var(--sun); box-shadow: var(--lift);
+}
+.fc-front {
+  display: flex; flex-direction: column; border: 4px solid var(--sun);
+  background: linear-gradient(180deg, #fff, #fff2f8); box-shadow: var(--lift);
+}
+.fc-art { flex: 1; display: grid; place-items: center; padding: 12px 12px 4px; }
+.fc-art .creature { width: 88%; }
+.fc-name {
+  background: linear-gradient(180deg, #ff85b9, var(--rose)); color: #fff;
+  padding: 9px 13px 11px; text-align: left;
+}
+.fc-name b { display: block; font-size: 1.3rem; line-height: 1.04; }
+.fc-name span { font-size: .63rem; font-weight: 800; letter-spacing: .15em; text-transform: uppercase; opacity: .93; }
+/* the shine that sweeps a foil card */
+.foil::after {
+  content: ''; position: absolute; inset: 0; pointer-events: none; mix-blend-mode: overlay;
+  background: linear-gradient(115deg, transparent 30%, rgba(255,255,255,.65) 45%,
+              rgba(255,217,61,.45) 50%, transparent 66%);
+  background-size: 250% 100%; animation: foil 2.8s ease-in-out infinite;
+}
+@keyframes foil { from { background-position: 120% 0; } to { background-position: -120% 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .friendcard { transition: none; }
+  .foil::after { animation: none; opacity: .25; }
+}
+
+/* ── The round: how far through she is, at a glance ── */
+.segs { display: flex; gap: 4px; flex: 1; min-width: 0; margin: 0 4px; }
+.seg {
+  flex: 1; height: 10px; border-radius: 5px; overflow: hidden;
+  background: rgba(255,255,255,.66); box-shadow: inset 0 1px 2px rgba(122,74,132,.18);
+}
+.seg > i {
+  display: block; height: 100%; width: 0; border-radius: 5px;
+  background: linear-gradient(90deg, #ffd93d, #ff8fc7);
+  transition: width .4s cubic-bezier(.2,.9,.3,1);
+}
+
+/* ── Results: three stars, popped in one at a time ── */
+.big-stars { display: flex; justify-content: center; align-items: flex-end; gap: 10px; height: 92px; }
+.big-stars i { font-style: normal; display: block; font-size: 3.4rem; line-height: 1; transform: scale(0); }
+.big-stars i.mid { font-size: 4.3rem; }
+.big-stars i.on { animation: starpop .55s cubic-bezier(.3,1.7,.5,1) forwards; }
+.big-stars i.off { animation: starmiss .35s ease forwards; }
+@keyframes starpop  { from { transform: scale(0) rotate(-40deg); } to { transform: scale(1) rotate(0); } }
+@keyframes starmiss { from { transform: scale(0); } to { transform: scale(.88); opacity: .25; } }
+
+/* ── The word she just read, called out big ── */
+.toast {
+  position: fixed; left: 50%; top: 21%; transform: translateX(-50%); z-index: 60;
+  font-weight: 800; font-size: clamp(1.7rem, 7vw, 2.9rem); text-align: center; white-space: nowrap;
+  color: #1f8544; text-shadow: 0 3px 0 #fff, 0 0 30px rgba(255,214,90,.85);
+  pointer-events: none; animation: toast 1.45s ease forwards;
+}
+@keyframes toast {
+  0%   { opacity: 0; transform: translate(-50%, 18px) scale(.8); }
+  15%  { opacity: 1; transform: translate(-50%, 0) scale(1.07); }
+  28%  { transform: translate(-50%, 0) scale(1); }
+  76%  { opacity: 1; }
+  100% { opacity: 0; transform: translate(-50%, -16px); }
+}
+@media (prefers-reduced-motion: reduce) { .toast { animation-duration: .01ms; } }
+
 /* ── The collection, as a sticker album ── */
 .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
 @media (min-width: 470px) { .grid { grid-template-columns: repeat(4, 1fr); } }
@@ -349,6 +437,13 @@ h1 {
   transform: rotate(18deg); pointer-events: none;
 }
 .cell.locked { background: rgba(255,255,255,.42); box-shadow: none; cursor: default; }
+.cell.locked.next { background: rgba(255,255,255,.72); animation: nextpulse 2.1s ease-out infinite; }
+@keyframes nextpulse {
+  0%   { box-shadow: 0 0 0 0 rgba(255,95,158,.5); }
+  70%  { box-shadow: 0 0 0 14px rgba(255,95,158,0); }
+  100% { box-shadow: 0 0 0 0 rgba(255,95,158,0); }
+}
+@media (prefers-reduced-motion: reduce) { .cell.locked.next { animation: none; } }
 .cname { font-size: .78rem; font-weight: 800; color: var(--ink-soft); }
 .cell.buddy .cname { color: var(--rose-deep); }
 .badge {

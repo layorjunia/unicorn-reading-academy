@@ -529,8 +529,12 @@ def validate(manifest, phrases):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--engine', default=os.environ.get('TTS_ENGINE', 'piper'),
-                    choices=['piper', 'google', 'apple'])
+                    choices=['piper', 'kokoro', 'google', 'apple'])
     ap.add_argument('--clean', action='store_true')
+    # Several processes side by side, each with its own model (Kokoro is not thread-safe, so threads don't help):
+    # shard i renders every n-th missing clip and writes nothing else; a final plain run writes the manifest.
+    ap.add_argument('--shards', type=int, default=1)
+    ap.add_argument('--shard', type=int, default=0)
     ap.add_argument('--workers', type=int, default=8)
     args = ap.parse_args()
 
@@ -613,6 +617,10 @@ def main():
           f'{len(ipa_map)} sounds, 26 letter names — {len(todo)} to render '
           f'({len(jobs) - len(todo)} cached)')
 
+    if args.shards > 1:
+        todo = todo[args.shard::args.shards]
+        print(f'shard {args.shard}/{args.shards}: {len(todo)} clips')
+
     fails = []
 
     def run(job):
@@ -630,6 +638,12 @@ def main():
                     fails.append(res)
                 if i % 250 == 0:
                     print(f'  {i}/{len(todo)}')
+
+    if args.shards > 1:
+        print(f'shard {args.shard} done, {len(fails)} failure(s)')
+        for out, err in fails[:15]:
+            print('  FAIL', os.path.basename(out), err)
+        return 1 if fails else 0
 
     # ── One continuous clip per teaching line ──
     # This is what stops narration sounding like glued-together fragments.

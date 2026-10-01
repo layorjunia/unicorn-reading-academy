@@ -379,6 +379,117 @@ class PiperEngine:
         self._write(seq, out_path)
 
 
+class KokoroEngine(PiperEngine):
+    """Kokoro (hexgrad/Kokoro-82M) — a local neural TTS, Apache-2.0, 82M
+    parameters. Same deal as Piper: runs on this Mac, no key, no billing, no
+    network at build time. It is noticeably more natural than Piper —
+    inflection, real pauses between sentences, expression — which is why Jacob
+    picked it over the device voice in Lamplight ("way better", 2026-09-28).
+
+    Words, phrases and letter NAMES are Kokoro. Letter SOUNDS and narration
+    lines with exact sounds inside them stay with PiperEngine (inherited): a
+    neural TTS is the wrong tool for a single phoneme (see `ipa_to_espeak`).
+    Copied from Wonder Lab (2026-09-30), where Jacob heard it as "way better".
+
+    See KOKORO-VOICE-UPGRADE.md. Pronunciations for words Kokoro has to guess
+    live in tools/lexicon.py.
+    """
+
+    name = 'kokoro'
+    ext = '.m4a'
+    VOICE_NAME = os.environ.get('KOKORO_VOICE', 'af_heart')
+    SR = 24000
+
+    LETTER = {'a': 'ˈA', 'b': 'bˈi', 'c': 'sˈi', 'd': 'dˈi', 'e': 'ˈi', 'f': 'ˈɛf', 'g': 'ʤˈi', 'h': 'ˈAʧ',
+              'i': 'ˈI', 'j': 'ʤˈA', 'k': 'kˈA', 'l': 'ˈɛl', 'm': 'ˈɛm', 'n': 'ˈɛn', 'o': 'ˈO', 'p': 'pˈi',
+              'q': 'kjˈu', 'r': 'ˈɑɹ', 's': 'ˈɛs', 't': 'tˈi', 'u': 'jˈu', 'v': 'vˈi', 'w': 'dˈʌbəljˌu',
+              'x': 'ˈɛks', 'y': 'wˈI', 'z': 'zˈi'}
+
+    MISAKI = [('eɪ', 'A'), ('aɪ', 'I'), ('oʊ', 'O'), ('aʊ', 'W'), ('ɔɪ', 'Y'), ('dʒ', 'ʤ'), ('tʃ', 'ʧ'), ('ɡ', 'g'), ('ː', '')]
+
+    def speak_phoneme(self, ipa, out_path):
+        """A word with a forced pronunciation (WORD_IPA: "read" as in present tense) in Kokoro's own phoneme
+        alphabet. Letter SOUNDS also come through here but are never re-rendered (their files are kept)."""
+        ph = ipa
+        for a, b in self.MISAKI:
+            ph = ph.replace(a, b)
+        if 'ˈ' not in ph:
+            ph = 'ˈ' + ph
+        word = os.path.basename(out_path).rsplit('.', 1)[0]
+        self.speak_text(f'[{word}](/{ph}/)', out_path)
+
+    def speak_letter_name(self, ch, out_path):
+        """The letter's NAME ("bee"), given as phonemes: left alone the voice reads "a" as "uh"."""
+        ph = self.LETTER.get(ch.lower())
+        self.speak_text(f'[{ch}](/{ph}/)' if ph else ch, out_path)
+
+    def __init__(self, voice=None, speed=0.95, device=None):
+        PiperEngine.__init__(self)
+        # Some ops have no MPS kernel; without this the run dies partway.
+        os.environ.setdefault('PYTORCH_ENABLE_MPS_FALLBACK', '1')
+        try:
+            import torch
+            from kokoro import KModel, KPipeline
+        except ImportError as e:
+            raise RuntimeError(
+                'kokoro is not installed. Set it up with:\n'
+                '  ~/.local/bin/uv pip install -p .venv-tts/bin/python "kokoro>=0.9" soundfile\n'
+                'then run gen_audio.py with .venv-tts/bin/python') from e
+        # Read the environment HERE, not from the class attribute: gen_audio
+        # sets KOKORO_VOICE after this module is imported, and the class body
+        # ran at import time — `--voice af_bella` would render af_heart.
+        self.voice = voice or os.environ.get('KOKORO_VOICE', 'af_heart')
+        self.speed = speed
+        threads = int(os.environ.get('KOKORO_THREADS', '0'))
+        if threads:
+            torch.set_num_threads(threads)
+        dev = device or os.environ.get('KOKORO_DEVICE') \
+            or ('mps' if torch.backends.mps.is_available() else 'cpu')
+        model = KModel(repo_id='hexgrad/Kokoro-82M').to(dev).eval()
+        # A British voice (bf_*, bm_*) needs the British frontend.
+        self.pipe = KPipeline(lang_code='b' if self.voice[0] == 'b' else 'a',
+                              repo_id='hexgrad/Kokoro-82M', model=model)
+        self.lang = 'b' if self.voice[0] == 'b' else 'a'
+        self._lock = threading.Lock()   # the Kokoro pipeline is not thread-safe
+
+    def speak_text(self, text, out_path):
+        import numpy as np
+        import soundfile as sf
+        from lexicon import tts_text
+        t = tts_text(text, self.lang)
+        # Without final punctuation the model trails off instead of landing.
+        if t.strip()[-1:] not in '.!?':
+            t = t.rstrip() + '.'
+        with self._lock:
+            chunks = [np.asarray(a) for _, _, a in
+                      self.pipe(t, voice=self.voice, speed=self.speed)]
+        if not chunks:
+            raise RuntimeError('kokoro produced no audio for: ' + text[:60])
+        gap = np.zeros(int(0.12 * self.SR), dtype=np.float32)
+        a = np.concatenate([x for c in chunks for x in (self._trim(c), gap)][:-1])
+        a = self._trim(a)
+        wav = out_path + '.wav'
+        sf.write(wav, a, self.SR, subtype='PCM_16')
+        try:
+            r = subprocess.run(
+                ['afconvert', '-f', 'm4af', '-d', 'aac',
+                 '-b', os.environ.get('KOKORO_BITRATE', '32000'), wav, out_path],
+                capture_output=True, text=True)
+        finally:
+            os.unlink(wav)
+        if r.returncode != 0:
+            raise RuntimeError('afconvert: ' + r.stderr.strip()[:200])
+
+    def _trim(self, a, pad=0.03):
+        """Cut the model's edge silence, gently: a single word ends on a quiet consonant ("bit", "book") that a
+        harder cut clips. These are the settings Jacob heard and chose (2026-09-30)."""
+        import numpy as np
+        idx = np.where(np.abs(a) > 0.004)[0]
+        if not len(idx):
+            return a
+        return a[max(0, idx[0] - int(pad * self.SR)): idx[-1] + int(0.06 * self.SR)]
+
+
 def get_engine(name):
     if name == 'google':
         return GoogleEngine()
@@ -386,6 +497,8 @@ def get_engine(name):
         return AppleEngine()
     if name == 'piper':
         return PiperEngine()
+    if name == 'kokoro':
+        return KokoroEngine()
     raise ValueError('unknown engine: ' + name)
 
 

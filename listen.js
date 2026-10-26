@@ -23,12 +23,21 @@ const Listener = {
   // read off the screen instead of guessed at from another machine.
   lastAudioOpened: false,
   lastEnd: '',
+  lastError: '',      // the recogniser's own error code, if it raised one
+  lastWhy: '',        // why the last attempt was handed to onBlocked
 
   // Start one listening attempt. Must be called from a tap handler (browsers
   // require a user gesture for the mic). Calls exactly one of:
   //   onHeard(alternatives)  — list of transcript strings, best first
   //   onSilence()            — mic worked, nothing recognisable was said
-  //   onBlocked()            — permission denied / recogniser unavailable
+  //   onBlocked(info)        — permission denied / recogniser unavailable;
+  //                            info.why is the recogniser's error code, or
+  //                            'no-audio' when it ended without ever opening
+  // and, as it goes, onState(s) with s one of:
+  //   'connecting' — start() was called; the mic is NOT open yet
+  //   'listening'  — the mic is open: speak now
+  //   'hearing'    — the recogniser can hear speech
+  //   'thinking'   — she has stopped; waiting for the transcript
   // ms of speaking time to allow — a 12-word sentence needs far longer than
   // a single word, and a fixed budget cut slow-but-correct readers off.
   budgetFor(text) {
@@ -47,6 +56,23 @@ const Listener = {
       this._cancel = null;
       (fn || (() => {}))(arg);
     };
+    // Every way out through onBlocked says WHY, so the screen can tell a
+    // switched-off Dictation from a denied microphone from a dead network.
+    // They need completely different fixes, and "allow the microphone" was
+    // sent to people whose microphone was already allowed.
+    const blocked = (why) => {
+      this.lastWhy = why;
+      done(opts.onBlocked, { why });
+    };
+    let stateNow = '';
+    const emit = (st) => {
+      if (settled || st === stateNow) return;
+      // states only move forward: a late audiostart must not undo 'thinking'
+      const order = ['connecting', 'listening', 'hearing', 'thinking'];
+      if (order.indexOf(st) < order.indexOf(stateNow)) return;
+      stateNow = st;
+      if (opts.onState) { try { opts.onState(st); } catch (e) { /* UI only */ } }
+    };
     // stop() must settle FIRST, silently: aborting the recogniser fires its
     // onend, and without this a screen change would deliver onSilence to a
     // screen that no longer exists (and speak over the new one).
@@ -55,7 +81,7 @@ const Listener = {
     try {
       rec = new this._SR();
     } catch (e) {
-      return done(opts.onBlocked);
+      return blocked('unsupported');
     }
     this._rec = rec;
     // Did the microphone ever actually open? This is the discriminator that
@@ -69,41 +95,66 @@ const Listener = {
     let audioOpened = false;
     this.lastAudioOpened = false;
     this.lastEnd = 'started';
-    rec.onaudiostart = () => { audioOpened = true; this.lastAudioOpened = true; };
-    rec.onspeechstart = () => { audioOpened = true; this.lastAudioOpened = true; };
+    this.lastError = '';
+    this.lastWhy = '';
+    emit('connecting');
+    // The microphone is open from audiostart. Until then anything she says is
+    // lost, which is why the screen waits for 'listening' before it says go.
+    rec.onaudiostart = () => { audioOpened = true; this.lastAudioOpened = true; emit('listening'); };
+    rec.onsoundstart = () => { audioOpened = true; this.lastAudioOpened = true; emit('listening'); };
+    rec.onspeechstart = () => { audioOpened = true; this.lastAudioOpened = true; emit('hearing'); };
+    rec.onspeechend = () => emit('thinking');
     rec.lang = 'en-US';
     rec.continuous = false;
-    rec.interimResults = false;
+    // Interim results are for FEEDBACK only — they tell the screen the
+    // recogniser is hearing words long before the final transcript lands
+    // (that round trip is where the wait comes from). Nothing is ever judged
+    // until it is final, so what counts as a pass is unchanged.
+    rec.interimResults = true;
     rec.maxAlternatives = 8;
+    let interim = [];
 
     rec.onresult = (ev) => {
       const alts = [];
+      let final = false;
       for (const result of ev.results) {
+        if (result.isFinal) final = true;
         for (const alt of result) {
           if (alt.transcript && alt.transcript.trim()) alts.push(alt.transcript);
         }
       }
-      done(alts.length ? opts.onHeard : opts.onSilence, alts);
+      if (final) {
+        done(alts.length ? opts.onHeard : opts.onSilence, alts);
+      } else if (alts.length) {
+        interim = alts;
+        audioOpened = true;
+        emit('hearing');
+      }
     };
     rec.onerror = (ev) => {
       this.lastEnd = 'error:' + ev.error;
+      this.lastError = ev.error || '';
       // Anything that means "the mic cannot work right now" — denied,
       // offline, no microphone — must fall back to the tap version, not
       // loop "I didn't hear you" at a child whose device can't hear her.
       if (ev.error === 'not-allowed' || ev.error === 'service-not-allowed' ||
           ev.error === 'network' || ev.error === 'audio-capture') {
-        done(opts.onBlocked);
+        blocked(ev.error);
       } else if (ev.error === 'no-speech' && audioOpened) {
         done(opts.onSilence);   // the mic opened and heard quiet — genuine
       } else if (!audioOpened) {
-        done(opts.onBlocked);   // it never opened; nothing she does can help
+        blocked(ev.error || 'no-audio');   // it never opened; nothing she does can help
       } else {
         done(opts.onSilence);
       }
     };
     rec.onend = () => {
       if (this.lastEnd === 'started') this.lastEnd = 'ended';
-      done(audioOpened ? opts.onSilence : opts.onBlocked);
+      // Some engines end after interim results without ever sending a final
+      // one. That is a real reading, not silence.
+      if (interim.length) return done(opts.onHeard, interim);
+      if (audioOpened) return done(opts.onSilence);
+      blocked('no-audio');
     };
 
     // The speaking budget must not start until recognition actually starts:
@@ -115,11 +166,16 @@ const Listener = {
       clearTimeout(this._timer);
       this._timer = setTimeout(() => {
         try { rec.stop(); } catch (e) { /* already stopped */ }
+        emit('thinking');
         // rec.stop() finalises asynchronously through Apple/Google's
         // service — a real transcript commonly lands 0.5–1.5s later, so
         // the grace period must comfortably exceed that round-trip or a
         // slow reader's correct answer is thrown away as silence.
-        setTimeout(() => done(audioOpened ? opts.onSilence : opts.onBlocked), 2500);
+        setTimeout(() => {
+          if (interim.length) return done(opts.onHeard, interim);
+          if (audioOpened) return done(opts.onSilence);
+          blocked('no-audio');
+        }, 2500);
       }, budget);
     };
     rec.onstart = armWatchdog;
@@ -127,14 +183,18 @@ const Listener = {
     try {
       rec.start();
     } catch (e) {
-      return done(opts.onBlocked);
+      return blocked('start-failed');
     }
     // Outer safety net for engines that never fire onstart (or hang in the
     // permission dialog forever): generous, because it only exists to keep
     // the button from being stuck.
     this._timer = setTimeout(() => {
       try { rec.stop(); } catch (e) { /* already stopped */ }
-      setTimeout(() => done(audioOpened ? opts.onSilence : opts.onBlocked), 2500);
+      setTimeout(() => {
+        if (interim.length) return done(opts.onHeard, interim);
+        if (audioOpened) return done(opts.onSilence);
+        blocked('no-audio');
+      }, 2500);
     }, budget + 17000);
   },
 
@@ -356,4 +416,116 @@ Listener.judgeSentence = function (target, alternatives) {
   const pass = n <= 5 ? (n - 1) / n : 0.8;
   if (best >= pass) return 'match';
   return best >= 0.6 ? 'near' : 'miss';
+};
+
+// ── The microphone level meter ──────────────────────────────────────────────
+// Speech recognition tells you NOTHING about whether it can hear — it is silent
+// until the transcript lands, seconds after she stops. This opens the
+// microphone a second way, purely to read how loud it is, so a bar can move
+// while she speaks.
+//
+// It is optional and it must never cost her the reading. On some iOS versions
+// the recogniser and a capture stream cannot share the microphone, so the app
+// watches for exactly that failure (the recogniser ending without ever
+// opening while this is live) and, on seeing it, switches the meter off for
+// good on this device. The bar then runs from the recogniser's own events
+// instead, which is coarser but can never conflict.
+Listener.Meter = {
+  PREF: 'readingstar:meter',
+  stream: null, ctx: null, an: null, buf: null,
+  alive: false,        // has the stream ever carried a non-silent sample?
+
+  get supported() {
+    return !!(typeof navigator !== 'undefined' && navigator.mediaDevices &&
+              navigator.mediaDevices.getUserMedia &&
+              (window.AudioContext || window.webkitAudioContext));
+  },
+  // A device preference, not progress — kept apart from her profile on purpose.
+  get enabled() {
+    try { return localStorage.getItem(this.PREF) !== 'off'; } catch (e) { return true; }
+  },
+  disable() {
+    try { localStorage.setItem(this.PREF, 'off'); } catch (e) { /* private mode */ }
+    this.close();
+  },
+  enable() {
+    try { localStorage.removeItem(this.PREF); } catch (e) { /* private mode */ }
+  },
+  get live() {
+    return !!(this.stream && this.an &&
+              this.stream.getAudioTracks().some(t => t.readyState === 'live'));
+  },
+
+  // Must be called from a tap: the AudioContext is created synchronously
+  // BEFORE the permission prompt, because iOS only lets one start inside the
+  // gesture, and the prompt can take seconds to answer.
+  open() {
+    if (this.live) return Promise.resolve({ ok: true });
+    // One attempt at a time: a second tap while the permission box is still
+    // up must not raise a second box.
+    if (!this._p) {
+      this._p = this._open().then(r => {
+        this._p = null;
+        if (!r.ok && /NotAllowed|Permission|Security/i.test(r.error || '')) this.denied = true;
+        return r;
+      });
+    }
+    return this._p;
+  },
+  denied: false,       // she (or the browser) refused: do not ask again this visit
+  _p: null,
+
+  async _open() {
+    if (!this.supported) return { ok: false, error: 'unsupported' };
+    const AC = window.AudioContext || window.webkitAudioContext;
+    let ctx;
+    try {
+      ctx = new AC();
+      if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+    } catch (e) { return { ok: false, error: 'no-audio-context' }; }
+    try {
+      // Every processing stage OFF: a meter should show what the microphone
+      // hears, not what noise suppression decided she meant. These are
+      // preferences, not requirements, so no device can reject them.
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false }
+      });
+      const src = ctx.createMediaStreamSource(stream);
+      const an = ctx.createAnalyser();
+      an.fftSize = 1024;
+      an.smoothingTimeConstant = 0.4;
+      src.connect(an);          // deliberately NOT to the speakers
+      this.close();
+      this.stream = stream; this.ctx = ctx; this.an = an;
+      this.buf = new Uint8Array(an.fftSize);
+      this.alive = false;
+      stream.getAudioTracks().forEach(t => { t.onended = () => this.close(); });
+      if (ctx.state === 'suspended') ctx.resume().catch(() => {});
+      return { ok: true };
+    } catch (e) {
+      try { ctx.close(); } catch (e2) { /* already closed */ }
+      return { ok: false, error: (e && e.name) || 'error' };
+    }
+  },
+
+  // 0..1. Quiet room ~0.1, a child speaking up ~0.6-0.9.
+  level() {
+    if (!this.live) return 0;
+    this.an.getByteTimeDomainData(this.buf);
+    let sum = 0;
+    for (let i = 0; i < this.buf.length; i++) {
+      const v = (this.buf[i] - 128) / 128;
+      sum += v * v;
+    }
+    const rms = Math.sqrt(sum / this.buf.length);
+    if (rms > 0.0002) this.alive = true;
+    const db = 20 * Math.log10(Math.max(rms, 1e-5));
+    return Math.min(1, Math.max(0, (db + 58) / 40));   // -58 dB .. -18 dB
+  },
+
+  close() {
+    try { if (this.stream) this.stream.getTracks().forEach(t => t.stop()); } catch (e) { /* gone */ }
+    try { if (this.ctx && this.ctx.state !== 'closed') this.ctx.close(); } catch (e) { /* gone */ }
+    this.stream = this.ctx = this.an = this.buf = null;
+  },
 };

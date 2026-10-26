@@ -101,6 +101,9 @@ const App = {
     document.addEventListener('touchend', prime, { once: true });
     document.addEventListener('click', prime, { once: true });
     this.paintSky();
+    // A hidden app must not keep the microphone open (the orange dot).
+    document.addEventListener('visibilitychange', () => { if (document.hidden) Listener.Meter.close(); });
+    window.addEventListener('pagehide', () => Listener.Meter.close());
     if (this.iosStandalone()) this.launcher();
     else this.home();
     this.checkForUpdate();
@@ -216,6 +219,9 @@ const App = {
     // timer would otherwise fire on the new screen, and a hear-it clip would
     // keep playing over it.
     Listener.stop();
+    this.stopVu();
+    this._micState = 'idle';
+    if (this._mcTimer) { clearInterval(this._mcTimer); this._mcTimer = null; }
     this._listening = false;
     if (this._advance) { clearTimeout(this._advance); this._advance = null; }
     if (this._unlock) { clearTimeout(this._unlock); this._unlock = null; }
@@ -225,6 +231,13 @@ const App = {
     document.querySelectorAll('.toast').forEach(t => t.remove());
     document.getElementById('app').innerHTML = html;
     window.scrollTo(0, 0);
+    // The microphone stays open only on a screen that listens: the round, the
+    // mic check, and the unlock ceremony that sits between two items of a
+    // round. Everywhere else it is closed, so the "microphone in use" dot
+    // never lingers on the home screen.
+    if (!document.getElementById('vu') && !document.querySelector('.unlock')) {
+      Listener.Meter.close();
+    }
   },
 
   // Owned by its round, so a stale timer can never act on a replaced round.
@@ -288,6 +301,7 @@ const App = {
         <div class="statrow">
           <button class="btn ghost small" onclick="App.progress()">📊 My Reading</button>
           <button class="btn ghost small" onclick="App.keyScreen()">🎨 What the colours mean</button>
+          <button class="btn ghost small" onclick="App.micCheck()">🎚️ Mic check</button>
         </div>
         <button class="btn ghost small" onclick="App.profiles()">
           ${this.esc(this.profile.avatar)} ${this.esc(this.profile.name)}${this.profile.cloud ? ' ☁️' : ''} — switch
@@ -418,6 +432,9 @@ const App = {
 
   start(mode) {
     if (!Listener.available) return this.noMic('unsupported');
+    // Inside this tap, so the permission box (if there is one) comes up HERE,
+    // on its own, before she has been asked to read anything.
+    this.openMeter();
     this.data.mode = mode;
     this.save();
     const lvl = this.data.level;
@@ -494,6 +511,7 @@ const App = {
           <div class="feedback" id="feedback">&nbsp;</div>
         </div>
         <button class="btn mic big" id="mic-btn" onclick="App.listen()">🎤 Tap, then read it!</button>
+        ${this.vuHtml()}
         ${isWord && it.a ? `<button class="btn ghost small" id="hear" onclick="App.hear()">🔊 Hear it first</button>` : ''}
         ${r.story ? `<div class="small-note">${this.esc(r.story.title)} · line ${r.i + 1} of ${r.items.length}</div>` : ''}
         <div id="skip-holder"></div>
@@ -506,6 +524,7 @@ const App = {
         </div>
       </div>
     `);
+    this.startVu();
   },
 
   // Which marks does THIS word carry? Read back off the marker rather than
@@ -547,9 +566,94 @@ const App = {
     }
   },
 
-  micIdle() {
+  // ── The listening bar ──────────────────────────────────────────────────
+  // Recognition says nothing until its transcript lands, seconds after she
+  // stops, so she could never tell whether she was being heard. The bar and
+  // the button now follow what the microphone is ACTUALLY doing:
+  //
+  //   Getting ready…   amber   the mic is not open yet — wait
+  //   Read it now!     green   the mic is open — speak (bars follow her voice)
+  //   I can hear you!  green   the recogniser has caught speech
+  //   Checking…        violet  she has stopped; the transcript is on its way
+  //
+  // "Read it now" used to appear the instant she tapped, but an iPad takes a
+  // second or two to open the microphone — longer with a permission box — and
+  // everything said in that gap was lost, then reported as "I didn't hear you".
+  vuHtml(big) {
+    const n = 24;
+    return `<div class="vu${big ? ' big' : ''}" id="vu" data-s="idle" data-live="0" aria-hidden="true">
+      <div class="vu-bars">${Array.from({ length: n }, (_, i) =>
+        `<i style="--h:${Math.round(26 + 74 * i / (n - 1))}%;--i:${i}"></i>`).join('')}</div>
+    </div>`;
+  },
+
+  MIC_STATES: {
+    idle:       { btn: '🎤 Tap, then read it!', cls: '',           say: '' },
+    connecting: { btn: '⏳ Getting ready…',      cls: 'connecting', say: 'wait for the green button…' },
+    listening:  { btn: '🎤 Read it now!',        cls: 'listening',  say: 'read it now!' },
+    hearing:    { btn: '🎤 Read it now!',        cls: 'listening',  say: 'I can hear you! 👂' },
+    thinking:   { btn: '✨ Checking…',            cls: 'thinking',   say: 'got it — checking…' },
+  },
+
+  setMicState(st) {
+    const S = this.MIC_STATES[st];
+    if (!S) return;
+    this._micState = st;
     const btn = document.getElementById('mic-btn');
-    if (btn) { btn.classList.remove('listening'); btn.textContent = '🎤 Tap, then read it!'; }
+    const vu = document.getElementById('vu');
+    const fb = document.getElementById('feedback');
+    if (btn) {
+      btn.classList.remove('connecting', 'listening', 'thinking');
+      if (S.cls) btn.classList.add(S.cls);
+      btn.textContent = S.btn;
+    }
+    if (vu) vu.dataset.s = st;
+    // The card's own line carries the message — that is where she is looking.
+    if (fb && st !== 'idle') { fb.className = 'feedback'; fb.innerHTML = S.say; }
+    // The microphone really opened, so any earlier "no audio" was a blip.
+    if (st === 'listening' || st === 'hearing') this._micStrike = 0;
+  },
+
+  micIdle() { this.setMicState('idle'); },
+
+  // Drives the bars from the real microphone level, when we have it. Without
+  // it (the stream was refused, or this device cannot share the microphone)
+  // the bars fall back to the recogniser's own states, driven by CSS.
+  startVu() {
+    this.stopVu();
+    const bars = [...document.querySelectorAll('#vu .vu-bars i')];
+    if (!bars.length) return;
+    let shown = 0;
+    const tick = () => {
+      const vu = document.getElementById('vu');
+      if (!vu) { this._vuRaf = null; return; }
+      this._vuRaf = requestAnimationFrame(tick);
+      const M = Listener.Meter;
+      const live = M.live;
+      vu.dataset.live = live ? '1' : '0';
+      if (!live || this._micState === 'thinking') {
+        if (shown) { shown = 0; bars.forEach(b => b.classList.remove('on')); }
+        return;
+      }
+      const lvl = M.level();
+      // fast attack, slow release: reads as a meter rather than as flicker
+      shown = lvl > shown ? lvl : shown * 0.86 + lvl * 0.14;
+      const on = Math.round(shown * bars.length);
+      bars.forEach((b, i) => b.classList.toggle('on', i < on));
+    };
+    this._vuRaf = requestAnimationFrame(tick);
+  },
+
+  stopVu() {
+    if (this._vuRaf) { cancelAnimationFrame(this._vuRaf); this._vuRaf = null; }
+  },
+
+  // Open the level meter inside a tap. It is only ever an EXTRA: if it cannot
+  // open, or has been switched off for this device, the recogniser still runs
+  // and the bar falls back to its own events.
+  openMeter() {
+    const M = Listener.Meter;
+    if (M.enabled && M.supported && !M.live && !M.denied) M.open();
   },
 
   listen() {
@@ -560,21 +664,48 @@ const App = {
     this._listening = true;
     if (this._clip) { this._clip.pause(); this._clip = null; }   // never judge our own clip
     const it = this.item();
-    const btn = document.getElementById('mic-btn');
-    const fb = document.getElementById('feedback');
     const hear = document.getElementById('hear');
-    if (btn) { btn.classList.add('listening'); btn.textContent = '👂 I\'m listening…'; }
-    if (fb) { fb.className = 'feedback'; fb.innerHTML = 'read it now!'; }
     if (hear) hear.disabled = true;
+    this.setMicState('connecting');
+    this.openMeter();
     const isWord = this.kind() === 'word';
     Listener.start({
       budgetMs: Listener.budgetFor(it.t),
+      onState: (st) => this.setMicState(st),
       onHeard: (alts) => this.result(isWord
         ? Listener.judge(it.t, alts)
         : Listener.judgeSentence(it.t, alts)),
       onSilence: () => this.result('silence'),
-      onBlocked: () => { this._listening = false; this.noMic('blocked'); },
+      onBlocked: (info) => { this._listening = false; this.micFailed(info); },
     });
+  },
+
+  // The recogniser could not listen. Decide how loudly to say so.
+  micFailed(info) {
+    const why = (info && info.why) || 'no-audio';
+    const M = Listener.Meter;
+    const hear = document.getElementById('hear');
+    if (hear) hear.disabled = false;
+    this.micIdle();
+    const fb = document.getElementById('feedback');
+    const soft = (msg) => { if (fb) { fb.className = 'feedback soft'; fb.innerHTML = msg; } };
+
+    // 1. The level meter and the recogniser cannot share this microphone —
+    //    it happens on some iOS versions. The bar is a nicety and reading is
+    //    the point, so the meter goes off for good on this device and the bar
+    //    runs from the recogniser's events instead.
+    if (M.live && (why === 'no-audio' || why === 'audio-capture' || why === 'aborted')) {
+      M.disable();
+      return soft('One more try — tap and read it!');
+    }
+    // 2. The first "never opened" of a visit is usually the permission box
+    //    having interrupted the start. The answer is simply to tap again, not
+    //    to throw her out of her round onto an error screen.
+    if (why === 'no-audio' && !this._micStrike) {
+      this._micStrike = 1;
+      return soft('The microphone was waking up — tap and read it!');
+    }
+    this.noMic('blocked', info);
   },
 
   result(verdict) {
@@ -1327,52 +1458,219 @@ const App = {
       apple: ${yn(this.isIOS())} &middot;
       listener: ${yn(Listener.available)} &middot;
       mic opened: ${yn(Listener.lastAudioOpened)} &middot;
-      last: ${Listener.lastEnd || '—'}
+      last: ${Listener.lastEnd || '—'} &middot;
+      why: ${Listener.lastWhy || '—'} &middot;
+      bar: ${Listener.Meter.live ? 'live' : Listener.Meter.enabled ? 'events' : 'off'}
     </div>`;
   },
 
-  noMic(why) {
-    const canResume = !!(this.round && this.round.items && this.round.i < this.round.items.length);
-    // Gate on the PLATFORM, not on a standalone guess. Detection has been
-    // wrong twice on a real iPad, and offering Safari is sound advice on any
-    // iOS device whose microphone will not open.
-    const iosApp = why === 'blocked' && this.isIOS();
-    let msg, fix = '';
-    if (why === 'unsupported') {
-      msg = 'Reading Star listens using Safari (iPhone/iPad) or Chrome. Please open it there!';
-    } else if (iosApp) {
-      // The real cause, stated plainly. iOS gives a home-screen web app no
-      // microphone at all, so no amount of tapping will make this work — the
-      // icon has to be re-made now that the app no longer asks iOS to launch
-      // it that way.
-      msg = 'This app was added to the Home Screen the old way, and iPads do not let those apps use the microphone.';
-      fix = `<div class="fixbox">
-        <b>Grown-up fix — takes 20 seconds:</b>
-        <ol>
-          <li>Press and hold the Reading Star icon → <b>Remove App</b>.</li>
-          <li>Open <b>Safari</b> and go to the Reading Star web page.</li>
-          <li>Tap <b>Share</b> → <b>Add to Home Screen</b> again.</li>
-        </ol>
-        The new icon opens in Safari, where the microphone works.
-      </div>`;
-    } else {
-      msg = 'Ask a grown-up to allow the microphone, and check you are online — then try again.';
+  // What the recogniser reported decides what we tell her grown-up. Four very
+  // different things used to share one line — "ask a grown-up to allow the
+  // microphone" — so someone whose microphone WAS allowed (but whose iPad had
+  // Dictation switched off) allowed it again, and again, and nothing changed.
+  micAdvice(code) {
+    const ios = this.isIOS();
+    const steps = (...li) => `<div class="fixbox"><b>Grown-up fix:</b><ol>${li.map(x => `<li>${x}</li>`).join('')}</ol></div>`;
+    switch (code) {
+      case 'unsupported':
+        return { title: "I can't hear you yet",
+          msg: 'Reading Star listens using Safari (iPhone/iPad) or Chrome. Please open it there!' };
+      case 'service-not-allowed':
+        return ios
+          ? { title: 'The listening helper is switched off',
+              msg: 'The microphone is fine — this iPad has <b>Dictation</b> turned off, and Reading Star needs it to understand words.',
+              fix: steps('Open <b>Settings</b> → <b>General</b> → <b>Keyboard</b>.',
+                         'Turn on <b>Enable Dictation</b>.',
+                         'Come back here and tap <b>Try again</b>.') }
+          : { title: 'The listening helper is switched off',
+              msg: 'This browser has speech recognition turned off or blocked.' };
+      case 'not-allowed':
+        return { title: 'The microphone is turned off for this page',
+          msg: 'Allowing it once is not enough — it has been blocked for Reading Star.',
+          fix: ios
+            ? steps('Tap the <b>aA</b> button at the left of Safari’s web address.',
+                    'Tap <b>Website Settings</b> → <b>Microphone</b> → <b>Allow</b>.',
+                    'Reload the page, then tap <b>Try again</b>.')
+            : steps('Click the icon at the left of the web address (a lock or sliders).',
+                    'Set <b>Microphone</b> to <b>Allow</b>.',
+                    'Reload the page, then tap <b>Try again</b>.') };
+      case 'network':
+        return { title: 'I need the internet to hear you',
+          msg: 'The listening helper works over wifi. Check the wifi is on, then try again.' };
+      case 'audio-capture':
+        return { title: "I can't find the microphone",
+          msg: 'Another app may be using it (a call, or a recording). Close it, then try again.' };
+      default: {
+        // "no-audio": it started and ended without the microphone ever opening.
+        // On an iPad that is the signature of an app opened from a Home Screen
+        // icon, which iOS gives no microphone at all.
+        if (this.iosStandalone()) {
+          return { title: "I can't hear you in this app",
+            msg: 'This icon opens Reading Star as an app, and iPads give those no microphone. Safari does.',
+            safari: true,
+            fix: steps('Press and hold the Reading Star icon → <b>Remove App</b>.',
+                       'Open <b>Safari</b> and go to the Reading Star page.',
+                       'Tap <b>Share</b> → <b>Add to Home Screen</b> again.') };
+        }
+        return { title: "I can't hear you yet",
+          msg: ios
+            ? 'The microphone did not start. Check you are in <b>Safari</b> (not a Home Screen icon) and that the wifi is on. The microphone test below shows exactly where it stops.'
+            : 'The microphone did not start. Check it is allowed and you are online. The microphone test below shows exactly where it stops.',
+          safari: ios };
+      }
     }
+  },
+
+  noMic(why, info) {
+    const code = why === 'unsupported' ? 'unsupported' : ((info && info.why) || 'no-audio');
+    const canResume = !!(this.round && this.round.items && this.round.i < this.round.items.length);
+    const A = this.micAdvice(code);
     this.render(`
       <div class="screen center">
         <div class="hero">🎤</div>
-        <h1>I can't hear you yet</h1>
-        <p class="tag">${msg}</p>
-        ${iosApp ? this.safariEscape() : ''}
-        ${fix}
-        ${this.micFacts()}
+        <h1>${A.title}</h1>
+        <p class="tag">${A.msg}</p>
+        ${A.fix || ''}
         ${canResume
-          ? `<button class="btn ${iosApp ? 'ghost' : 'big go'}" onclick="App.resume()">🔁 Try again</button>
-             <button class="btn ghost" onclick="App.home()">🏠 Home</button>`
-          : `<button class="btn ${iosApp ? 'ghost' : 'big go'}" onclick="App.home()">🏠 Home</button>`}
+          ? `<button class="btn big go" onclick="App.resume()">🔁 Try again</button>`
+          : ''}
+        ${code === 'unsupported' ? '' :
+          `<button class="btn ${canResume ? 'ghost' : 'big friends'}" onclick="App.micCheck()">🎚️ Test my microphone</button>`}
+        ${A.safari ? `<p class="small-note">Opened from a Home Screen icon?</p>${this.safariEscape()}` : ''}
+        <button class="btn ghost" onclick="App.home()">🏠 Home</button>
+        ${this.micFacts()}
         <a class="classic-link" href="classic/">🌈 Play Unicorn Island instead</a>
       </div>
     `);
+  },
+
+  // ── Microphone check ──────────────────────────────────────────────────
+  // Two steps, so a failure points at the right thing:
+  //   1. is the MICROPHONE working?  (bars move when she speaks)
+  //   2. is the LISTENING HELPER working?  (it writes back what she said)
+  // "It says it can't hear us" could be either, and from the outside they
+  // look identical.
+  micCheck() {
+    this.render(`
+      <div class="screen center">
+        <div class="topbar" style="width:100%">
+          <button class="btn ghost small" onclick="App.home()">🏠</button>
+          <span class="count">Microphone check</span>
+          <span></span>
+        </div>
+        <div class="hero">🎤</div>
+        <p class="tag" id="mc-say">Tap the button, allow the microphone if it asks, then say <b>HELLO!</b></p>
+        ${this.vuHtml(true)}
+        <div id="mc-btns" class="mc-btns"></div>
+        ${this.micFacts()}
+      </div>
+    `);
+    this.mcButtons('start');
+    this.startVu();
+  },
+
+  mcSay(html) {
+    const e = document.getElementById('mc-say');
+    if (e) e.innerHTML = html;
+    return !!e;
+  },
+
+  mcButtons(phase) {
+    const el = document.getElementById('mc-btns');
+    if (!el) return;
+    const home = '<button class="btn ghost" onclick="App.home()">🏠 Home</button>';
+    el.innerHTML = {
+      start: `<button class="btn big go" onclick="App.mcOpen()">🎤 Turn on the microphone</button>`,
+      level: `<button class="btn big go" onclick="App.mcRecognise()">🗣️ Now test the listening helper</button>${home}`,
+      again: `<button class="btn big go" onclick="App.mcRecognise()">🔁 Test again</button>${home}`,
+      done:  `<button class="btn big go" onclick="App.home()">⭐ Let's read!</button>
+              <button class="btn ghost" onclick="App.mcRecognise()">🔁 Test again</button>`,
+      retry: `<button class="btn big go" onclick="App.mcOpen()">🔁 Try again</button>${home}`,
+    }[phase] || home;
+  },
+
+  // Step 1: open the microphone and watch the bars.
+  async mcOpen() {
+    const M = Listener.Meter;
+    M.enable(); M.denied = false;       // she asked for this: lift any earlier "off"
+    this.mcSay('Allow the microphone if it asks…');
+    const r = await M.open();
+    if (!document.getElementById('mc-say')) return;     // she left the screen
+    if (!r.ok) {
+      const code = /NotAllowed|Permission|Security/i.test(r.error || '') ? 'not-allowed' : 'audio-capture';
+      const A = this.micAdvice(code);
+      this.mcSay(`<b>${A.title}.</b> ${A.msg}${A.fix || ''}`);
+      return this.mcButtons('retry');
+    }
+    this.mcSay('Say <b>HELLO!</b> — do the bars move?');
+    document.getElementById('mc-btns').innerHTML = '';
+    let loud = 0, ticks = 0;
+    if (this._mcTimer) clearInterval(this._mcTimer);
+    this._mcTimer = setInterval(() => {
+      if (!document.getElementById('mc-say')) { clearInterval(this._mcTimer); this._mcTimer = null; return; }
+      ticks++;
+      if (M.level() > 0.35) loud++;
+      if (loud >= 3) {
+        clearInterval(this._mcTimer); this._mcTimer = null;
+        this.mcSay('I can hear you! 🎉 <b>The microphone works.</b>');
+        return this.mcButtons('level');
+      }
+      // ~7 seconds with nothing: say what that means
+      if (ticks === 58) {
+        this.mcSay(M.alive
+          ? 'I can only hear very quiet sound. Say <b>HELLO!</b> a bit louder, closer to the iPad.'
+          : '<b>The microphone is on but silent.</b> Check it is not covered, and that nothing else is using it.');
+        this.mcButtons('retry');
+      }
+    }, 120);
+  },
+
+  // Step 2: the listening helper itself.
+  mcRecognise() {
+    if (!Listener.available) return this.mcSay(this.micAdvice('unsupported').msg);
+    const M = Listener.Meter;
+    this.mcSay('Wait for <b>“Say it now”</b>, then say <b>HELLO!</b>');
+    document.querySelector('#mc-btns').innerHTML = '';
+    const vu = () => document.getElementById('vu');
+    Listener.start({
+      budgetMs: 8000,
+      onState: (st) => {
+        this._micState = st;
+        if (vu()) vu().dataset.s = st;
+        this.mcSay({
+          connecting: 'Getting ready… <b>wait</b>',
+          listening: '🟢 <b>Say it now!</b> — say HELLO',
+          hearing: 'I can hear you! 👂',
+          thinking: 'Checking…',
+        }[st] || '');
+      },
+      onHeard: (alts) => {
+        this._micState = 'idle';
+        if (vu()) vu().dataset.s = 'idle';
+        this.mcSay(`I heard: <b>“${this.esc(alts[0])}”</b><br>🎉 <b>Everything works.</b>`);
+        this.mcButtons('done');
+      },
+      onSilence: () => {
+        this._micState = 'idle';
+        if (vu()) vu().dataset.s = 'idle';
+        this.mcSay("The microphone opened, but I didn't hear any words. Try again, nice and clear.");
+        this.mcButtons('again');
+      },
+      onBlocked: (info) => {
+        this._micState = 'idle';
+        if (vu()) vu().dataset.s = 'idle';
+        const why = (info && info.why) || 'no-audio';
+        // Found the conflict rather than guessing at it.
+        if (M.live && (why === 'no-audio' || why === 'audio-capture' || why === 'aborted')) {
+          M.disable();
+          this.mcSay('This device cannot show the bars <i>and</i> listen at the same moment. That is fine — the bar will use the simpler mode from now on. <b>Tap to test again.</b>');
+          return this.mcButtons('again');
+        }
+        const A = this.micAdvice(why);
+        this.mcSay(`<b>${A.title}.</b> ${A.msg}${A.fix || ''}`);
+        this.mcButtons('again');
+      },
+    });
   },
 
   resume() {
